@@ -1,0 +1,21 @@
+﻿в powershell(под админом)
+
+PS C:\Users\user> $ip = "192.168.1.35"
+PS C:\Users\user> $dnsName = "my-server.local"
+PS C:\Users\user> $cert = New-SelfSignedCertificate -DnsName $dnsName, $ip -CertStoreLocation Cert:\LocalMachine\My -KeyUsage DigitalSignature, KeyEncipherment -NotAfter (Get-Date).AddYears(1) -FriendlyName "MySelfSignedCertForIP"
+PS C:\Users\user> $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.FriendlyName -eq "MySelfSignedCertForIP" }
+PS C:\Users\user> $password = ConvertTo-SecureString -String "certPass" -Force -AsPlainText
+PS C:\Users\user> Export-PfxCertificate -Cert $cert -FilePath "E:\Certs\MySelfSignedCert.pfx" -Password $password
+
+после этого вручную файл сертификата установить в корневые-доверенные(двойной клик на сертификате и далее)
+
+
+--это команда для извлечение именно сертификатной части :
+
+PS C:\Users\user> $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+PS C:\Users\user> $cert.Import("E:\Certs\MySelfSignedCert.pfx", "certPass", 'Exportable,PersistKeySet')
+PS C:\Users\user> $cert.Export("Cert") | Set-Content -Encoding byte -Path "E:\Certs\MySelfSigned_CertPart.cer"
+
+
+
+admin_1991/validPass_917

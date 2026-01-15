@@ -1,0 +1,57 @@
+﻿using Message_Server.Interfaces;
+using MessageLib;
+using System.Collections.Concurrent;
+
+namespace Message_Server.Services.MessagesProcessors
+{
+    /// <summary>
+    /// Сохраняет все входящие сообщения
+    /// </summary>
+    /// <param name="repository"></param>
+    public class MessageSaver(IMessageRepository repository) : IMessageSaver
+    {
+        private readonly IMessageRepository _messageRepo = repository;
+        private ConcurrentQueue<Message> _inputMessages = new ConcurrentQueue<Message>();//на случай, если собщения идут быстрее, чем сохраняются
+        private bool taskWork = false;
+
+        public async void Save(List<Message> messages)
+        {
+            foreach (Message msg in messages)
+                _inputMessages.Enqueue(msg);
+
+            if (_inputMessages.Count > 0 && !taskWork)
+            {
+                await Task.Factory.StartNew(() =>
+                {
+                    taskWork = true;
+                    while (_inputMessages.Count > 0)
+                    {
+                        if (_inputMessages.TryDequeue(out Message msg))
+                            _messageRepo.Add(msg);
+                    }
+                    taskWork = false;
+                });
+            }
+        }
+
+        public async void Save(Message message)
+        {
+            _inputMessages.Enqueue(message);
+
+            if (_inputMessages.Count > 0 && !taskWork)
+            {
+                await Task.Factory.StartNew(() =>
+                {
+                    taskWork = true;
+                    while (_inputMessages.Count > 0)
+                    {
+                        if (_inputMessages.TryDequeue(out Message msg))
+                            _messageRepo.Add(msg);
+                    }
+                    taskWork = false;
+                });
+            }
+        }
+
+    }
+}
