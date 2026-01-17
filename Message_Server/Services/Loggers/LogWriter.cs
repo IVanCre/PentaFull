@@ -5,17 +5,17 @@ using System.Reflection;
 
 namespace Message_Server.Services.Loggers
 {
-    internal class LogWriter:ILogWriter
+    public class LogWriter:ILogWriter
     {
-        private string _logFolder;
+        public string LogFolder { get; private set; }
         private ConcurrentQueue<string> _logs = new ConcurrentQueue<string>();
         private bool _writerWork = false;
 
         public LogWriter(IConfiguration config)
         {
-            _logFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
-            if (!Directory.Exists(_logFolder))
-                Directory.CreateDirectory(_logFolder);
+            LogFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
+            if (!Directory.Exists(LogFolder))
+                Directory.CreateDirectory(LogFolder);
         }
 
         public void SaveError(string text)
@@ -60,7 +60,7 @@ namespace Message_Server.Services.Loggers
                     while (_logs.Count > 0)
                     {
                         _logs.TryDequeue(out string msg);
-                        File.AppendAllText(Path.Combine(_logFolder,$"Log_{DateTime.Now.Date.ToString("dd_MM_yyyy")}.txt"), msg+"\n");
+                        File.AppendAllText(Path.Combine(LogFolder,$"Log_{DateTime.Now.Date.ToString("dd_MM_yyyy")}.txt"), msg+"\n");                
                     }
                     _writerWork = false;
                 });

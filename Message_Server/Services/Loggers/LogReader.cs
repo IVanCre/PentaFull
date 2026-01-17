@@ -3,21 +3,21 @@ using System.Reflection;
 
 namespace Message_Server.Services.Loggers
 {
-    internal class LogReader:ILogReader
+    public class LogReader:ILogReader
     {
-        private string _logFolder;
+        public string LogFolder { get; private set; }
 
         public LogReader(IConfiguration config)
         {
-            _logFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
+            LogFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
         }
 
         public IEnumerable<string> GetLogFileNames()
         {
             List<string> rows = new();
-            if (Directory.Exists(_logFolder))
+            if (Directory.Exists(LogFolder))
             {
-                var finded = Directory.GetFiles(_logFolder);
+                var finded = Directory.GetFiles(LogFolder);
                 foreach(string path in finded)
                     rows.Add(Path.GetFileName(path));
             }
@@ -27,9 +27,9 @@ namespace Message_Server.Services.Loggers
         public async Task<IEnumerable<string>> GetLogsFromFileAsync(string fileName)
         {
             List<string> rows = new();
-            if (Directory.Exists(_logFolder))
+            if (Directory.Exists(LogFolder))
             {
-                var filePaths = Directory.GetFiles(_logFolder);
+                var filePaths = Directory.GetFiles(LogFolder);
                 foreach (string f in filePaths)
                 {
                     if (Path.GetFileName(f) == fileName)

@@ -1,5 +1,8 @@
 ﻿namespace Message_Server.Interfaces
 {
+    /// <summary>
+    /// Читает логи и их наличие
+    /// </summary>
     public interface ILogReader
     {
         public IEnumerable<string> GetLogFileNames();

@@ -1,5 +1,8 @@
 ﻿namespace Message_Server.Interfaces
 {
+    /// <summary>
+    /// Пишет события в файлы
+    /// </summary>
     public interface ILogWriter
     {
         public void SaveError(string text);

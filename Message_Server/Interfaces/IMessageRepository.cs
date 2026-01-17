@@ -2,6 +2,9 @@
 
 namespace Message_Server.Interfaces
 {
+    /// <summary>
+    /// Crud для работы с Сообщениями в БД
+    /// </summary>
     public interface IMessageRepository
     {
         void Add(Message msg);

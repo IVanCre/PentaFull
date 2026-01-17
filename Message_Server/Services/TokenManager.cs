@@ -19,34 +19,10 @@ namespace Message_Server.Services
         private IConfiguration _config = config;
         private ILogWriter _logger = logger;
 
-        /// <summary>
-        /// На основе связки ник-пароль генерирует токен. Роль так же генерируется на основе связки
-        /// </summary>
-        /// <param name="username"></param>
-        /// <param name="pass"></param>
-        /// <returns></returns>
-        private string GenerateToken(int userID,string username, string pass)
+
+        public string CreateToken(int maskedID,string username, string pass)
         {
-            string roleName = UserRoleCreator.GenerateRole(username, pass);
-            var claims = new List<Claim> 
-            { 
-                new Claim("userID", userID.ToString()),//не используем имя, только ID
-                new Claim(ClaimTypes.Role,roleName )//роли вшиваем в токен
-            };
-
-            var jwt = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(Convert.ToInt32(_config["Jwt:LifeTimeMinutes"]))),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"])), SecurityAlgorithms.HmacSha256));
-
-
-            return new JwtSecurityTokenHandler().WriteToken(jwt);
-        }
-        public string CreateToken(int userID,string username, string pass)
-        {
-            var token = GenerateToken(userID, username, pass);
+            var token = GenerateToken(maskedID, username, pass);
             using (DB db= new DB(config["WorkDB:ConnString"]))
             {
                 string maskedPass = PasswordManager.Encrypt(pass, username);
@@ -78,9 +54,33 @@ namespace Message_Server.Services
                     }
                 }
             }
-
             return token;
         }
+
+        // На основе связки ник-пароль генерирует токен. Роль так же генерируется на основе связки
+        private string GenerateToken(int userID,string username, string pass)
+        {
+            string roleName = UserRoleCreator.GenerateRole(username, pass);
+            var claims = new List<Claim> 
+            { 
+                new Claim("userID", userID.ToString()),//не используем имя, только maskedID
+                new Claim(ClaimTypes.Role,roleName )//роли вшиваем в токен
+            };
+
+            var jwt = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(Convert.ToInt32(_config["Jwt:LifeTimeMinutes"]))),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"])), SecurityAlgorithms.HmacSha256));
+
+
+            return new JwtSecurityTokenHandler().WriteToken(jwt);
+        }
+
+
+
+
 
         public string CreateRefreshToken()
         {
@@ -100,7 +100,7 @@ namespace Message_Server.Services
                 }
             }
 
-            _logger.SaveSystemInfo("Юзер, указанный в токене, не обнаружен в БД");
+            _logger?.SaveSystemInfo("Юзер, указанный в токене, не обнаружен в БД");
             return -1;
         }
 

@@ -10,12 +10,10 @@ namespace Message_Server.Controllers
     public class UserController(
         IUserRepository repo,
         ITokenManager tokenMngr,
-        ICopyUserDetector copyLoginDtctr,
         ILogWriter logger) : ControllerBase
     {
         private readonly IUserRepository _userRepository = repo;
         private readonly ITokenManager _tokenMngr = tokenMngr;
-        private readonly ICopyUserDetector _copyLoginDtctr = copyLoginDtctr;
         private readonly ILogWriter _logger = logger;
 
 
@@ -29,12 +27,13 @@ namespace Message_Server.Controllers
             if (string.IsNullOrEmpty(pass) || pass.Length > 50 || pass.Length<1)
                 throw new ArgumentException("Invalid password len");
 
+
             var userID = await _userRepository.AddNewUserAsync(name, pass);
             if(userID!=-1)
                 return _tokenMngr.CreateToken(userID,name, pass);
             else
             {
-                _logger.SaveWarning($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть");
+                _logger?.SaveWarning($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть");
                 return string.Empty;
             }
         }
@@ -50,13 +49,8 @@ namespace Message_Server.Controllers
 
             var userID = await _userRepository.FindUserAsync(name, pass);
             if (userID != -1)
-            {
-                if (!_copyLoginDtctr.IsClientAlreadyInSystem(userID))//не позволяем подключаться одновременно с 2 и более
-                {
                     return _tokenMngr.GetToken(name, pass);
-                }
-                _logger.SaveWarning($"Зафиксирована попытка входа в один аккаунт(name={name}) с нескольких устройств.Отказ");
-            }
+
             return string.Empty;
         }
 

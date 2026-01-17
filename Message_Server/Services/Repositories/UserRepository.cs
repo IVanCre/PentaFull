@@ -76,7 +76,5 @@ namespace Message_Server.Services.Repositories
                     return false;
             }
         }
-
-
     }
 }

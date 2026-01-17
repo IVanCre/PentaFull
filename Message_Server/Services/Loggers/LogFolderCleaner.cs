@@ -4,9 +4,9 @@ using SysTimer = System.Timers.Timer;
 
 namespace Message_Server.Services.Loggers
 {
-    internal class LogFolderCleaner
+    public class LogFolderCleaner
     {
-        private string _logFolder;
+        public string LogFolder { get; private set; }
         private SysTimer _cleaner;
         private int _minutesInterval = 60;
         private int _maxDaysSave = 14;
@@ -16,7 +16,7 @@ namespace Message_Server.Services.Loggers
             ILogWriter logger,
             IConfiguration config)
         {
-            _logFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
+            LogFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
 
             _logWriter = logger;
             _minutesInterval = int.Parse(config["Logging:AutoDeleteIntervalMinutes"]);
@@ -30,15 +30,15 @@ namespace Message_Server.Services.Loggers
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (Directory.Exists(_logFolder))
+            if (Directory.Exists(LogFolder))
             {
-                var files = Directory.GetFiles(_logFolder);
+                var files = Directory.GetFiles(LogFolder);
                 var curDay = DateTime.Now;
                 foreach (var file in files)
                 {
-                    if ((curDay.Date - new FileInfo(file).CreationTime.Date).TotalDays > _maxDaysSave)
+                    if ((curDay.Date - new FileInfo(file).CreationTime.Date).TotalDays >= _maxDaysSave)
                     {
-                        Directory.Delete(file);
+                        File.Delete(file);
                         _logWriter?.SaveSystemInfo($"Logfile {file} auto deletetd");
                     }
                 }

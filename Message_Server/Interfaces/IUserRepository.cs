@@ -1,5 +1,8 @@
 ﻿namespace Message_Server.Interfaces
 {
+    /// <summary>
+    /// Crud для работы с юзерами в БД
+    /// </summary>
     public interface IUserRepository
     {
         public Task<int> AddNewUserAsync(string name,string password);

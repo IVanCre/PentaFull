@@ -1,11 +1,14 @@
 ﻿using MessageLib;
-using Microsoft.AspNetCore.SignalR;
+
 
 
 namespace Message_Server.Interfaces
 {
+    /// <summary>
+    /// Занимаетася обработкой входящих сообщений(от клиента к серверу)
+    /// </summary>
     public interface IMessageProcessor
     {
-        Task ProcessingMessage(Message msg, IHubCallerClients connectedClients);
+        Task ProcessingMessage(Message msg);
     }
 }

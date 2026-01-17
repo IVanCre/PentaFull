@@ -1,9 +1,9 @@
-﻿using Message_Server.Interfaces;
+﻿
 using System.Collections.Concurrent;
 
 namespace Message_Server.Services.SignalR
 {
-    public class ConnectionsRepository : IConnectionsRepository
+    internal class ConnectionsRepository
     {
         private ConcurrentDictionary<int, string> _connections = new();
 

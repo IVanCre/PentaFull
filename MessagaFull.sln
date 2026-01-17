@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageLib", "MessageLib\Me
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageClientLib", "MessageClientLib\MessageClientLib.csproj", "{C87206E3-AA58-40FA-9EED-6A6EAA71A806}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Message_ServerTests", "Message_ServerTests\Message_ServerTests.csproj", "{B544A99B-2936-4CD8-B544-BDAE90CAC637}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{C87206E3-AA58-40FA-9EED-6A6EAA71A806}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C87206E3-AA58-40FA-9EED-6A6EAA71A806}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C87206E3-AA58-40FA-9EED-6A6EAA71A806}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B544A99B-2936-4CD8-B544-BDAE90CAC637}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B544A99B-2936-4CD8-B544-BDAE90CAC637}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B544A99B-2936-4CD8-B544-BDAE90CAC637}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B544A99B-2936-4CD8-B544-BDAE90CAC637}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

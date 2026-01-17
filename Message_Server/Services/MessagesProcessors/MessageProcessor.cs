@@ -1,146 +1,106 @@
 ﻿using Message_Server.Interfaces;
-using Message_Server.Services.Repositories.Models;
 using MessageLib;
-using Microsoft.AspNetCore.SignalR;
 
 
 namespace Message_Server.Services.MessagesProcessors
 {
-
+    /// <summary>
+    /// Осуществляет обработку сообщений(пользовательские и системные)
+    /// </summary>
+    /// <param name="groupRepo"></param>
+    /// <param name="userRepo"></param>
+    /// <param name="clientNotifier"></param>
     public class MessageProcessor(
-        ILogWriter logger,
-        IConnectionsRepository repo,
-        IMessageSaver msgSaver,
         IGroupRepository groupRepo,
-        IUserRepository userRepo) : IMessageProcessor
+        IUserRepository userRepo,
+        IClientNotifier clientNotifier) : IMessageProcessor
     {
-        private IConnectionsRepository _connRepo = repo;
-        private ILogWriter _logger = logger;
-        private IMessageSaver _msgSaver = msgSaver;
         private IGroupRepository _groupRepo = groupRepo;
         private IUserRepository _userRepo = userRepo;
+        private IClientNotifier _clientNotifier= clientNotifier;
 
 
-        public async Task ProcessingMessage(Message msg, IHubCallerClients connectedClients)
+        public async Task ProcessingMessage(Message msg)
         {
-            if(msg.IsUserToUser())
-                await ProcessMessageForUser(msg, connectedClients);
+            if (msg.IsUserToUser())
+                await _clientNotifier.SendToUser(msg);
             else 
-                await ProcessMessageForGroup(msg, connectedClients);   
+                await ProcessMessageForGroup(msg);   
         }
 
-        private async Task ProcessMessageForUser(Message msg, IHubCallerClients connectedClients)
-        {
-            var connectionID = _connRepo.GetConnectionID(msg.ToUserID);
-            if (!string.IsNullOrEmpty(connectionID))
-            {
-                var client = connectedClients.Client(connectionID);
-                if (client != null)
-                    await client.SendAsync("RecieveMessage", msg);
-            }
-            else
-            {
-                _logger.SaveSystemInfo($"Получатель {msg.ToUserID} не в сети. Сохраняем");
-                _msgSaver.Save(msg);//сохраняем в БД
-            }
-        }
-
-
-        private async Task ProcessMessageForGroup(Message msg, IHubCallerClients connectedClients)
+        private async Task ProcessMessageForGroup(Message msg)
         {
             switch (msg.Type)
             {
-                case MessageType.EnterToGroupResponce:       await EnterToGroupResponce(msg, connectedClients); break;
-                case MessageType.LeaveGroupRequest:          await LeaveGroupRequest(msg, connectedClients); break;
-                case MessageType.RemoveUserFromGroupRequest: await RemoveUserFromGroupRequest(msg, connectedClients); break;
-                case MessageType.CreateGroupRequest:         await CreateGroup(msg); break;
-                case MessageType.DeleteGroupRequest:         _groupRepo.DeleteGroup(msg.FromUserID, msg.GroupID); break;
+                case MessageType.EnterToGroupResponce:       await EnterToGroupResponce(msg); break;
+                case MessageType.LeaveGroupRequest:          await LeaveGroupRequest(msg); break;
+                case MessageType.RemoveUserFromGroupRequest: await RemoveUserFromGroupRequest(msg); break;
 
-                default: await SendMessageToAll(msg, connectedClients); break;
+                case MessageType.CreateGroupRequest:         await CreateGroup(msg); break;
+                case MessageType.DeleteGroupRequest:         _groupRepo.DeleteGroup(msg.FromID, msg.GroupID); break;
+
+                default: await _clientNotifier.SendToGroup(msg); break;
             }
         }
-        private async Task EnterToGroupResponce(Message msg, IHubCallerClients connectedClients)
+
+
+        private async Task EnterToGroupResponce(Message msg)
         {
             if (msg.GetDataLikeBoolean())//юзер согласен вступить в группу
             {
-                if (await _groupRepo.AddUserToGroupAsync(msg.FromUserID, msg.GroupID))
+                if (await _groupRepo.AddUserToGroupAsync(msg.FromID, msg.GroupID))
                 {
-                    var name = _userRepo.FindUserNameByIDAsync(msg.FromUserID);
-                    await SendMessageToAll(
+                    var name = _userRepo.FindUserNameByIDAsync(msg.FromID);
+                    await _clientNotifier.SendToGroup(
                         new Message(//создаем новое сообщения для всех
                             -1,
-                            msg.FromUserID,
+                            msg.FromID,
                             msg.GroupID,
                             -1,
                             msg.Type,
-                            MessageUtils.TextToBytes($"Юзер {name} присоединился к группе")),//оповещаем что мы добавились
-                        connectedClients);
+                            MessageUtils.TextToBytes($"Юзер {name} присоединился к группе")));//оповещаем что мы добавились
                 }
             }
         }
-        private async Task LeaveGroupRequest(Message msg, IHubCallerClients connectedClients)
+        private async Task LeaveGroupRequest(Message msg)
         {
-            if (await _groupRepo.RemoveUserFromGroupAsync(msg.FromUserID, msg.GroupID))
+            if (await _groupRepo.RemoveUserFromGroupAsync(msg.FromID, msg.GroupID))
             {
-                var name = _userRepo.FindUserNameByIDAsync(msg.FromUserID);
-                await SendMessageToAll(
+                var name = _userRepo.FindUserNameByIDAsync(msg.FromID);
+                await _clientNotifier.SendToGroup(
                     new Message(//создаем новое сообщения для всех
                         -1,
-                        msg.FromUserID,
+                        msg.FromID,
                         msg.GroupID,
                         -1,
                         msg.Type,
-                        MessageUtils.TextToBytes($"Юзер {name} покинул группу")),//оповещаем что мы добавились
-                    connectedClients);
+                        MessageUtils.TextToBytes($"Юзер {name} покинул группу")));//оповещаем что мы добавились
+
             }
         }
-        async Task RemoveUserFromGroupRequest(Message msg, IHubCallerClients connectedClients)
+        private async Task RemoveUserFromGroupRequest(Message msg)
         {
             var finded = await _groupRepo.GetGroupByIDAsync(msg.GroupID);
-            if (finded != null && finded.AdminGroupID == msg.FromUserID)
+            if (finded != null && finded.AdminGroupID == msg.FromID)
             {
                 var userIDToDelete = msg.GetDataLikeInt();
                 if (await _groupRepo.RemoveUserFromGroupAsync(userIDToDelete, msg.GroupID))
                 {
-                    var name = _userRepo.FindUserNameByIDAsync(msg.FromUserID);
-                    await SendMessageToAll(
+                    var name = _userRepo.FindUserNameByIDAsync(msg.FromID);
+                    await _clientNotifier.SendToGroup(
                         new Message(//создаем новое сообщения для всех
                             -1,
-                            msg.FromUserID,
+                            msg.FromID,
                             msg.GroupID,
                             -1,
                             msg.Type,
-                            MessageUtils.TextToBytes($"Юзер {name} удален администратором группы")),//оповещаем что мы добавились
-                        connectedClients);
+                            MessageUtils.TextToBytes($"Юзер {name} удален администратором группы")));
                 }
             }
         }
         private async Task<bool> CreateGroup(Message msg)
         {
-           return await _groupRepo.CreatGroupAsync(msg.FromUserID, msg.GetDataLikeString());
-        }
-
-
-
-        private async Task SendMessageToAll(Message msg, IHubCallerClients connectedClients)
-        {
-            var finded = await _groupRepo.GetGroupByIDAsync(msg.GroupID);
-            if (finded != null)
-            {
-                var usersID = finded.UserIDsInGroup();
-                foreach (var userID in usersID)
-                {
-                    await ProcessMessageForUser(//для каждого юзера делаем отдельную копию сообщения
-                        new Message(
-                            -1,
-                            msg.FromUserID,
-                            msg.GroupID,
-                            userID,
-                            msg.Type,
-                            msg.Data),
-                        connectedClients);
-                }
-            }
+           return await _groupRepo.CreatGroupAsync(msg.FromID, msg.GetDataLikeString());
         }
     }
 }

@@ -21,14 +21,14 @@ namespace Message_Server.Services.Repositories
         {
             using (DB db= new DB(connStr))
             {
-                if(db.Users.FirstOrDefault(x=>x.ID==msg.ToUserID) !=null)//получатель должен быть зарегистрированнным
+                if(db.Users.FirstOrDefault(x=>x.ID==msg.ToID) !=null)//получатель должен быть зарегистрированнным
                 {
                     db.Messages.Add(new Models.MessageEntity()
                     {
                         IsSended = false,
-                        FromUserID = msg.FromUserID,
+                        FromUserID = msg.FromID,
                         GroupID = msg.GroupID,
-                        ToUserID = msg.ToUserID,
+                        ToUserID = msg.ToID,
                         Type = msg.Type,
                         Data = msg.Data
                     });

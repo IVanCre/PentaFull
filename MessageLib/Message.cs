@@ -29,9 +29,9 @@ namespace MessageLib
     public class Message
     {
         public int ID { get; private set; }
-        public int FromUserID { get; private set; }
+        public int FromID { get; private set; }
         public int GroupID { get; private set; }
-        public int ToUserID { get; private set; }
+        public int ToID { get; private set; }
         public MessageType Type { get; private set; }
         public byte[] Data { get; private set; }
 
@@ -45,9 +45,9 @@ namespace MessageLib
            byte[] Data)
         {
             this.ID = ID;
-            this.FromUserID = FromUserID;
+            this.FromID = FromUserID;
             this.GroupID = GroupID;
-            this.ToUserID = ToUserID;
+            this.ToID = ToUserID;
             this.Type = Type;
             this.Data = Data;
         }

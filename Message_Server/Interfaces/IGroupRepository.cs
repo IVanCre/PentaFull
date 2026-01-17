@@ -3,6 +3,9 @@
 
 namespace Message_Server.Interfaces
 {
+    /// <summary>
+    /// Сложный crud для работы с Группами в БД
+    /// </summary>
     public interface IGroupRepository
     {
         Task<bool> CreatGroupAsync(int masterUserID, string groupName);

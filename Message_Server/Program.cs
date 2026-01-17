@@ -34,7 +34,7 @@ namespace Message_Server
                 app.UseSwagger();
                 app.UseSwaggerUI();
                 app.UseHttpsRedirection();
-                app.MapHub<ChatHub>("/chat");
+                app.MapHub<MessageHub>("/exchanger");
 
                 StartServices(app.Services);
 
@@ -54,14 +54,14 @@ namespace Message_Server
 
             services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<IMessageRepository, MessageRepository>();
-            services.AddSingleton<IConnectionsRepository, ConnectionsRepository>();
             services.AddSingleton<IGroupRepository, GroupRepository>();
+            services.AddSingleton<MessagesDBCleaner>();
 
             services.AddSingleton<IMessageSaver, MessageSaver>();
             services.AddSingleton<ITokenManager, TokenManager>();
-            services.AddSingleton<MessagesDBCleaner>();
-            services.AddSingleton<ICopyUserDetector, CopyUserDetector>();
             services.AddSingleton<IMessageProcessor, MessageProcessor>();
+            services.AddSingleton<IHubObserver, HubObserver>();
+            services.AddSingleton<IClientNotifier, ClientNotifier>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();

@@ -5,7 +5,9 @@ using SysTimer =System.Timers.Timer;
 
 namespace Message_Server.Services.MessagesProcessors
 {
-
+    /// <summary>
+    /// Циклично чистит БД от доставленных(юзерам) сообщений
+    /// </summary>
     public class MessagesDBCleaner
     {
         private SysTimer _cleaner;
@@ -33,7 +35,7 @@ namespace Message_Server.Services.MessagesProcessors
             {
                 int deletetd= db.Database.ExecuteSqlRaw("DELETE FROM Messages WHERE IsSended=1");
                 if (deletetd > 0)
-                    _logger.SaveSystemInfo("Помеченные сообщения удалены");
+                    _logger?.SaveSystemInfo("Помеченные сообщения удалены");
             }
         }
 
