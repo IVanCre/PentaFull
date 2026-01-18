@@ -19,10 +19,18 @@ namespace MessageLib
 #region FromUserToSystem
         
         EnterToGroupResponce = 50,//ответ на приглашение в группу (user->system)
+
         LeaveGroupRequest = 51,//юзер сам выходит (user->system)
-        RemoveUserFromGroupRequest = 52,//юзера выкидывает сам админ группы (user->system)
-        CreateGroupRequest = 53,//создание новой группы (user->ыныеуь)
-        DeleteGroupRequest = 54,//удаление группы и ее чатов самим админом группы (user->system)
+        LeaveGroupResponce=52,
+
+        RemoveUserFromGroupRequest = 53,//юзера выкидывает сам админ группы (user->system)
+        RemoveUserFromGroupResponce=54,
+
+        CreateGroupRequest = 55,//создание новой группы (user->ыныеуь)
+        CreateGroupResponce=56,
+
+        DeleteGroupRequest = 57,//удаление группы и ее чатов самим админом группы (user->system)
+        DeleteGroupResponce=58
 #endregion
     }
 
@@ -30,7 +38,7 @@ namespace MessageLib
     {
         public int ID { get; private set; }
         public int FromID { get; private set; }
-        public int GroupID { get; private set; }
+        public int ChatID { get; private set; }
         public int ToID { get; private set; }
         public MessageType Type { get; private set; }
         public byte[] Data { get; private set; }
@@ -46,7 +54,7 @@ namespace MessageLib
         {
             this.ID = ID;
             this.FromID = FromUserID;
-            this.GroupID = GroupID;
+            this.ChatID = GroupID;
             this.ToID = ToUserID;
             this.Type = Type;
             this.Data = Data;
