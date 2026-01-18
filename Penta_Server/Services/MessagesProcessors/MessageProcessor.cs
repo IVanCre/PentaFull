@@ -53,7 +53,7 @@ namespace Penta_Server.Services.MessagesProcessors
                     var userName = await _userRepo.FindUserNameByIDAsync(msg.FromID);
                     _= _clientNotifier.SendToGroup(
                         new Message(//создаем новое сообщения для всех кто в группе
-                            -1,
+                            Message.GenerateIDByTime(),
                             msg.FromID,
                             msg.ChatID,
                             -1,
@@ -70,7 +70,7 @@ namespace Penta_Server.Services.MessagesProcessors
                 {
                     _ = _clientNotifier.SendToGroup(
                         new Message(//создаем новое сообщения для всех кто в группе
-                            -1,
+                            Message.GenerateIDByTime(),
                             msg.FromID,
                             msg.ChatID,
                             -1,
@@ -88,7 +88,7 @@ namespace Penta_Server.Services.MessagesProcessors
                 {
                     _= _clientNotifier.SendToGroup(
                         new Message(//создаем новое сообщения для всех кто в группе
-                            -1,
+                            Message.GenerateIDByTime(),
                             msg.FromID,
                             msg.ChatID,
                             -1,
@@ -105,7 +105,7 @@ namespace Penta_Server.Services.MessagesProcessors
 
             _=_clientNotifier.SendToUser(
                 new Message(//генерируем ответ для юзера, который прислал запрос
-                    -1,
+                    Message.GenerateIDByTime(),
                     -1,
                     groupID,//номер созданной группы
                     msg.FromID,
@@ -118,7 +118,7 @@ namespace Penta_Server.Services.MessagesProcessors
            var deleted=await _groupRepo.DeleteGroup(msg.FromID, msg.ChatID);
            _ = _clientNotifier.SendToUser(
                 new Message(//генерируем ответ для юзера, который прислал запрос
-                    -1,
+                    Message.GenerateIDByTime(),
                     -1,
                     msg.ChatID,
                     msg.FromID,

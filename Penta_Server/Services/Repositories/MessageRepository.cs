@@ -25,6 +25,7 @@ namespace Penta_Server.Services.Repositories
                 {
                     db.Messages.Add(new Models.MessageEntity()
                     {
+                        ID = msg.ToID,
                         IsSended = false,
                         FromUserID = msg.FromID,
                         GroupID = msg.ChatID,
@@ -47,7 +48,6 @@ namespace Penta_Server.Services.Repositories
                     if (db.Users.FirstOrDefault(x => x.ID == userID) != null)//получатель должен быть зарегистрированнным
                     {
                         var finded = db.Messages.Where(x => x.ToUserID==userID && !x.IsSended).ToList();
-
                         foreach (var f in finded)
                         {
                             result.Add(new Message(

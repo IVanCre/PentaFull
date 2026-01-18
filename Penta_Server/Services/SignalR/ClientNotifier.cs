@@ -57,7 +57,7 @@ namespace Penta_Server.Services.SignalR
                 {
                     await SendToUser(//для каждого юзера делаем отдельную копию сообщения
                         new Message(
-                            -1,
+                            Message.GenerateIDByTime(),
                             msg.FromID,
                             msg.ChatID,
                             userID,

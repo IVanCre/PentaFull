@@ -1,5 +1,4 @@
 ﻿using Penta_ClientLib.Interfaces;
-using Penta_ClientLib.MethodResults;
 using MessageLib;
 
 namespace Penta_ClientLib.Services
@@ -7,10 +6,11 @@ namespace Penta_ClientLib.Services
 
     internal class ChatManager : IChatManager
     {
-        private IGroupChatProvider _chatProvider;
+        private IChatHolder _chatProvider;
         private IMessageProcessor _messProcessor;
+        private IMessageHolder _messHolder;
         private IContactManager _contactManager;
-        private ISettingsProvider _settings;
+        private ISettingsHolder _settings;
 
         public event ChatChanged CreatedNewChat;
         public event ChatChanged ChatDeleted;
@@ -19,9 +19,9 @@ namespace Penta_ClientLib.Services
         public event NewMessageInChat MessageAddedToChat;
 
         public ChatManager(
-            IGroupChatProvider chatProvider,
+            IChatHolder chatProvider,
             IContactManager contactManager,
-            ISettingsProvider settings,
+            ISettingsHolder settings,
             IMessageProcessor messProcessor)
         {
             _chatProvider = chatProvider;
@@ -45,13 +45,13 @@ namespace Penta_ClientLib.Services
             }
         }
 
-        public async Task<BOOLResult> SendCreateGroupChat(string chatName)//запрос
+        public async Task<Tuple<bool,Exception>> SendCreateGroupChat(string chatName)//запрос
         {
             try
             {
-                int currentUserID = _settings.GetValueByName<int>("userID");
+                int currentUserID = await _settings.GetValueByName<int>("userID");
                 var msg = new Message(
-                    -1,
+                    Message.GenerateIDByTime(),
                     currentUserID,
                     -1,
                     -1,
@@ -62,7 +62,7 @@ namespace Penta_ClientLib.Services
             }
             catch (Exception e)
             {
-                return new BOOLResult(false, e);
+                return Tuple.Create<bool, Exception>(false, e);
             }
         }
         private async Task ProcessCreateGroupChatResponce(Message msg)//ответ на запрос
@@ -75,14 +75,14 @@ namespace Penta_ClientLib.Services
         }
 
 
-        public async Task<BOOLResult> SendDeleteGroupChat(string chatName)
+        public async Task<Tuple<bool,Exception>> SendDeleteGroupChat(string chatName)
         {
             try
             {
-                int currentUserID = _settings.GetValueByName<int>("userID");
+                int currentUserID =await _settings.GetValueByName<int>("userID");
                 int chatID = await _chatProvider.GetChatID(chatName);
                 var msg = new Message(
-                    -1,
+                    Message.GenerateIDByTime(),
                     currentUserID,
                     chatID,
                     -1,
@@ -93,28 +93,31 @@ namespace Penta_ClientLib.Services
             }
             catch(Exception e)
             {
-                return new BOOLResult(false, e);
+                return Tuple.Create<bool, Exception>(false, e);
             }
         }
         private async Task ProcessDeleteGroupResponce(Message msg)
         {
             if (msg.GetDataLikeBoolean())
             {
-                if(await _chatProvider.DeleteChat(msg.ChatID))
+                if (await _chatProvider.DeleteChat(msg.ChatID))
+                {
+                    await _messHolder.DeleteByChatID(msg.ChatID);
                     ChatDeleted?.Invoke(msg.ChatID);
+                }
             }
         }
 
 
-        public async Task<BOOLResult> SendDeleteUserFromGroupChat(string chatName, string userName)
+        public async Task<Tuple<bool,Exception>> SendDeleteUserFromGroupChat(string chatName, string userName)
         {
             try
             {
-                int currentUserID = _settings.GetValueByName<int>("userID");
+                int currentUserID =await _settings.GetValueByName<int>("userID");
                 int chatID = await _chatProvider.GetChatID(chatName);
                 int userID = await _contactManager.GetUserID(userName);
                 var msg = new Message(
-                    -1,
+                    Message.GenerateIDByTime(),
                     currentUserID,
                     chatID,
                     userID,
@@ -125,7 +128,7 @@ namespace Penta_ClientLib.Services
             }
             catch (Exception e)
             {
-                return new BOOLResult(false, e);
+                return Tuple.Create<bool, Exception>(false, e);
             }
         }
         private async Task ProcessDeleteUserFromGroupResponce(Message msg)
@@ -135,14 +138,14 @@ namespace Penta_ClientLib.Services
         }
 
 
-        public async Task<BOOLResult> SendLeaveGroupChat(string chatName)
+        public async Task<Tuple<bool,Exception>> SendLeaveGroupChat(string chatName)
         {
             try
             {
-                int currentUserID = _settings.GetValueByName<int>("userID");
+                int currentUserID =await _settings.GetValueByName<int>("userID");
                 int chatID = await _chatProvider.GetChatID(chatName);
                 var msg = new Message(
-                    -1,
+                    Message.GenerateIDByTime(),
                     currentUserID,
                     chatID,
                     -1,
@@ -153,7 +156,7 @@ namespace Penta_ClientLib.Services
             }
             catch (Exception e)
             {
-                return new BOOLResult(false, e);
+                return Tuple.Create<bool, Exception>(false, e);
             }
         }
         private async Task ProcessUserLeaveGroupResponce(Message msg)
@@ -163,15 +166,15 @@ namespace Penta_ClientLib.Services
         }
 
 
-        public async Task<BOOLResult> SendInviteUserToGroupChat(string userName, string chatName)
+        public async Task<Tuple<bool,Exception>> SendInviteUserToGroupChat(string userName, string chatName)
         {
             try
             {
-                int currentUserID = _settings.GetValueByName<int>("userID");
+                int currentUserID =await _settings.GetValueByName<int>("userID");
                 int chatID = await _chatProvider.GetChatID(chatName);
                 int userID = await _contactManager.GetUserID(userName);
                 var msg = new Message(
-                    -1,
+                    Message.GenerateIDByTime(),
                     currentUserID,
                     chatID,
                     userID,
@@ -182,7 +185,7 @@ namespace Penta_ClientLib.Services
             }
             catch (Exception e)
             {
-                return new BOOLResult(false, e);
+                return Tuple.Create<bool, Exception>(false, e);
             }
         }
         private async Task ProcessInviteUserToGroupResponce(Message msg)
@@ -194,16 +197,16 @@ namespace Penta_ClientLib.Services
 
 
 
-        public async Task<BOOLResult> AddMessageToChat(string chatName,string userName,MessageType type,byte[] data)
+        public async Task<Tuple<bool,Exception>> AddMessageToChat(string chatName,string userName,MessageType type,byte[] data)
         {
             try
             {
                 int chatID = await _chatProvider.GetChatID(chatName);
                 int toUserID = await _contactManager.GetUserID(userName);
-                var currUser = _settings.GetValueByName<int>("userID");
+                var currUser = await _settings.GetValueByName<int>("userID");
                 return await _messProcessor.SendMessage(
                             new Message(
-                                -1,
+                                Message.GenerateIDByTime(),
                                 currUser,
                                 chatID,
                                 toUserID,
@@ -213,13 +216,13 @@ namespace Penta_ClientLib.Services
             }
             catch(Exception e)
             {
-                return new BOOLResult(false, e);
+                return Tuple.Create<bool, Exception>(false, e);
             }
         }
 
         private async Task ProcessMessageFromUser(Message msg)
         {
-            if(msg.ToID== _settings.GetValueByName<int>("userID"))//сообщение адресовано именно нам
+            if(msg.ToID== await _settings.GetValueByName<int>("userID"))//сообщение адресовано именно нам
             {
 
                 if (await _contactManager.AutoAddNewUserContact(msg.FromID.ToString(), msg.FromID))//сохраняем id как имя(все что есть)

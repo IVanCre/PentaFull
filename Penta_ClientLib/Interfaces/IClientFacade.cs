@@ -1,4 +1,4 @@
-﻿using Penta_ClientLib.MethodResults;
+﻿
 using MessageLib;
 
 
@@ -14,28 +14,42 @@ namespace Penta_ClientLib.Interfaces
     /// </summary>
     public interface IClientFacade
     {
-        public Task<BOOLResult> Registration(string login, string password);
-        public Task<BOOLResult> Login(string login, string password);
+        /// <summary>
+        /// Регистрация в системе
+        /// </summary>
+        /// <param name="login"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public Task<Tuple<bool,Exception>> Registration(string login, string password);
+
+        /// <summary>
+        /// Вход в систему
+        /// </summary>
+        /// <param name="login"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public Task<Tuple<bool, Exception>> Login(string login, string password);
 
         /// <summary>
         /// Отдает идентификатор текущего юзера,
         /// по которому другие юзеры могут отправлять ему сообщения
         /// </summary>
         /// <returns></returns>
-        public Task<STRResult> GetMyContactID();
+        public Task<Tuple<string, Exception>> GetMyContactID();
 
         /// <summary>
         /// Шлет запрос на удаление всех данных текущего юзера с Сервера.
         /// Внутренние данные так же удаляются с Клиента
         /// </summary>
         /// <returns>Ошибка, если </returns>
-        public Task<BOOLResult> DeleteAccount();
+        public Task<Tuple<bool, Exception>> DeleteAccount();
 
         /// <summary>
         /// Доступ к настройкам Клиента
         /// </summary>
         /// <returns></returns>
-        public ISettingsProvider GetSettings();
+        public ISettingsHolder GetSettings();
+
 
         /// <summary>
         /// Сохранить в свои контакты юзера(с идентификатором userID) под именем userName
@@ -43,14 +57,16 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="userName">псевдоним, под которым юзер хранится в контактах</param>
         /// <param name="userContactID">идентификатор юзера, который генерирует его Клиент</param>
         /// <returns></returns>
-        public Task<BOOLResult> AddNewUserContact(string userName, string userContactID);
+        public Task<Tuple<bool, Exception>> AddNewUserContact(string userName, string userContactID);
 
         /// <summary>
         /// Удалить из контактов юзера 
         /// </summary>
         /// <param name="userName"></param>
         /// <returns></returns>
-        public Task<BOOLResult> DeleteUserContact(string userName);
+        public Task<Tuple<bool, Exception>> DeleteUserContact(string userName);
+
+        public Task<Tuple<List<string>, Exception>> GetAllContacts();
 
 
 #region GroupChat
@@ -59,7 +75,7 @@ namespace Penta_ClientLib.Interfaces
         /// </summary>
         /// <param name="chatName"></param>
         /// <returns>факт отправки запроса</returns>
-        public Task<BOOLResult> CreateGroupChat(string chatName);
+        public Task<Tuple<bool, Exception>> CreateGroupChat(string chatName);
         public event ChatChanged CreatedNewChat;
 
         /// <summary>
@@ -69,7 +85,7 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="userID">идентификатора юзера, которому отправим приглашение</param>
         /// <param name="chatName">имя чата, который есть у Клиента</param>
         /// <returns></returns>
-        public Task<BOOLResult> InviteUserToGroupChat(string userID, string chatName);
+        public Task<Tuple<bool, Exception>> InviteUserToGroupChat(string userID, string chatName);
         public event ChatUserListChanged UserAdded;
 
         /// <summary>
@@ -77,7 +93,7 @@ namespace Penta_ClientLib.Interfaces
         /// </summary>
         /// <param name="chatName">имя чата, который есть у Клиента</param>
         /// <returns></returns>
-        public Task<BOOLResult> LeaveGroupChat(string chatName);
+        public Task<Tuple<bool, Exception>> LeaveGroupChat(string chatName);
         public event ChatUserListChanged UserRemoved;
 
         /// <summary>
@@ -87,7 +103,7 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="chatName">имя чата</param>
         /// <param name="userID">идентификатор юзера, которого нужно удалить</param>
         /// <returns></returns>
-        public Task<BOOLResult> DeleteUserFromGroupChat(string chatName, string userID);
+        public Task<Tuple<bool, Exception>> DeleteUserFromGroupChat(string chatName, string userID);
 
         /// <summary>
         /// Удаляет чат и всю переписку на сервер и на клиенте.
@@ -95,7 +111,7 @@ namespace Penta_ClientLib.Interfaces
         /// </summary>
         /// <param name="chatName">имя чата</param>
         /// <returns></returns>
-        public Task<BOOLResult> DeleteGroupChat(string chatName);
+        public Task<Tuple<bool, Exception>> DeleteGroupChat(string chatName);
         public event ChatChanged ChatDeleted;
 
         #endregion
@@ -106,7 +122,7 @@ namespace Penta_ClientLib.Interfaces
         /// </summary>
         /// <param name="mesage">само сообщение</param>
         /// <returns></returns>
-        public Task<BOOLResult> AddMessageToChat(string chatName, string userName, MessageType type, byte[] data);
+        public Task<Tuple<bool, Exception>> AddMessageToChat(string chatName, string userName, MessageType type, byte[] data);
 
         /// <summary>
         /// Делегат для отслеживания появления сообщений в чате(своих и чужих)

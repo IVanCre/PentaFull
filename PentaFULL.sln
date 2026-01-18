@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Penta_ClientLib", "Penta_Cl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Penta_ServerTests", "Penta_ServerTests\Penta_ServerTests.csproj", "{B544A99B-2936-4CD8-B544-BDAE90CAC637}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient_Tests", "ConsoleClient_Tests\ConsoleClient_Tests.csproj", "{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{B544A99B-2936-4CD8-B544-BDAE90CAC637}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B544A99B-2936-4CD8-B544-BDAE90CAC637}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B544A99B-2936-4CD8-B544-BDAE90CAC637}.Release|Any CPU.Build.0 = Release|Any CPU
+		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

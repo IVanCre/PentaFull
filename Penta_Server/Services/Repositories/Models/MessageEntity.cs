@@ -10,14 +10,14 @@ namespace Penta_Server.Services.Repositories.Models
     [Index("Type")]
     public class MessageEntity
     {
-        public int ID { get; set; }
+        public long ID { get; set; }
 
         public bool IsSended { get; set; }//была ли выполнена автодоставка при покдлючении(чтобы потом удалить это сообщение)
         public int FromUserID { get; set; }
         public int GroupID { get; set; }
         public int ToUserID { get; set; }
 
-        public MessageType Type { get; set; }
+        public MessageType Type { get; set; }//чтобы EF в бибилотеку исходного класа не тащить
         public byte[] Data { get; set; }//по факту тут всегда byte[]
 
     }

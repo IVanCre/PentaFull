@@ -1,6 +1,6 @@
 ﻿namespace Penta_ClientLib.Interfaces
 {
-    internal interface IGroupChatProvider
+    internal interface IChatHolder
     {
         Task<bool> CreateChat(string chatName, int chatID);
         Task<int> GetChatID(string chatName);

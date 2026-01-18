@@ -1,4 +1,4 @@
-﻿using Penta_ClientLib.MethodResults;
+﻿
 using MessageLib;
 
 
@@ -9,6 +9,6 @@ namespace Penta_ClientLib.Interfaces
     internal interface IMessageProcessor
     {
         public event MessageRecieved RecievedMessage;
-        Task<BOOLResult> SendMessage(Message mesage);
+        Task<Tuple<bool, Exception>> SendMessage(Message mesage);
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Penta_ClientLib.Interfaces;
-using Penta_ClientLib.MethodResults;
 using MessageLib;
 
 
@@ -10,13 +9,13 @@ namespace Penta_ClientLib
         IAccountManager accManager,
         IContactManager contactManager,
         IChatManager chatManager,
-        ISettingsProvider settingsProvider
+        ISettingsHolder settingsProvider
        ) : IClientFacade
     {
         private IAccountManager _accManager=accManager;
         private IContactManager _contactManager=contactManager;
         private IChatManager _chatManager=chatManager;
-        private ISettingsProvider _settingsProvider=settingsProvider;
+        private ISettingsHolder _settingsProvider=settingsProvider;
 
         public event ChatChanged CreatedNewChat
         {
@@ -46,26 +45,26 @@ namespace Penta_ClientLib
         }
 
 
-        public Task<BOOLResult> Registration(string login, string password)=>_accManager.Registration(login, password);
-        public Task<BOOLResult> Login(string login, string password)=>_accManager.Login(login, password);
-        public Task<BOOLResult> DeleteAccount()=>_accManager.DeleteAccount();
+        public Task<Tuple<bool,Exception>> Registration(string login, string password)=>_accManager.Registration(login, password);
+        public Task<Tuple<bool, Exception>> Login(string login, string password)=>_accManager.Login(login, password);
+        public Task<Tuple<bool, Exception>> DeleteAccount()=>_accManager.DeleteAccount();
 
    
-        public Task<STRResult> GetMyContactID()=> _contactManager.GetMyContactString();
-        public Task<BOOLResult> AddNewUserContact(string userName, string userContactID)=>_contactManager.AddNewUserContact(userName, userContactID);
-        public Task<BOOLResult> DeleteUserContact(string userName)=>_contactManager?.DeleteUserContact(userName);
+        public Task<Tuple<string, Exception>> GetMyContactID()=> _contactManager.GetMyContactString();
+        public Task<Tuple<bool, Exception>> AddNewUserContact(string userName, string userContactID)=>_contactManager.AddNewUserContact(userName, userContactID);
+        public Task<Tuple<bool, Exception>> DeleteUserContact(string userName)=>_contactManager.DeleteUserContact(userName);
+        public Task<Tuple<List<string>, Exception>> GetAllContacts() => _contactManager.GetAllContacts();
+
+        public Task<Tuple<bool, Exception>> AddMessageToChat(string chatName, string userName, MessageType type, byte[] data) => _chatManager.AddMessageToChat(chatName, userName, type, data);
+        public Task<Tuple<bool, Exception>> CreateGroupChat(string chatName)=>_chatManager.SendCreateGroupChat(chatName);
+        public Task<Tuple<bool, Exception>> InviteUserToGroupChat(string userID, string chatName)=>_chatManager.SendInviteUserToGroupChat(userID, chatName);
+        public Task<Tuple<bool, Exception>> LeaveGroupChat(string chatName)=>_chatManager.SendLeaveGroupChat(chatName);
+        public Task<Tuple<bool, Exception>> DeleteUserFromGroupChat(string chatName, string userID)=> _chatManager.SendDeleteUserFromGroupChat(chatName, userID);
+        public Task<Tuple<bool, Exception>> DeleteGroupChat(string chatName)=>_chatManager.SendDeleteGroupChat(chatName);
 
 
-        public Task<BOOLResult> AddMessageToChat(string chatName, string userName, MessageType type, byte[] data) => _chatManager.AddMessageToChat(chatName, userName, type, data);
-        public Task<BOOLResult> CreateGroupChat(string chatName)=>_chatManager.SendCreateGroupChat(chatName);
-        public Task<BOOLResult> InviteUserToGroupChat(string userID, string chatName)=>_chatManager.SendInviteUserToGroupChat(userID, chatName);
-        public Task<BOOLResult> LeaveGroupChat(string chatName)=>_chatManager.SendLeaveGroupChat(chatName);
-        public Task<BOOLResult> DeleteUserFromGroupChat(string chatName, string userID)=> _chatManager.SendDeleteUserFromGroupChat(chatName, userID);
-        public Task<BOOLResult> DeleteGroupChat(string chatName)=>_chatManager.SendDeleteGroupChat(chatName);
 
-
-
-        public ISettingsProvider GetSettings()
+        public ISettingsHolder GetSettings()
         {
             return _settingsProvider;
         }

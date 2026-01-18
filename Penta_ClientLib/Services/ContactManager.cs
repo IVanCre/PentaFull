@@ -1,36 +1,29 @@
 ﻿using Penta_ClientLib.Interfaces;
-using Penta_ClientLib.MethodResults;
 using System.Text;
 
 
 namespace Penta_ClientLib.Services
 {
-    public interface IContactHolder
-    {
-        Task<bool> AddContactAsync(string userName, int userID);
-        Task<int> GetContactIDAsync(string userName);
-        Task<bool> DeleteContactAsync(string userName);
-    }
 
     internal class ContactManager(
-        ISettingsProvider settings,
+        ISettingsHolder settings,
         IContactHolder contactHolder) : IContactManager
     {
-        private ISettingsProvider _settings = settings;
+        private ISettingsHolder _settings = settings;
         private IContactHolder _contactHolder= contactHolder;
 
 
-        public async Task<BOOLResult> AddNewUserContact(string userName, string userContactID)
+        public async Task<Tuple<bool, Exception>> AddNewUserContact(string userName, string userContactID)
         {
             try
             {
                 int userID = GetContactID(userContactID);
                 var result = await _contactHolder.AddContactAsync(userName, userID);
-                return new BOOLResult(result, null);
+                return Tuple.Create<bool,Exception>(result, null);
             }
             catch (Exception ex)
             {
-                return new BOOLResult(false, ex);
+                return Tuple.Create(false, ex);
             }
         }
         public async Task<bool> AutoAddNewUserContact(string userName, int userID)
@@ -55,17 +48,28 @@ namespace Penta_ClientLib.Services
                 return -1;
             }
         }
-
-        public async Task<BOOLResult> DeleteUserContact(string userName)
+        public async Task<Tuple<List<string>, Exception>> GetAllContacts()
         {
             try
             {
-                var result = await _contactHolder.DeleteContactAsync(userName);
-                return new BOOLResult(result, null);
+                var list = await _contactHolder.GetAllContacts();
+                return Tuple.Create<List<string>, Exception>(list, null);
+            }
+            catch (Exception e)
+            {
+                return Tuple.Create< List<string>,Exception >(null, e);
+            }
+        }
+        public async Task<Tuple<bool, Exception>> DeleteUserContact(string userName)
+        {
+            try
+            {
+                var result = await _contactHolder.DeleteContact(userName);
+                return Tuple.Create<bool,Exception>(result, null);
             }
             catch (Exception ex)
             {
-                return new BOOLResult(false, ex);
+                return Tuple.Create(false, ex);
             }
         } 
 
@@ -82,9 +86,9 @@ namespace Penta_ClientLib.Services
             var masked = long.Parse(str.ToString());
             return Convert.ToInt32(3_000_000_000 - masked);
         }
-        public async Task<STRResult> GetMyContactString()
+        public async Task<Tuple<string, Exception>> GetMyContactString()
         {
-            var userID = _settings.GetValueByName<int>("userID");
+            var userID = await _settings.GetValueByName<int>("userID");
             var masked = (3_000_000_000 - userID).ToString();
             StringBuilder str = new(masked);
             str.Insert(0, "8");
@@ -93,7 +97,7 @@ namespace Penta_ClientLib.Services
             str.Insert(9, '-');
             str.Insert(12, '-');// формат типа телефона 8-218-729-22-21 ))))))
 
-            return new STRResult(str.ToString(), null);
+            return Tuple.Create<string,Exception>(str.ToString(), null);
         }
 
 

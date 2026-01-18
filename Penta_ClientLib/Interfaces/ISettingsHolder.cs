@@ -2,9 +2,9 @@
 
 namespace Penta_ClientLib.Interfaces
 {
-    public interface ISettingsProvider
+    public interface ISettingsHolder
     {
-        T GetValueByName<T>(string paramName);
+        Task<T> GetValueByName<T>(string paramName);
         void SetValueByName<T>(string paramName, T value );
     }
 }

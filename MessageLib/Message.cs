@@ -4,39 +4,10 @@ using System.Text.Json.Serialization;
 
 namespace MessageLib
 {
-    public enum MessageType
-    {
-        Unknown = 0,
-
-#region FromUserToUser
-
-        Text = 10,//текстовое сообщение от юзера к юзеру
-        Picture = 11,//изображение от юзера к юзеру
-        Voice = 12,//голосовое от юзера к юзеру
-        EnterToGroupRequest = 13,//запрос на вступление в группу (user->user)
-#endregion
-
-#region FromUserToSystem
-        
-        EnterToGroupResponce = 50,//ответ на приглашение в группу (user->system)
-
-        LeaveGroupRequest = 51,//юзер сам выходит (user->system)
-        LeaveGroupResponce=52,
-
-        RemoveUserFromGroupRequest = 53,//юзера выкидывает сам админ группы (user->system)
-        RemoveUserFromGroupResponce=54,
-
-        CreateGroupRequest = 55,//создание новой группы (user->ыныеуь)
-        CreateGroupResponce=56,
-
-        DeleteGroupRequest = 57,//удаление группы и ее чатов самим админом группы (user->system)
-        DeleteGroupResponce=58
-#endregion
-    }
 
     public class Message
     {
-        public int ID { get; private set; }
+        public long ID { get; private set; }//на случай, если потребуется самим назначать
         public int FromID { get; private set; }
         public int ChatID { get; private set; }
         public int ToID { get; private set; }
@@ -45,7 +16,7 @@ namespace MessageLib
 
         [JsonConstructor]
         public Message(
-           int ID,
+           long ID,
            int FromUserID,
            int GroupID,
            int ToUserID,
@@ -58,6 +29,11 @@ namespace MessageLib
             this.ToID = ToUserID;
             this.Type = Type;
             this.Data = Data;
+        }
+
+        public static long GenerateIDByTime()//при высокой интенсивности, могут выскакивать повторы))
+        {
+            return (long)(DateTime.Parse("01.01.2020") - DateTime.Now).TotalMilliseconds;
         }
     }
 }

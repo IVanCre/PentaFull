@@ -29,7 +29,7 @@ namespace Penta_Server.Migrations
                 name: "Messages",
                 columns: table => new
                 {
-                    ID = table.Column<int>(type: "int", nullable: false)
+                    ID = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     IsSended = table.Column<bool>(type: "bit", nullable: false),
                     FromUserID = table.Column<int>(type: "int", nullable: false),

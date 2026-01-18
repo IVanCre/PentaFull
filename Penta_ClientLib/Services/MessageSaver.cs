@@ -1,5 +1,4 @@
 ﻿using Penta_ClientLib.Interfaces;
-using Penta_ClientLib.MethodResults;
 using MessageLib;
 
 
@@ -8,7 +7,7 @@ namespace Penta_ClientLib.Services
 
     internal class MessageSaver: IMessageProcessor
     {
-        private IMessageProvider _messProvider;
+        private IMessageHolder _messHolder;
         private IWebClient _webClient;
 
         public event MessageRecieved RecievedMessage
@@ -19,35 +18,35 @@ namespace Penta_ClientLib.Services
 
 
         public MessageSaver(
-            IMessageProvider messProvider,
+            IMessageHolder messProvider,
             IWebClient webClient)
         {
-            _messProvider = messProvider;
+            _messHolder = messProvider;
             _webClient = webClient;
             RecievedMessage += Save;
         }
         private async void Save (Message msg)
         {
-             await _messProvider.SaveMessage(msg);
+             await _messHolder.SaveMessage(msg);
         }
 
 
-        public async Task<BOOLResult> SendMessage(Message message)
+        public async Task<Tuple<bool, Exception>> SendMessage(Message message)
         {
             try
             {
-                var saved= await _messProvider.SaveMessage(message);
+                var saved= await _messHolder.SaveMessage(message);
                 if (saved)
                 {
                    var sended= await _webClient.SendMessage(message);
-                   return new BOOLResult(sended, null);
+                   return Tuple.Create<bool,Exception>(sended, null);
                 }
                 else
-                    return new BOOLResult(false, new Exception("Ошибка при сохранении сообщения в хранилище перед отправкой"));
+                    return Tuple.Create(false, new Exception("Ошибка при сохранении сообщения в хранилище перед отправкой"));
             }
             catch (Exception ex)
             {
-                return new BOOLResult(false,ex);
+                return Tuple.Create(false,ex);
             }
         }
     }

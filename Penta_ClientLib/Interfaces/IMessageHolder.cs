@@ -3,10 +3,11 @@
 
 namespace Penta_ClientLib.Interfaces
 {
-    internal interface IMessageProvider
+    internal interface IMessageHolder
     {
         Task<bool> SaveMessage(Message msg);
-        Task<bool> MarkSendedForDelete(int messageID);
         Task<List<Message>> GetNonSended();
+
+        Task<bool> DeleteByChatID(int chatID);
     }
 }

@@ -1,23 +1,23 @@
 ﻿using Penta_ClientLib.Interfaces;
-using Penta_ClientLib.MethodResults;
+
 
 namespace Penta_ClientLib.Services
 {
 
     internal class AccountManager(
-        ISettingsProvider settings,
+        ISettingsHolder settings,
         IWebClient webClient):IAccountManager
     {
-        private ISettingsProvider _settings=settings;
+        private ISettingsHolder _settings=settings;
         private IWebClient _webClient=webClient;
 
-        public Task<BOOLResult> DeleteAccount()
+        public Task<Tuple<bool, Exception>> DeleteAccount()
         {
             throw new NotImplementedException();
         }
 
 
-        public async Task<BOOLResult> Registration(string login, string password)
+        public async Task<Tuple<bool, Exception>> Registration(string login, string password)
         {
             try
             {
@@ -27,32 +27,28 @@ namespace Penta_ClientLib.Services
                     _settings.SetValueByName("userLogin",login);
                     _settings.SetValueByName("userPassword", password);
                     _settings.SetValueByName("userID",userID);
-                    return new BOOLResult(true, null);
+                    return Tuple.Create<bool,Exception>(true, null);
                 }
                 else
-                    return new BOOLResult(false, null);
+                    return Tuple.Create<bool, Exception>(false, null);
             }
             catch (Exception e)
             {
-                return new BOOLResult(false, e);
+                return Tuple.Create(false, e);
             }
         }
-        public async Task<BOOLResult> Login(string login, string password)
+        public async Task<Tuple<bool,Exception>> Login(string login, string password)
         {
             bool result = false;
-            if (IsRegistred())
+            if (!string.IsNullOrEmpty( await _settings.GetValueByName<string>("userID")))
             {
                 result = await _webClient.TryLoginAsync(login, password);
-                return new BOOLResult(result, null);
+                return Tuple.Create<bool, Exception>(result, null);
             }
             else
-                return new BOOLResult(false, new Exception("Клиент не зарегистрирован"));
+                return Tuple.Create(false, new Exception("Клиент не зарегистрирован"));
 
         }
 
-        private bool IsRegistred()
-        {
-            return !string.IsNullOrEmpty(_settings.GetValueByName<string>("userID"));
-        }
     }
 }
