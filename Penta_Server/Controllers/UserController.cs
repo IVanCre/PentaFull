@@ -29,8 +29,11 @@ namespace Penta_Server.Controllers
 
 
             var userID = await _userRepository.AddNewUserAsync(name, pass);
-            if(userID!=-1)
-                return _tokenMngr.CreateToken(userID,name, pass);
+            if (userID != -1)
+            {
+                _logger?.SaveSystemInfo($"Зарегистрирован новый юзер: {name}");
+                return _tokenMngr.CreateToken(userID, name, pass);
+            }
             else
             {
                 _logger?.SaveWarning($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть");
@@ -49,7 +52,10 @@ namespace Penta_Server.Controllers
 
             var userID = await _userRepository.FindUserAsync(name, pass);
             if (userID != -1)
-                    return _tokenMngr.GetToken(name, pass);
+            {
+                _logger?.SaveSystemInfo("Юзер вошел в аккаунт");
+                return _tokenMngr.GetToken(name, pass);
+            }
 
             return string.Empty;
         }
@@ -63,11 +69,14 @@ namespace Penta_Server.Controllers
 
         [HttpPost("DeleteSelfAccount")]
         [Authorize]
-        public void DelSelfAccount()
+        public async void DelSelfAccount()
         {
             string token = Request.Headers["Authorization"];
             token=token.Replace("Bearer ", "");
-            _userRepository.DeleteUserByTokenAsync(token);
+            var result =await _userRepository.DeleteUserByTokenAsync(token);
+            if(result)
+                _logger?.SaveSystemInfo("Юзер вышел из аккаунта");
+
         }
     }
 }

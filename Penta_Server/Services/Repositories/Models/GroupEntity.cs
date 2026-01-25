@@ -39,9 +39,9 @@ namespace Penta_Server.Services.Repositories.Models
                 if (id != userIDStr)
                 {
                     if (str.Length == 0)
-                        str.Append(",");
+                        str.Append($"{id}");
                     else
-                        str.Append(",");
+                        str.Append($",{id}");
                 }
             }
 

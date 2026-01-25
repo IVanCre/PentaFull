@@ -32,16 +32,5 @@ namespace MessageLib
            return BitConverter.ToInt32(msg.Data, 0);
         }
 
-
-        /// <summary>
-        /// Определение идет по типу MessageType
-        /// </summary>
-        /// <param name="msg"></param>
-        /// <returns></returns>
-        public static bool IsUserToUser(this Message msg)
-        {
-            return msg.Type > MessageType.Unknown && msg.Type < MessageType.EnterToGroupResponce;
-        }
-
     }
 }

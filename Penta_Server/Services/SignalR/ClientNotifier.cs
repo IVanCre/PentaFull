@@ -2,7 +2,7 @@
 
 using Penta_Server.Interfaces;
 using MessageLib;
-using Penta_Server.Services.Repositories.Models;
+
 
 namespace Penta_Server.Services.SignalR
 {
@@ -13,25 +13,26 @@ namespace Penta_Server.Services.SignalR
     /// <param name="groupRepo"></param>
     public class ClientNotifier(
         IMessageRepository messageRepo,
-        IGroupRepository groupRepo,
-        IHubObserver hubObserver,
-        IMessageSaver messSaver) : IClientNotifier
+        IConnectionsRepository connRepo,
+        IHubContext<MessageHub> hubContext,
+        IMessageSaver messSaver,
+        ILogWriter logger) : IClientNotifier
     {
         private IMessageRepository _messageRepo= messageRepo;
-        private IGroupRepository _groupRepo= groupRepo;
-        private IHubObserver _hubObserver=hubObserver;
+        private IConnectionsRepository _connRepo = connRepo;
         private IMessageSaver _messSaver=messSaver;
+        private ILogWriter _logger = logger;
+        private IHubContext<MessageHub> _hubContext=hubContext;
 
 
         public async Task SendAllNonSended(int userID, string connID)//отправляет клиенту все неотправленные ЕМУ сообщения
         {
-            var findedHub = _hubObserver.TryGetHub();
-            if (findedHub != null)
+            if (_hubContext != null)
             {
                 var nonsended = await _messageRepo.GetNonSendedForUserAsync(userID);
                 if (nonsended != null && nonsended.Count > 0)
                 {
-                    var client = findedHub.GetClientsProvider().Client(connID);
+                    var client = _hubContext.Clients.Client(connID);
                     if (client != null)
                     {
                         foreach (var msg in nonsended)
@@ -42,30 +43,20 @@ namespace Penta_Server.Services.SignalR
         }
         public async Task SendToUser(Message msg)
         {
-            _messSaver.Save(msg);//сохраняем в БД(вдруг хаба нет илои связь плохая)
+            _messSaver.Save(msg);//сохраняем в БД(вдруг хаба нет или связь плохая)
 
-            var messageHub = _hubObserver.TryGetHub();
-            messageHub?.SendToClient(msg);
-        }
-        public async Task SendToGroup(Message msg)
-        {
-            var finded = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-            if (finded != null)
+            var connectionID = _connRepo.GetConnectionID(msg.ToID);
+            if (!string.IsNullOrEmpty(connectionID))//что такой юзер все еще подключен
             {
-                var usersID = finded.UserIDsInGroup();
-                foreach (var userID in usersID)
+                var client = _hubContext.Clients.Client(connectionID);
+                if (client != null)
                 {
-                    await SendToUser(//для каждого юзера делаем отдельную копию сообщения
-                        new Message(
-                            Message.GenerateIDByTime(),
-                            msg.FromID,
-                            msg.ChatID,
-                            userID,
-                            msg.Type,
-                            msg.Data));
+                    _logger?.SaveSystemInfo($"Пересылаем клиенту {connectionID} сообщение");
+                    await client.SendAsync("RecieveMessage", msg);
                 }
             }
         }
+
 
         public void MessageSended(int messageID) => _messageRepo.MarkForDelete(messageID);
 

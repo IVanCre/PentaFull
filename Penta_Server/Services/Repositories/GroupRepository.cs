@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Penta_Server.Services.Repositories
 {
 
-    public class GroupRepository(IConfiguration config) : IGroupRepository
+    public class GroupRepository(IConfiguration config) : IGroupChatRepository
     {
         private string connStr = config["WorkDB:ConnString"];
 
@@ -31,14 +31,14 @@ namespace Penta_Server.Services.Repositories
             }
             return -1;
         }
-        public async Task<bool> DeleteGroup(int masterUserID, int groupID)
+        public async Task<bool> DeleteGroup(int masterUserID, int chatID)
         {
             using (DB db = new DB(connStr))
             {
-                var finded = db.Groups.FirstOrDefault(x => x.ID == groupID);
-                if ( finded.AdminGroupID == masterUserID)
+                var finded = db.Groups.FirstOrDefault(x => x.AdminGroupID==masterUserID && x.ID== chatID);
+                if (finded!=null)
                 {
-                    var result= await db.Database.ExecuteSqlRawAsync($"DELETE FROM Groups WHERE ID={groupID}");
+                    var result= await db.Database.ExecuteSqlRawAsync($"DELETE FROM Groups WHERE ID={finded.ID}");
                     return result == 1;
                 }
             }

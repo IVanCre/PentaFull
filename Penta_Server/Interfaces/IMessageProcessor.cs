@@ -9,6 +9,6 @@ namespace Penta_Server.Interfaces
     /// </summary>
     public interface IMessageProcessor
     {
-        Task ProcessingMessage(Message msg);
+        void ProcessingMessage(Message msg);
     }
 }

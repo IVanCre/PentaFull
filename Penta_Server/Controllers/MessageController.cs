@@ -9,10 +9,12 @@ namespace Penta_Server.Controllers
     [ApiController]
     public class MessageController(
         IMessageRepository msgRepo,
-        ITokenManager tokenMngr) : ControllerBase
+        ITokenManager tokenMngr,
+        ILogWriter logger) : ControllerBase
     {
-        private readonly IMessageRepository _msgRepo = msgRepo;
-        private readonly ITokenManager _tokenMngr= tokenMngr;
+        private IMessageRepository _msgRepo = msgRepo;
+        private ITokenManager _tokenMngr= tokenMngr;
+        private ILogWriter _logger = logger;
 
 
         /// <summary>
@@ -33,8 +35,11 @@ namespace Penta_Server.Controllers
                 userID=_tokenMngr.FindUserByToken(token);
             }
 
-            if (userID!=-1)
+            if (userID != -1)
+            {
+                _logger?.SaveSystemInfo("Получен запрос на проверку новых сообщений");
                 return _msgRepo.HasNonSended(userID);
+            }
             else
                 return false;
         }

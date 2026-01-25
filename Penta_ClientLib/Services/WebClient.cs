@@ -49,6 +49,8 @@ namespace Penta_ClientLib.Services
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     _jwtToken = await response.Content.ReadAsStringAsync();
+
+                    await ConnectToMessageHub();
                     Console.WriteLine("-Вход завершен");
                     return true;
                 }
@@ -70,6 +72,7 @@ namespace Penta_ClientLib.Services
                 {
                     _jwtToken = await response.Content.ReadAsStringAsync();
                     userID = GetUserID(_jwtToken);
+                    await ConnectToMessageHub();
                     Console.WriteLine("-Регистрация успешно завершена");
                 }
                 else
@@ -99,36 +102,47 @@ namespace Penta_ClientLib.Services
 
 
 
-        public async Task<bool> ConnectToMessageHub()
+        private async Task<bool> ConnectToMessageHub()
         {
             try
             {
-                _messHabConnection = new HubConnectionBuilder()
-                    .WithUrl($"{_serverUrl}/exchanger", options =>
-                    {
-                        options.AccessTokenProvider = () => Task.FromResult(_jwtToken);//передаем токен,чтоб пропустили на хаб
-                        options.HttpMessageHandlerFactory = _ =>
-                        {
-                            return HandlerCustomCertCheck();
-                        };
-                    })
-                    .Build();
-
-
-                // Обработка входящих сообщений
-                _messHabConnection.On<Message>("RecieveMessage", async (message) =>
+                if (_messHabConnection == null)
                 {
-                    RecievedMessage?.Invoke(message);//вызываем внешний делегат
-                    await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении
-                });
+                    _messHabConnection = new HubConnectionBuilder()
+                        .WithUrl($"{_serverUrl}/exchanger", options =>
+                        {
+                            options.AccessTokenProvider = () => Task.FromResult(_jwtToken);//передаем токен,чтоб пропустили на хаб
+                            options.HttpMessageHandlerFactory = _ =>
+                            {
+                                return HandlerCustomCertCheck();
+                            };
+                        })
+                        .Build();
 
-                await _messHabConnection.StartAsync();
+
+                    // Обработка входящих сообщений с сервера
+                    _messHabConnection.On<Message>("RecieveMessage", async (message) =>
+                    {
+                        RecievedMessage?.Invoke(message);//вызываем внешний делегат
+                        await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении
+                    });
+
+                    await _messHabConnection.StartAsync();
+                }
+                else
+                {
+                    if (_messHabConnection.State == HubConnectionState.Disconnected)//соединение может закрыться, если кто-то долго не отвечает
+                       await _messHabConnection.StartAsync();
+                }
 
                 return true;
             }
-            catch (Exception ex) {  }
+            catch (Exception ex) 
+            {  
+                return false;
+            }
 
-            return false;
+
         }
         private HttpClientHandler HandlerCustomCertCheck()
         {
@@ -165,25 +179,40 @@ namespace Penta_ClientLib.Services
             };
         }
 
-        public async void DisconnectFromMessageHub()
+        private async void DisconnectFromMessageHub()
         {
-            if(_messHabConnection!=null && _messHabConnection.State== HubConnectionState.Connected)
+            if (_messHabConnection != null)
+            {
                 await _messHabConnection.StopAsync();
+                await _messHabConnection.DisposeAsync();
+                _messHabConnection = null;
+            }
         }
 
         public async Task<bool> SendMessage(Message message)
         {
             try
             {
+                await ConnectToMessageHub();
+
                 if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
                 {
                     await _messHabConnection.InvokeAsync("SendToServer", message);
                     return true;
                 }
             }
-            catch(Exception ex) { }
+            catch(Exception ex) 
+            {
+                Console.WriteLine(ex);
+            }
 
             return false;
+        }
+
+        public void Dispose()
+        {
+            DisconnectFromMessageHub();
+            _jwtToken = string.Empty;
         }
     }
 }

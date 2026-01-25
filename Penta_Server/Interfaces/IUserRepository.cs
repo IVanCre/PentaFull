@@ -9,5 +9,6 @@
         public Task<int> FindUserAsync(string username,string password);
         public Task<string> FindUserNameByIDAsync(int userID);
         public Task<bool> DeleteUserByTokenAsync(string token);
+        public Task<bool> DeleteUserByIDAsync(int userID);
     }
 }

@@ -10,6 +10,5 @@ namespace Penta_Server.Interfaces
         Task SendAllNonSended(int userID, string connID);
         void MessageSended(int messageID);
         Task SendToUser(Message msg);
-        Task SendToGroup(Message msg);
     }
 }

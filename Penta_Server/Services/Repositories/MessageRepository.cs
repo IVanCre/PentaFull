@@ -25,7 +25,6 @@ namespace Penta_Server.Services.Repositories
                 {
                     db.Messages.Add(new Models.MessageEntity()
                     {
-                        ID = msg.ToID,
                         IsSended = false,
                         FromUserID = msg.FromID,
                         GroupID = msg.ChatID,

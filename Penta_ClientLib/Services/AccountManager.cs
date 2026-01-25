@@ -1,4 +1,5 @@
-﻿using Penta_ClientLib.Interfaces;
+﻿using MessageLib;
+using Penta_ClientLib.Interfaces;
 
 
 namespace Penta_ClientLib.Services
@@ -11,11 +12,21 @@ namespace Penta_ClientLib.Services
         private ISettingsHolder _settings=settings;
         private IWebClient _webClient=webClient;
 
-        public Task<Tuple<bool, Exception>> DeleteAccount()
+        public async Task<Tuple<bool, Exception>> DeleteAccount()
         {
-            throw new NotImplementedException();
-        }
+            try
+            {
+                var id = await _settings.GetValueByName<string>("userID");
+                var result = await _webClient.SendMessage(
+                    MessageFactory.DeleteAccountRequest(int.Parse(id)));
 
+                return Tuple.Create<bool, Exception>(result, null);
+            }
+            catch(Exception e)
+            {
+                return Tuple.Create(false, e);
+            }
+        }
 
         public async Task<Tuple<bool, Exception>> Registration(string login, string password)
         {

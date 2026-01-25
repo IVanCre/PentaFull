@@ -8,17 +8,20 @@ namespace Penta_ClientLib
 {
     public static class  Dependencies 
     {
+        /// <summary>
+        /// Добавляет основные сервисы 
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
         public static IServiceCollection AddClientDependencies(this IServiceCollection services)
         {
-            //тут добавляем в контейнер наши классы
-
-
             services.AddSingleton<IAccountManager, AccountManager>();
             services.AddSingleton<IChatManager, ChatManager>();
-            services.AddSingleton<IContactManager, ContactManager>();
-            services.AddSingleton<IMessageProcessor, MessageSaver>();
+            services.AddSingleton<IContactConverter, ContactConverter>();
+            services.AddSingleton<IMessageReciever, MessageReciever>();
             services.AddSingleton<IWebClient, WebClient>();
 
+            services.AddSingleton<IClientFacade, ClientFacade>();
 
             return services;
         }

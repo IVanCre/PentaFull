@@ -1,24 +1,25 @@
 ﻿
 using MessageLib;
-
+using Penta_ClientLib.DataStructs;
 using Penta_ClientLib.Interfaces;
-using Penta_ClientLib.Services;
 using SQLite;
 
 namespace Penta_ClientLib.Repository
 {
-    internal class DBManager : ISettingsHolder, IContactHolder, IChatHolder, IMessageHolder
+    internal class DBManager : ISettingsHolder, IChatHolder, IMessageHolder
     {
-        private const string _dbFileName = "WorkDB.db3";
+        private string _dbFileName = $"WorkDB.db3";
         private SQLiteOpenFlags _creationFlags =
             SQLiteOpenFlags.ReadWrite |// open the database in read/write mode
             SQLiteOpenFlags.Create |// create the database if it doesn't exist
             SQLiteOpenFlags.SharedCache;// enable multi-threaded database access
-        private string _dbFullPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _dbFileName);
+        private string _dbFullPath;
         private SQLiteAsyncConnection _connection;
 
         public DBManager()
         {
+//_dbFileName = $"WorkDB_{DateTime.Now.Minute}.db3";//чисто для тестов
+            _dbFullPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _dbFileName);
             InitConnect();
 
             _connection.CreateTableAsync<Settings>();
@@ -55,6 +56,13 @@ namespace Penta_ClientLib.Repository
                 finded.Value = value.ToString();
                 _ = _connection.UpdateAsync(finded);
             }
+            else
+                _=_connection.InsertAsync(
+                    new Settings() 
+                    { 
+                        Name=paramName,
+                        Value=value.ToString()
+                    });
         }
         #endregion
 
@@ -83,12 +91,12 @@ namespace Penta_ClientLib.Repository
             else
                 return -1;
         }        
-        public async Task<List<string>> GetAllContacts()
+        public async Task<List<UserContactInfo>> GetAllContacts()
         {
-            List<string> list = new();
+           List<UserContactInfo> list = new();
             var finded = await _connection.Table<Contact>().ToListAsync();
             foreach (var contact in finded)
-                list.Add(contact.UserName);
+                list.Add(new UserContactInfo(contact.ID,contact.UserName));
 
             return list;
         }
@@ -103,7 +111,7 @@ namespace Penta_ClientLib.Repository
 
 
 #region Chats
-        public async Task<bool> CreateChat(string chatName, int chatID)
+        public async Task<bool> CreateChat(int chatID,string chatName)
         {
             InitConnect();
 
@@ -115,6 +123,18 @@ namespace Penta_ClientLib.Repository
                 });
 
             return added == 1;
+        }
+        public async Task<int> CreateLocalChat(string chatName)
+        {
+            int id = 0;
+            InitConnect();
+            var finded = _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
+            if(finded==null)
+            {
+                id = GenerateLocalIDByTime();
+                await CreateChat(id, chatName);
+            }
+            return id;
         }
         public async Task<int> GetChatID(string chatName)
         {
@@ -129,6 +149,7 @@ namespace Penta_ClientLib.Repository
             InitConnect();
 
             var deleted = await _connection.ExecuteAsync("delete from Chat where ID = ?", chatID);
+            await DeleteByChatID(chatID);
             return deleted == 1;
         }
         public async Task<bool> AddUserToChat(int userid, int chatID)
@@ -152,6 +173,15 @@ namespace Penta_ClientLib.Repository
             var deleted = await _connection.ExecuteAsync("delete from UserInChat where ContactId = ? and ChatId = ?",param );
 
             return deleted == 1;
+        }        
+        public async Task<List<ChatInfo>> GetAllChats()
+        {
+            List<ChatInfo> finded = new();
+            var list =await _connection.Table<Chat>().ToListAsync();
+            foreach(var item in list)
+                finded.Add(new ChatInfo(item.ID,item.Name));
+
+            return finded;
         }
         #endregion
 
@@ -194,9 +224,15 @@ namespace Penta_ClientLib.Repository
             return deleted > 0;
         }
 
+#endregion
 
-        #endregion
+        private int GenerateLocalIDByTime()
+        {
+            int val = (int)(DateTime.Now - DateTime.Parse("01.01.2025")).TotalSeconds;
+            if (val > 0)
+                val = val * -1;//чтобы не путать ID сгенеренные серваком и свои локальные
 
-
+            return val;
+        }
     }
 }

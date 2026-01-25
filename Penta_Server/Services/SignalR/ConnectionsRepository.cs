@@ -1,9 +1,10 @@
 ﻿
+using Penta_Server.Interfaces;
 using System.Collections.Concurrent;
 
 namespace Penta_Server.Services.SignalR
 {
-    internal class ConnectionsRepository
+    internal class ConnectionsRepository: IConnectionsRepository
     {
         private ConcurrentDictionary<int, string> _connections = new();
 

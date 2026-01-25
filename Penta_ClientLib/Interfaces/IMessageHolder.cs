@@ -3,7 +3,7 @@
 
 namespace Penta_ClientLib.Interfaces
 {
-    internal interface IMessageHolder
+    public interface IMessageHolder
     {
         Task<bool> SaveMessage(Message msg);
         Task<List<Message>> GetNonSended();

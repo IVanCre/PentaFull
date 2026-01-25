@@ -1,13 +1,16 @@
 ﻿
 using MessageLib;
+using Penta_ClientLib.DataStructs;
 
 
 namespace Penta_ClientLib.Interfaces
 {
+
     public delegate void NewMessageInChat(int chatID, Message mesage);
     public delegate void ChatChanged(int chatID);
     public delegate void ChatUserListChanged(int chatID, int userID);
-
+    public delegate void InvitedToChat(Message msg);
+    public delegate void AccountDeleted();
 
     /// <summary>
     /// Единая точка доступа к функциональности Клиента
@@ -15,124 +18,153 @@ namespace Penta_ClientLib.Interfaces
     public interface IClientFacade
     {
         /// <summary>
-        /// Регистрация в системе
+        /// Регистрация в системе(через сервер)
         /// </summary>
         /// <param name="login"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        public Task<Tuple<bool,Exception>> Registration(string login, string password);
+        Task<Tuple<bool,Exception>> Registration(string login, string password);
 
         /// <summary>
-        /// Вход в систему
+        /// Вход в систему(через сервер)
         /// </summary>
         /// <param name="login"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        public Task<Tuple<bool, Exception>> Login(string login, string password);
+        Task<Tuple<bool, Exception>> Login(string login, string password);
 
-        /// <summary>
-        /// Отдает идентификатор текущего юзера,
-        /// по которому другие юзеры могут отправлять ему сообщения
-        /// </summary>
-        /// <returns></returns>
-        public Task<Tuple<string, Exception>> GetMyContactID();
 
-        /// <summary>
-        /// Шлет запрос на удаление всех данных текущего юзера с Сервера.
-        /// Внутренние данные так же удаляются с Клиента
-        /// </summary>
-        /// <returns>Ошибка, если </returns>
-        public Task<Tuple<bool, Exception>> DeleteAccount();
+
 
         /// <summary>
         /// Доступ к настройкам Клиента
         /// </summary>
         /// <returns></returns>
-        public ISettingsHolder GetSettings();
-
+        ISettingsHolder GetSettings();
 
         /// <summary>
-        /// Сохранить в свои контакты юзера(с идентификатором userID) под именем userName
+        /// Получение идентификатора юзера, для возможности идентификации юзера в системе
         /// </summary>
-        /// <param name="userName">псевдоним, под которым юзер хранится в контактах</param>
-        /// <param name="userContactID">идентификатор юзера, который генерирует его Клиент</param>
         /// <returns></returns>
-        public Task<Tuple<bool, Exception>> AddNewUserContact(string userName, string userContactID);
+        Task<string> GetMyContactID();
 
         /// <summary>
-        /// Удалить из контактов юзера 
-        /// </summary>
-        /// <param name="userName"></param>
-        /// <returns></returns>
-        public Task<Tuple<bool, Exception>> DeleteUserContact(string userName);
-
-        public Task<Tuple<List<string>, Exception>> GetAllContacts();
-
-
-#region GroupChat
-        /// <summary>
-        /// Создает новый групповой чат(запрос на сервер)
+        /// Создает новый групповой чат(через сервер)
         /// </summary>
         /// <param name="chatName"></param>
         /// <returns>факт отправки запроса</returns>
-        public Task<Tuple<bool, Exception>> CreateGroupChat(string chatName);
-        public event ChatChanged CreatedNewChat;
+        Task<Tuple<bool, Exception>> CreateGroupChat(string chatName);
 
         /// <summary>
-        /// Приглашаем юзера в наш групповой чат. 
+        /// Вызывается, когда сервер возвращает ответ о создании чата
+        /// </summary>
+        event ChatChanged CreatedNewChat;
+
+        /// <summary>
+        /// Приглашаем юзера наш групповой чат(через сервер)
         /// Работает только если текщий Клиент является создателем указанного чата
         /// </summary>
-        /// <param name="userID">идентификатора юзера, которому отправим приглашение</param>
-        /// <param name="chatName">имя чата, который есть у Клиента</param>
+        /// <param name="chatID"></param>
+        /// <param name="userContactID"></param>
         /// <returns></returns>
-        public Task<Tuple<bool, Exception>> InviteUserToGroupChat(string userID, string chatName);
-        public event ChatUserListChanged UserAdded;
+        Task<Tuple<bool, Exception>> InviteUserToGroupChat(int chatID, string userContactID);
+
+        /// <summary>
+        /// Вызывается, когда сервер возвращает результат добавления юзера в групповой чат
+        /// </summary>
+        event ChatUserListChanged UserAdded;
+
+        /// <summary>
+        /// Отправка ответа на приглашение в групповой чат(через сервер)
+        /// </summary>
+        /// <param name="chatID"></param>
+        /// <param name="acceptInvite"></param>
+        /// <returns></returns>
+        Task<Tuple<bool, Exception>> SendResponseToInvite(int chatID, bool acceptInvite);
 
         /// <summary>
         /// Юзер, который сейчас работает в Клиенте, шлет запрос на выход из группового чата
         /// </summary>
-        /// <param name="chatName">имя чата, который есть у Клиента</param>
+        /// <param name="chatID">идентификатор чата, который есть у Клиента</param>
         /// <returns></returns>
-        public Task<Tuple<bool, Exception>> LeaveGroupChat(string chatName);
-        public event ChatUserListChanged UserRemoved;
+        Task<Tuple<bool, Exception>> LeaveGroupChat(int chatID);
+
+        /// <summary>
+        /// Вызывается, когда сервер удаляет юзера из группового чата
+        /// </summary>
+        event ChatUserListChanged UserRemoved;
 
         /// <summary>
         /// Удаление юзера с из группового чата.
         /// Работает, только если текущий юзер является создателем указанного чата
         /// </summary>
-        /// <param name="chatName">имя чата</param>
-        /// <param name="userID">идентификатор юзера, которого нужно удалить</param>
+        /// <param name="chatID">идентификатор чата</param>
+        /// <param name="userContactID">идентификатор юзера, которого нужно удалить</param>
         /// <returns></returns>
-        public Task<Tuple<bool, Exception>> DeleteUserFromGroupChat(string chatName, string userID);
+        Task<Tuple<bool, Exception>> DeleteUserFromGroupChat(int chatID, string userContactID);
 
         /// <summary>
-        /// Удаляет чат и всю переписку на сервер и на клиенте.
+        /// Удаляет групповой чат(через сервер)
         /// Работает, только если юзер является создателем указанного чата
         /// </summary>
-        /// <param name="chatName">имя чата</param>
+        /// <param name="chatID">идентификатор чата</param>
         /// <returns></returns>
-        public Task<Tuple<bool, Exception>> DeleteGroupChat(string chatName);
-        public event ChatChanged ChatDeleted;
+        Task<Tuple<bool, Exception>> DeleteGroupChat(int chatID);
 
-        #endregion
+        /// <summary>
+        /// Вызывается, когда сервер возвращает результат удаления группового чата
+        /// </summary>
+        event ChatChanged ChatDeleted;
+
+        /// <summary>
+        /// Отдает список всех имеющихся чатов у текущего клиента(групповые и приватные)
+        /// </summary>
+        /// <returns></returns>
+        Task< Tuple< List<ChatInfo>,Exception> > GetAllChatsInfo();
+
 
 
         /// <summary>
-        /// Отправка сообщения на сервер
+        /// Отправка сообщения в групповой чат
         /// </summary>
         /// <param name="mesage">само сообщение</param>
         /// <returns></returns>
-        public Task<Tuple<bool, Exception>> AddMessageToChat(string chatName, string userName, MessageType type, byte[] data);
+        Task<Tuple<bool, Exception>> SendMessageToChat(int chatID, MessageType type, byte[] data);
 
         /// <summary>
-        /// Делегат для отслеживания появления сообщений в чате(своих и чужих)
+        /// Отправка сообщения в приватный чат
         /// </summary>
-        public event NewMessageInChat MessageAddedToChat;
+        /// <param name="userConnectID"></param>
+        /// <param name="type"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        Task<Tuple<bool, Exception>> SendMessageToUser(string userConnectID, MessageType type, byte[] data);
+
+        /// <summary>
+        /// Вызывается, когда с сервера приходит новое сообщение в конкретный чат
+        /// </summary>
+        event NewMessageInChat MessageAddedToChat;
+
+        /// <summary>
+        /// Вызывается, когда с сервера приходит приглашение(от админа группы) на вступление в групповой чат
+        /// </summary>
+        event InvitedToChat RecieveInvite;
+
+        /// <summary>
+        /// Удаление аккаунта на сервере
+        /// </summary>
+        /// <returns></returns>
+        Task<Tuple<bool, Exception>> DeleteAccount();
+
+        /// <summary>
+        /// Вызывается, когда сервер присылает результат удаления аккаунта(удалет только аккаунт отправителя)
+        /// </summary>
+        event AccountDeleted AccountDeleted;
 
         /// <summary>
         /// вызывает закрытие всех ресурсов клиента.
         /// Вызывать перед завершением приложения
         /// </summary>
-        public void DisposeClient();
+        void DisposeClient();
     }
 }

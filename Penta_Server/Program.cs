@@ -54,13 +54,13 @@ namespace Penta_Server
 
             services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<IMessageRepository, MessageRepository>();
-            services.AddSingleton<IGroupRepository, GroupRepository>();
+            services.AddSingleton<IGroupChatRepository, GroupRepository>();
             services.AddSingleton<MessagesDBCleaner>();
+            services.AddSingleton<IConnectionsRepository, ConnectionsRepository>();
 
             services.AddSingleton<IMessageSaver, MessageSaver>();
             services.AddSingleton<ITokenManager, TokenManager>();
             services.AddSingleton<IMessageProcessor, MessageProcessor>();
-            services.AddSingleton<IHubObserver, HubObserver>();
             services.AddSingleton<IClientNotifier, ClientNotifier>();
 
             services.AddControllers();
@@ -96,7 +96,10 @@ namespace Penta_Server
                 });
             });
 
-            services.AddSignalR();
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
         }
 
         private static void SetSecurity(IHostApplicationBuilder builder)
@@ -131,6 +134,9 @@ namespace Penta_Server
 
         private static void StartServices(IServiceProvider sprovider)
         {
+            var logger = sprovider.GetRequiredService<ILogWriter>();
+            logger.SaveInfo("<---start-work--->");//чтобы по логам можно было понять когда стартовал\схлопнулся
+
             var config = sprovider.GetRequiredService<IConfiguration>();
             using (DB db= new DB(config["WorkDB:ConnString"]))
             {

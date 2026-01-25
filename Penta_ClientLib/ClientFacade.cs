@@ -1,66 +1,127 @@
 ﻿using Penta_ClientLib.Interfaces;
 using MessageLib;
+using Penta_ClientLib.DataStructs;
 
 
 namespace Penta_ClientLib
 {
-
+    // ui->facade->chatManager->webClient  --->
+    // ui<-facade<-mesageReciever<-webClient <---
     internal class ClientFacade(
         IAccountManager accManager,
-        IContactManager contactManager,
         IChatManager chatManager,
-        ISettingsHolder settingsProvider
+        IMessageReciever messReciever,
+        ISettingsHolder settingsProvider,
+        IContactConverter converter,
+        IWebClient client
        ) : IClientFacade
     {
         private IAccountManager _accManager=accManager;
-        private IContactManager _contactManager=contactManager;
         private IChatManager _chatManager=chatManager;
         private ISettingsHolder _settingsProvider=settingsProvider;
+        private IContactConverter _converter=converter;
+        private IMessageReciever _messReciever = messReciever;
+        private IWebClient _client = client;
+
 
         public event ChatChanged CreatedNewChat
         {
-            add =>  _chatManager.CreatedNewChat += value;
-            remove=>_chatManager.CreatedNewChat -= value;
+            add => _messReciever.CreatedNewChat += value;
+            remove=> _messReciever.CreatedNewChat -= value;
         }
         public event ChatChanged ChatDeleted
         {
-            add=>     _chatManager.ChatDeleted += value;
-            remove => _chatManager.ChatDeleted -= value;
+            add=> _messReciever.ChatDeleted += value;
+            remove => _messReciever.ChatDeleted -= value;
         }
         public event ChatUserListChanged UserAdded
         {
-            add =>    _chatManager.UserAdded += value;
-            remove => _chatManager.UserAdded -= value;
+            add => _messReciever.UserAdded += value;
+            remove => _messReciever.UserAdded -= value;
         }
         public event ChatUserListChanged UserRemoved
         {
-            add=>     _chatManager.UserRemoved += value;
-            remove => _chatManager.UserRemoved -= value;
+            add=> _messReciever.UserRemoved += value;
+            remove => _messReciever.UserRemoved -= value;
         }
 
         public event NewMessageInChat MessageAddedToChat
         { 
-            add => _chatManager.MessageAddedToChat += value;
-            remove=> _chatManager.MessageAddedToChat -= value; 
+            add => _messReciever.MessageAddedToChat += value;
+            remove=> _messReciever.MessageAddedToChat -= value; 
+        }
+
+        public event InvitedToChat RecieveInvite
+        {
+            add=> _messReciever.RecieveInvite += value;
+            remove=> _messReciever.RecieveInvite -= value;
+        }
+
+        public event AccountDeleted AccountDeleted
+        {
+            add => _messReciever.AccountDeleted += value;
+            remove => _messReciever.AccountDeleted -= value;
         }
 
 
-        public Task<Tuple<bool,Exception>> Registration(string login, string password)=>_accManager.Registration(login, password);
-        public Task<Tuple<bool, Exception>> Login(string login, string password)=>_accManager.Login(login, password);
+        public Task<Tuple<bool, Exception>> Registration(string login, string password)
+        {
+            if (string.IsNullOrEmpty(login))
+                return Task.FromResult(Tuple.Create(false, new Exception("Login should be not null or empty")));
+            if (string.IsNullOrEmpty(password))
+                return Task.FromResult(Tuple.Create(false, new Exception("Password should be not null or empty")));
+
+            return _accManager.Registration(login, password);
+        }
+        public Task<Tuple<bool, Exception>> Login(string login, string password)
+        {
+            if (string.IsNullOrEmpty(login))
+                return Task.FromResult(Tuple.Create(false, new Exception("Login should be not null or empty")));
+            if (string.IsNullOrEmpty(password))
+                return Task.FromResult(Tuple.Create(false, new Exception("Password should be not null or empty")));
+
+            return _accManager.Login(login, password);
+        }
         public Task<Tuple<bool, Exception>> DeleteAccount()=>_accManager.DeleteAccount();
 
-   
-        public Task<Tuple<string, Exception>> GetMyContactID()=> _contactManager.GetMyContactString();
-        public Task<Tuple<bool, Exception>> AddNewUserContact(string userName, string userContactID)=>_contactManager.AddNewUserContact(userName, userContactID);
-        public Task<Tuple<bool, Exception>> DeleteUserContact(string userName)=>_contactManager.DeleteUserContact(userName);
-        public Task<Tuple<List<string>, Exception>> GetAllContacts() => _contactManager.GetAllContacts();
 
-        public Task<Tuple<bool, Exception>> AddMessageToChat(string chatName, string userName, MessageType type, byte[] data) => _chatManager.AddMessageToChat(chatName, userName, type, data);
-        public Task<Tuple<bool, Exception>> CreateGroupChat(string chatName)=>_chatManager.SendCreateGroupChat(chatName);
-        public Task<Tuple<bool, Exception>> InviteUserToGroupChat(string userID, string chatName)=>_chatManager.SendInviteUserToGroupChat(userID, chatName);
-        public Task<Tuple<bool, Exception>> LeaveGroupChat(string chatName)=>_chatManager.SendLeaveGroupChat(chatName);
-        public Task<Tuple<bool, Exception>> DeleteUserFromGroupChat(string chatName, string userID)=> _chatManager.SendDeleteUserFromGroupChat(chatName, userID);
-        public Task<Tuple<bool, Exception>> DeleteGroupChat(string chatName)=>_chatManager.SendDeleteGroupChat(chatName);
+        public Task<string> GetMyContactID()=>_converter.GetMyContactID();
+
+
+        public Task<Tuple<bool, Exception>> SendMessageToUser(string userContactID, MessageType type, byte[] data)
+        {
+            if(string.IsNullOrEmpty(userContactID))
+                return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
+
+            int recieverUserID = _converter.ExtractUserID(userContactID);
+            return  _chatManager.AddMessageToChat(-1, recieverUserID, type, data);
+        }
+        public Task<Tuple<bool, Exception>> SendMessageToChat(int chatID, MessageType type, byte[] data) => _chatManager.AddMessageToChat(chatID,-1,  type, data);
+        public Task<Tuple<bool, Exception>> CreateGroupChat(string chatName)
+        {
+            if (string.IsNullOrEmpty(chatName))
+                return Task.FromResult(Tuple.Create(false, new Exception("chatName should be not null or empty")));
+
+           return _chatManager.SendCreateGroupChat(chatName);
+        }
+        public Task<Tuple<bool, Exception>> SendResponseToInvite(int chatID,bool accept) => _chatManager.SendResponseToInvite(chatID, accept);
+        public Task<Tuple<bool, Exception>> InviteUserToGroupChat(int chatID, string userContactID)
+        {
+            if (string.IsNullOrEmpty(userContactID))
+                return Task.FromResult(Tuple.Create(false, new Exception("userConnectID should be not null or empty")));
+
+            return _chatManager.SendInviteUserToGroupChat(chatID, userContactID);
+        }
+        public Task<Tuple<bool, Exception>> LeaveGroupChat(int chatID)=>_chatManager.SendLeaveGroupChat(chatID);
+        public Task<Tuple<bool, Exception>> DeleteUserFromGroupChat(int chatID, string userContactID)
+        {
+            if (string.IsNullOrEmpty(userContactID))
+                return Task.FromResult(Tuple.Create(false, new Exception("userConnectID should be not null or empty")));
+
+            return _chatManager.SendDeleteUserFromGroupChat(chatID, userContactID);
+        }
+        public Task<Tuple<bool, Exception>> DeleteGroupChat(int chatID)=>_chatManager.SendDeleteGroupChat(chatID);
+        public Task<Tuple<List<ChatInfo>, Exception>> GetAllChatsInfo() => _chatManager.GetAllChatsInfo();
 
 
 
@@ -71,7 +132,7 @@ namespace Penta_ClientLib
 
         public void DisposeClient()
         {
-            throw new NotImplementedException();
+            _client?.Dispose();
         }
     }
 }
