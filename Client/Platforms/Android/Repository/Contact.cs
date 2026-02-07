@@ -1,7 +1,7 @@
 ﻿using SQLite;
 
 
-namespace Penta_ClientLib.Repository
+namespace Client.Platforms.Android.Repository
 {
     internal class Contact
     {

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Client.Pages.AuthPage"
+             Title="Авторизация"
+             BackgroundColor="{StaticResource OffBlack}">
+
+    <StackLayout  Spacing="40" VerticalOptions="CenterAndExpand" BackgroundColor ="{StaticResource OffBlack}">
+        <Entry x:Name="UsernameEntry"
+               TextColor="{StaticResource White}"
+               PlaceholderColor="{StaticResource PrimaryDark}"
+               HorizontalTextAlignment="Center"
+               Placeholder="Логин"
+               Keyboard="Default" />
+
+        <Entry x:Name="PasswordEntry"
+               TextColor="{StaticResource White}"
+               HorizontalTextAlignment="Center"
+               PlaceholderColor="{StaticResource PrimaryDark}"
+               Placeholder="Пароль"
+               IsPassword="True"
+               Keyboard="Default" />
+
+        <Button x:Name="RegButton"
+                Text="Зарегистрироваться"
+                TextColor="{StaticResource PrimaryDark}"
+                Clicked="OnRegButtonClicked" />
+
+        <Button x:Name="LoginButton"
+                Text="Войти"
+                TextColor="{StaticResource PrimaryDark}"
+                Clicked="OnLoginButtonClicked" />
+
+    </StackLayout>
+</ContentPage>

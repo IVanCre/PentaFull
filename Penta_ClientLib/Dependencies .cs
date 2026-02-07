@@ -17,7 +17,6 @@ namespace Penta_ClientLib
         {
             services.AddSingleton<IAccountManager, AccountManager>();
             services.AddSingleton<IChatManager, ChatManager>();
-            services.AddSingleton<IContactConverter, ContactConverter>();
             services.AddSingleton<IMessageReciever, MessageReciever>();
             services.AddSingleton<IWebClient, WebClient>();
 

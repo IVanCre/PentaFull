@@ -7,13 +7,13 @@ namespace ConsoleClient_Tests
 {
     internal static class AppLogic
     {
-        private static void ChatDeleted(int chatID)
+        private static void ChatDeleted(int chatID,string chatName)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($">> Чат id={chatID} удален на сервере");//тут уже верхний слой принимает решение что делать со своим экземпляра чата
             Console.ForegroundColor = ConsoleColor.White;
         }
-        private static void ChatCreated(int chatID)
+        private static void ChatCreated(int chatID, string chatName)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($">> Чат id={chatID} создан");

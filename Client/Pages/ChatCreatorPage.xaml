@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Client.Pages.ChatCreatorPage"
+             Title="ChatCreatorPage">
+
+    <VerticalStackLayout>
+    <Grid Margin="10" RowDefinitions="Auto,Auto" ColumnDefinitions="Auto, *">
+        <Label 
+            Grid.Row="0" Grid.Column="0"
+            Text="Название чата:" 
+            VerticalOptions="Center"/>
+        <Editor 
+            Grid.Row="0" Grid.Column="1" 
+            x:Name="ChatName"
+            BackgroundColor="{StaticResource PrimaryDark}"
+            HorizontalOptions="FillAndExpand"/>
+        </Grid>
+        
+    <Button 
+        Text="Create" 
+        HorizontalOptions="FillAndExpand"
+        Clicked="OnCreateChat" 
+        VerticalOptions="Center"/>
+    </VerticalStackLayout>
+</ContentPage>

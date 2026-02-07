@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="Client.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Client.Pages"
+    BackgroundColor="{StaticResource SecondaryDarkText}"
+    FlyoutBackgroundColor="{StaticResource Gray600}">
+
+    <FlyoutItem Title="Авторизация"  Route="AuthPage">
+        <ShellContent ContentTemplate="{DataTemplate local:AuthPage}" Route="AuthPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Чаты"  Route="ChatsPage">
+        <ShellContent ContentTemplate="{DataTemplate local:ChatsPage}" Route="ChatsPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Контакты"  Route="ContactsPage">
+        <ShellContent ContentTemplate="{DataTemplate local:ContactsPage}" Route="ContactsPage" />
+    </FlyoutItem>
+    
+</Shell>

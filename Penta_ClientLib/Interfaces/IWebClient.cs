@@ -2,12 +2,14 @@
 
 namespace Penta_ClientLib.Interfaces
 {
-    internal delegate void MessageRecieved(Message msg);
-    internal interface IWebClient :IDisposable
+    public delegate void MessageRecieved(Message msg);
+    public interface IWebClient :IDisposable
     {
         Task<int> TryRegisterAsync(string userName, string pass);
         Task<bool> TryLoginAsync(string userName, string password);
         Task<bool> TryDeleteAccountAsync();
+
+        Task<bool> ConnectToMessageHub();
 
 
         Task<bool> SendMessage(Message message);

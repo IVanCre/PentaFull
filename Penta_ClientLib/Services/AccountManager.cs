@@ -48,17 +48,22 @@ namespace Penta_ClientLib.Services
                 return Tuple.Create(false, e);
             }
         }
-        public async Task<Tuple<bool,Exception>> Login(string login, string password)
+
+        public async Task<Tuple<bool,Exception>> Login(string login=null, string password = null)
         {
             bool result = false;
             if (!string.IsNullOrEmpty( await _settings.GetValueByName<string>("userID")))
             {
+                if(login==null)
+                    login=await _settings.GetValueByName<string>("userLogin");
+                if(password==null)
+                    password=await _settings.GetValueByName<string>("userPassword");
+
                 result = await _webClient.TryLoginAsync(login, password);
                 return Tuple.Create<bool, Exception>(result, null);
             }
             else
                 return Tuple.Create(false, new Exception("Клиент не зарегистрирован"));
-
         }
 
     }

@@ -1,6 +1,7 @@
 ﻿using Penta_ClientLib.Interfaces;
 using MessageLib;
 using Penta_ClientLib.DataStructs;
+using Penta_ClientLib.Services;
 
 
 namespace Penta_ClientLib
@@ -12,14 +13,12 @@ namespace Penta_ClientLib
         IChatManager chatManager,
         IMessageReciever messReciever,
         ISettingsHolder settingsProvider,
-        IContactConverter converter,
         IWebClient client
        ) : IClientFacade
     {
         private IAccountManager _accManager=accManager;
         private IChatManager _chatManager=chatManager;
         private ISettingsHolder _settingsProvider=settingsProvider;
-        private IContactConverter _converter=converter;
         private IMessageReciever _messReciever = messReciever;
         private IWebClient _client = client;
 
@@ -73,19 +72,15 @@ namespace Penta_ClientLib
 
             return _accManager.Registration(login, password);
         }
-        public Task<Tuple<bool, Exception>> Login(string login, string password)
-        {
-            if (string.IsNullOrEmpty(login))
-                return Task.FromResult(Tuple.Create(false, new Exception("Login should be not null or empty")));
-            if (string.IsNullOrEmpty(password))
-                return Task.FromResult(Tuple.Create(false, new Exception("Password should be not null or empty")));
-
-            return _accManager.Login(login, password);
-        }
+        public Task<Tuple<bool, Exception>> Login(string login, string password) => _accManager.Login(login, password);
         public Task<Tuple<bool, Exception>> DeleteAccount()=>_accManager.DeleteAccount();
 
 
-        public Task<string> GetMyContactID()=>_converter.GetMyContactID();
+        public async Task<string> GetMyContactID()
+        {
+            var userID = await _settingsProvider.GetValueByName<int>("userID");
+            return ContactConverter.ConvertUserIDToContactID(userID);
+        }
 
 
         public Task<Tuple<bool, Exception>> SendMessageToUser(string userContactID, MessageType type, byte[] data)
@@ -93,7 +88,7 @@ namespace Penta_ClientLib
             if(string.IsNullOrEmpty(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
 
-            int recieverUserID = _converter.ExtractUserID(userContactID);
+            int recieverUserID = ContactConverter.ExtractUserID(userContactID);
             return  _chatManager.AddMessageToChat(-1, recieverUserID, type, data);
         }
         public Task<Tuple<bool, Exception>> SendMessageToChat(int chatID, MessageType type, byte[] data) => _chatManager.AddMessageToChat(chatID,-1,  type, data);
@@ -103,6 +98,13 @@ namespace Penta_ClientLib
                 return Task.FromResult(Tuple.Create(false, new Exception("chatName should be not null or empty")));
 
            return _chatManager.SendCreateGroupChat(chatName);
+        }
+        public Task<int> CreatePrivateChat(string chatName)
+        {
+            if (string.IsNullOrEmpty(chatName))
+               throw new Exception("chatName should be not null or empty");
+
+            return _chatManager.CreatePrivateChat(chatName);
         }
         public Task<Tuple<bool, Exception>> SendResponseToInvite(int chatID,bool accept) => _chatManager.SendResponseToInvite(chatID, accept);
         public Task<Tuple<bool, Exception>> InviteUserToGroupChat(int chatID, string userContactID)

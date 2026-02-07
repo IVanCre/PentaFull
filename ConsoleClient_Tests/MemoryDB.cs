@@ -49,7 +49,7 @@ namespace ConsoleClient_Tests
 
 
         #region Chats
-        public async Task<bool> CreateChat(int chatID, string chatName)
+        public async Task<bool> AddGroupChat(int chatID, string chatName)
         {
             if (!_chats.ContainsKey(chatID))
             { 
@@ -59,7 +59,7 @@ namespace ConsoleClient_Tests
             return await Task.FromResult(false);
         }
 
-        public async Task<int> CreateLocalChat(string chatName)
+        public async Task<int> CreatePrivateChat(string chatName)
         {
             if(!_chats.Values.Contains(chatName))
             {

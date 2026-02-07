@@ -7,7 +7,7 @@ namespace Penta_ClientLib.Interfaces
 {
 
     public delegate void NewMessageInChat(int chatID, Message mesage);
-    public delegate void ChatChanged(int chatID);
+    public delegate void ChatChanged(int chatID, string chatName);
     public delegate void ChatUserListChanged(int chatID, int userID);
     public delegate void InvitedToChat(Message msg);
     public delegate void AccountDeleted();
@@ -28,10 +28,10 @@ namespace Penta_ClientLib.Interfaces
         /// <summary>
         /// Вход в систему(через сервер)
         /// </summary>
-        /// <param name="login"></param>
-        /// <param name="password"></param>
+        /// <param name="login">если не указан- будет взят из хранилища</param>
+        /// <param name="password">если не указан- будет взят из хранилища</param>
         /// <returns></returns>
-        Task<Tuple<bool, Exception>> Login(string login, string password);
+        Task<Tuple<bool, Exception>> Login(string login=null, string password = null);
 
 
 
@@ -56,9 +56,16 @@ namespace Penta_ClientLib.Interfaces
         Task<Tuple<bool, Exception>> CreateGroupChat(string chatName);
 
         /// <summary>
-        /// Вызывается, когда сервер возвращает ответ о создании чата
+        /// Вызывается, когда сервер возвращает ответ о создании группового чата
         /// </summary>
         event ChatChanged CreatedNewChat;
+
+        /// <summary>
+        /// Создает приватный(1на1) чат на клиенте 
+        /// </summary>
+        /// <param name="chatName"></param>
+        /// <returns></returns>
+        Task<int> CreatePrivateChat(string chatName);
 
         /// <summary>
         /// Приглашаем юзера наш групповой чат(через сервер)

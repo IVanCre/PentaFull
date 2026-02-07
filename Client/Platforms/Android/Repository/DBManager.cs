@@ -1,12 +1,12 @@
-﻿
-using MessageLib;
+﻿using MessageLib;
 using Penta_ClientLib.DataStructs;
 using Penta_ClientLib.Interfaces;
+using Penta_ClientLib.Services;
 using SQLite;
 
-namespace Penta_ClientLib.Repository
+namespace Client.Platforms.Android.Repository
 {
-    internal class DBManager : ISettingsHolder, IChatHolder, IMessageHolder
+    internal class DBManager : ISettingsHolder, IChatHolder, IMessageHolder,IContactHolder
     {
         private string _dbFileName = $"WorkDB.db3";
         private SQLiteOpenFlags _creationFlags =
@@ -18,7 +18,6 @@ namespace Penta_ClientLib.Repository
 
         public DBManager()
         {
-//_dbFileName = $"WorkDB_{DateTime.Now.Minute}.db3";//чисто для тестов
             _dbFullPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _dbFileName);
             InitConnect();
 
@@ -30,21 +29,21 @@ namespace Penta_ClientLib.Repository
         }
         private void InitConnect()
         {
-            if(_connection==null)
+            if (_connection == null)
                 _connection = new SQLiteAsyncConnection(_dbFullPath, _creationFlags);
         }
 
 
-#region Settings
+        #region Settings
         public async Task<T> GetValueByName<T>(string paramName)
         {
             InitConnect();
 
             var finded = await _connection.Table<Settings>().FirstOrDefaultAsync(x => x.Name == paramName);
-            if(finded!=null)
+            if (finded != null)
                 return (T)Convert.ChangeType(finded.Value, typeof(T));
             else
-                return default(T);
+                return default;
         }
         public async void SetValueByName<T>(string paramName, T value)
         {
@@ -57,25 +56,25 @@ namespace Penta_ClientLib.Repository
                 _ = _connection.UpdateAsync(finded);
             }
             else
-                _=_connection.InsertAsync(
-                    new Settings() 
-                    { 
-                        Name=paramName,
-                        Value=value.ToString()
+                _ = _connection.InsertAsync(
+                    new Settings()
+                    {
+                        Name = paramName,
+                        Value = value.ToString()
                     });
         }
         #endregion
 
 
- #region Contacts
-        public async Task<bool> AddContactAsync(string userName, int userID)
+        #region Contacts
+        public async Task<bool> AddContact(string userName, string connectID)
         {
             InitConnect();
 
             var inserted = await _connection.InsertAsync(
                 new Contact()
                 {
-                    ID = userID,
+                    ID = ContactConverter.ExtractUserID(connectID),
                     UserName = userName,
                 });
 
@@ -85,65 +84,71 @@ namespace Penta_ClientLib.Repository
         {
             InitConnect();
 
-            var finded =await  _connection.Table<Contact>().FirstOrDefaultAsync(x => x.UserName == userName);
+            var finded = await _connection.Table<Contact>().FirstOrDefaultAsync(x => x.UserName == userName);
             if (finded != null)
                 return finded.ID;
             else
                 return -1;
-        }        
-        public async Task<List<UserContactInfo>> GetAllContacts()
+        }
+        public async Task<List<ContactInfo>> GetAllContacts()
         {
-           List<UserContactInfo> list = new();
+            List<ContactInfo> list = new();
             var finded = await _connection.Table<Contact>().ToListAsync();
             foreach (var contact in finded)
-                list.Add(new UserContactInfo(contact.ID,contact.UserName));
+                list.Add(new ContactInfo( contact.UserName,ContactConverter.ConvertUserIDToContactID(contact.ID)));
 
             return list;
         }
-        public async Task<bool> DeleteContact(string userName)
+        public async Task<bool> DeleteByContactID(string contactID)
         {
             InitConnect();
 
-            var deleted = await _connection.ExecuteAsync("delete from Contact where Name = ?", userName);
+            var deleted = await _connection.ExecuteAsync("delete from Contact where ID = ?", ContactConverter.ExtractUserID(contactID));
             return deleted == 1;
         }
         #endregion
 
 
-#region Chats
-        public async Task<bool> CreateChat(int chatID,string chatName)
+        #region Chats        
+        private async Task<bool> AddChat(int chatID, string chatName)
         {
             InitConnect();
 
-            var added= await _connection.InsertAsync(
-                new Chat() 
-                { 
+            var added = await _connection.InsertAsync(
+                new Chat()
+                {
                     ID = chatID,
-                    Name=chatName 
+                    Name = chatName
                 });
 
             return added == 1;
+        }        
+        public Task<bool> AddGroupChat(int chatID, string chatName)
+        {
+            return AddChat(chatID, chatName);
         }
-        public async Task<int> CreateLocalChat(string chatName)
+        public async Task<int> CreatePrivateChat(string chatName)
         {
             int id = 0;
             InitConnect();
             var finded = _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
-            if(finded==null)
+            if (finded == null)
             {
                 id = GenerateLocalIDByTime();
-                await CreateChat(id, chatName);
+                await AddChat(id, chatName);
             }
             return id;
         }
+
         public async Task<int> GetChatID(string chatName)
         {
-            var finded =await _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
-            if(finded!=null)
+            var finded = await _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
+            if (finded != null)
                 return finded.ID;
-            else 
+            else
                 return -1;
         }
+
         public async Task<bool> DeleteChat(int chatID)
         {
             InitConnect();
@@ -152,6 +157,7 @@ namespace Penta_ClientLib.Repository
             await DeleteByChatID(chatID);
             return deleted == 1;
         }
+
         public async Task<bool> AddUserToChat(int userid, int chatID)
         {
             InitConnect();
@@ -165,47 +171,48 @@ namespace Penta_ClientLib.Repository
 
             return inserted == 1;
         }
+
         public async Task<bool> RemoveUserFromChat(int userid, int chatID)
         {
             InitConnect();
 
             object[] param = { userid, chatID };
-            var deleted = await _connection.ExecuteAsync("delete from UserInChat where ContactId = ? and ChatId = ?",param );
+            var deleted = await _connection.ExecuteAsync("delete from UserInChat where ContactId = ? and ChatId = ?", param);
 
             return deleted == 1;
-        }        
+        }
         public async Task<List<ChatInfo>> GetAllChats()
         {
             List<ChatInfo> finded = new();
-            var list =await _connection.Table<Chat>().ToListAsync();
-            foreach(var item in list)
-                finded.Add(new ChatInfo(item.ID,item.Name));
+            var list = await _connection.Table<Chat>().ToListAsync();
+            foreach (var item in list)
+                finded.Add(new ChatInfo(item.ID, item.Name));
 
             return finded;
         }
         #endregion
 
 
-#region Messages
+        #region Messages
         public async Task<bool> SaveMessage(Message msg)
         {
-           var result =await  _connection.InsertAsync(
-                new MessageItem()
-                {
-                    ID = msg.ID,
-                    FromID = msg.FromID,
-                    ChatID = msg.ChatID,
-                    ToID = msg.ToID,
-                    Type = msg.Type,
-                    Data = msg.Data
-                });
+            var result = await _connection.InsertAsync(
+                 new MessageItem()
+                 {
+                     ID = msg.ID,
+                     FromID = msg.FromID,
+                     ChatID = msg.ChatID,
+                     ToID = msg.ToID,
+                     Type = msg.Type,
+                     Data = msg.Data
+                 });
 
             return result == 1;
         }
         public async Task<List<Message>> GetNonSended()
         {
             List<Message> result = new();
-            var finded =await _connection.Table<MessageItem>().Where(x => x.IsSended == false).ToListAsync();
+            var finded = await _connection.Table<MessageItem>().Where(x => x.IsSended == false).ToListAsync();
             foreach (var item in finded)
                 result.Add(
                     new Message(
@@ -224,7 +231,7 @@ namespace Penta_ClientLib.Repository
             return deleted > 0;
         }
 
-#endregion
+        #endregion
 
         private int GenerateLocalIDByTime()
         {
@@ -234,5 +241,7 @@ namespace Penta_ClientLib.Repository
 
             return val;
         }
+
+
     }
 }

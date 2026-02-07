@@ -9,11 +9,11 @@ namespace Penta_Server.Services.Repositories
        private string connStr = config["WorkDB:ConnString"];
 
 
-        public void MarkForDelete(int messageID)
+        public async void MarkForDelete(int messageID)
         {
             using (DB db = new DB(connStr))
             {
-                db.Database.ExecuteSqlRaw($"UPDATE Messages SET IsSended=1 where ID={messageID}");
+                await db.Database.ExecuteSqlRawAsync($"UPDATE Messages SET IsSended=1 where ID={messageID}");
             }
         }
 

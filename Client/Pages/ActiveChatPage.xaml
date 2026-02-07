@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Client.Pages.ActiveChatPage"
+             Title="{Binding Name}">
+
+<Grid RowDefinitions="*,Auto">
+    <CollectionView Grid.Row="0" ItemsSource="{Binding MessageList}">
+        <CollectionView.ItemTemplate>
+            <DataTemplate>
+                <Label Text="{Binding Text}"
+                            HorizontalOptions="Fill"
+                            VerticalOptions="CenterAndExpand"
+                            Margin="5"
+                            BackgroundColor="{StaticResource Gray100}"/>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
+
+    <StackLayout Grid.Row="1">
+         <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,Auto" Margin="10">
+            <Editor Grid.Column="0" 
+                    x:Name="MessageText"
+                    VerticalOptions="End"
+                    HorizontalOptions="FillAndExpand"
+                    BackgroundColor="{StaticResource PrimaryDark}"/>
+            <Button Grid.Column="1" 
+                    Text="Send"
+                    Clicked="OnSendMessage"
+                    VerticalOptions="End"/>
+        </Grid>
+    </StackLayout>
+
+</Grid>
+</ContentPage>

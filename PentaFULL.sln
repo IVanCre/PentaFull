@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Penta_ServerTests", "Penta_
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient_Tests", "ConsoleClient_Tests\ConsoleClient_Tests.csproj", "{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{98B874E1-E271-4B0D-B9A6-8B8B97A10739}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST_Utils", "TEST_Utils", "{ECB87D7B-DB30-4599-8EFA-EEA2C308CF76}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,8 +43,18 @@ Global
 		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98B874E1-E271-4B0D-B9A6-8B8B97A10739}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98B874E1-E271-4B0D-B9A6-8B8B97A10739}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98B874E1-E271-4B0D-B9A6-8B8B97A10739}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{98B874E1-E271-4B0D-B9A6-8B8B97A10739}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98B874E1-E271-4B0D-B9A6-8B8B97A10739}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98B874E1-E271-4B0D-B9A6-8B8B97A10739}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B544A99B-2936-4CD8-B544-BDAE90CAC637} = {ECB87D7B-DB30-4599-8EFA-EEA2C308CF76}
+		{400BB8DF-85BB-43B4-B128-03C20C3CFEBA} = {ECB87D7B-DB30-4599-8EFA-EEA2C308CF76}
 	EndGlobalSection
 EndGlobal

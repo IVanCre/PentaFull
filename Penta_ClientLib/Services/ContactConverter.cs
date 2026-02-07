@@ -1,22 +1,15 @@
 ﻿
-using Penta_ClientLib.Interfaces;
+
 using System.Text;
 
 
 namespace Penta_ClientLib.Services
 {
-    internal class ContactConverter(
-        ISettingsHolder settings) : IContactConverter
+    public static class ContactConverter
     {
-        private ISettingsHolder _settings = settings;
         private const uint _mask = 3_305_078_396;
 
-        public async Task<string> GetMyContactID()
-        {
-            var userID = await _settings.GetValueByName<int>("userID");
-            return ConvertUserIDToContactID(userID);
-        }
-        public int ExtractUserID(string userContactID)
+        public static int ExtractUserID(string userContactID)
         {
             try
             {
@@ -32,7 +25,7 @@ namespace Penta_ClientLib.Services
                 return -1;
             }
         }
-        public string ConvertUserIDToContactID(int userID)
+        public static string ConvertUserIDToContactID(int userID)
         {            
             var masked = (_mask - userID).ToString();
             StringBuilder str = new(masked);

@@ -1,6 +1,7 @@
 ﻿using Penta_ClientLib.Interfaces;
 using MessageLib;
 using Penta_ClientLib.DataStructs;
+using Penta_ClientLib.Services;
 
 namespace Penta_ClientLib.Services
 {
@@ -8,20 +9,17 @@ namespace Penta_ClientLib.Services
     {
         private IChatHolder _chatHolder;
         private IWebClient _messSender;
-        private IContactConverter _contactConverter;
         private ISettingsHolder _settingsHolder;
         private IMessageHolder _messHolder;
 
         public ChatManager(
             IChatHolder chatProvider,
-            IContactConverter contactConverter,
             ISettingsHolder settings,
             IWebClient messSender,
             IMessageHolder messHolder)
         {
             _chatHolder = chatProvider;
             _messSender = messSender;
-            _contactConverter = contactConverter;
             _settingsHolder = settings;
             _messHolder = messHolder;
         }
@@ -65,7 +63,7 @@ namespace Penta_ClientLib.Services
             try
             {
                 int currentUserID =await _settingsHolder.GetValueByName<int>("userID");
-                int userID = _contactConverter.ExtractUserID(userConnectID);
+                int userID = ContactConverter.ExtractUserID(userConnectID);
                 var msg = MessageFactory.InviteUserToGroupChat_Request(currentUserID,chatID,userID);
                 await _messHolder.SaveMessage(msg);
 
@@ -84,7 +82,7 @@ namespace Penta_ClientLib.Services
             try
             {
                 int currentUserID =await _settingsHolder.GetValueByName<int>("userID");
-                int userID =_contactConverter.ExtractUserID(userConnectID);
+                int userID =ContactConverter.ExtractUserID(userConnectID);
                 var msg = MessageFactory.DeleteUserFromGroupChat_Request(currentUserID, userID, chatID);
                 await _messHolder.SaveMessage(msg);
 
@@ -159,6 +157,10 @@ namespace Penta_ClientLib.Services
         {
             var list =await _chatHolder.GetAllChats();
             return Tuple.Create<List<ChatInfo>,Exception>(list, null);
+        }
+        public async Task<int> CreatePrivateChat(string chatName)
+        {
+            return await _chatHolder.CreatePrivateChat(chatName);
         }
     }
 }

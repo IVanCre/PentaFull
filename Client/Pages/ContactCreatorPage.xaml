@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Client.Pages.ContactCreatorPage"
+             Title="ContactCreatorPage">
+    
+    <VerticalStackLayout>
+        <Grid Margin="10" RowDefinitions="Auto,Auto" ColumnDefinitions="Auto, *">
+            <Label 
+                Grid.Row="0" Grid.Column="0"
+                Text="Name:" 
+                VerticalOptions="Center"/>
+            <Editor 
+                Grid.Row="0" Grid.Column="1" 
+                x:Name="UserName"
+                BackgroundColor="{StaticResource PrimaryDark}"
+                HorizontalOptions="FillAndExpand"/>
+
+            <Label 
+                Grid.Row="1" Grid.Column="0"
+                Text="ContactID:" 
+                VerticalOptions="Center"/>
+            <Editor 
+                Grid.Row="1" Grid.Column="1" 
+                x:Name="ContactID"
+                BackgroundColor="{StaticResource PrimaryDark}"
+                HorizontalOptions="FillAndExpand"/>
+        </Grid>
+
+        <Button 
+            Text="Create" 
+            HorizontalOptions="FillAndExpand"
+            Clicked="OnCreateContact" 
+            VerticalOptions="Center"/>
+    </VerticalStackLayout>
+</ContentPage>

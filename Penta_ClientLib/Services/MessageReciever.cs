@@ -8,7 +8,6 @@ namespace Penta_ClientLib.Services
         private IChatHolder _chatHolder;
         private IWebClient _messListener;
         private IMessageHolder _messHolder;
-        private IContactConverter _contactConverter;
 
         public event ChatChanged CreatedNewChat;
         public event ChatChanged ChatDeleted;
@@ -22,15 +21,13 @@ namespace Penta_ClientLib.Services
         public MessageReciever(
             IWebClient messListener,
             IChatHolder chatProvider,
-            IMessageHolder messHolder,
-            IContactConverter contactConverter
+            IMessageHolder messHolder
             )
         {
             _messListener = messListener;
             _messListener.RecievedMessage += ProcessResponce;
             _chatHolder = chatProvider;
             _messHolder = messHolder;
-            _contactConverter = contactConverter;
         }        
         
         private async void ProcessResponce(Message msg)//просматриваем ответы от сервера
@@ -55,8 +52,9 @@ namespace Penta_ClientLib.Services
         {
             if (msg.ChatID!=-1)//значит сервак успешно создал
             {
-                if(await _chatHolder.CreateChat(msg.ChatID, msg.GetDataLikeString()))
-                    CreatedNewChat?.Invoke(msg.ChatID);
+                var chatName = msg.GetDataLikeString();
+                if(await _chatHolder.AddGroupChat(msg.ChatID,chatName ))
+                    CreatedNewChat?.Invoke(msg.ChatID,chatName);
             }
         }
         private async Task ProcessInviteUserToGroupResponce(Message msg)
@@ -78,17 +76,18 @@ namespace Penta_ClientLib.Services
         {
             if (await _chatHolder.DeleteChat(msg.ChatID))
             {
-                ChatDeleted?.Invoke(msg.ChatID);
+                ChatDeleted?.Invoke(msg.ChatID,"");
             }
         }        
         private async Task ProcessMessageFromUser(Message msg)
         {
             if(msg.ChatID==-1)//личное сообщение
             {
-                var chatID= await _chatHolder.CreateLocalChat(_contactConverter.ConvertUserIDToContactID(msg.FromID));//чат называется именем собеседника
+                var userConnectionID = ContactConverter.ConvertUserIDToContactID(msg.FromID);
+                var chatID= await _chatHolder.CreatePrivateChat(userConnectionID);//чат называется именем собеседника
                 if (chatID != 0)//значит чат создан
                 {
-                    CreatedNewChat?.Invoke(chatID);
+                    CreatedNewChat?.Invoke(chatID, userConnectionID);
                     UserAdded?.Invoke(chatID, msg.FromID);
                 }
             }
