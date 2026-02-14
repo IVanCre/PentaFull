@@ -1,3 +1,4 @@
+using Client.Interfaces;
 using Client.Services;
 using Penta_ClientLib.Interfaces;
 
@@ -7,11 +8,13 @@ namespace Client.Pages
 	public partial class ChatCreatorPage : ContentPage
 	{
         private IClientFacade _clientFacade;
+        private IUINotificator _notifier;
 
         public ChatCreatorPage()
 		{
 			InitializeComponent();
             _clientFacade = App.Services.GetRequiredService<IClientFacade>();
+            _notifier = App.Services.GetRequiredService<IUINotificator>();
         }
 
         private async void OnCreateChat(object sender, EventArgs e)
@@ -23,7 +26,7 @@ namespace Client.Pages
                 if (sended.Item1)
                     await Navigation.PopAsync();
                 else
-                    await NotificationService.ShowMessage("Ошибка",$"Ошибка при отправке запроса: {sended.Item2.Message}","ОК");
+                    await _notifier.ShowMessage("Ошибка",$"Ошибка при отправке запроса: {sended.Item2.Message}","ОК");
             }
         }
     }

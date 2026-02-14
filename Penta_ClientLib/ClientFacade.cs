@@ -6,13 +6,14 @@ using Penta_ClientLib.Services;
 
 namespace Penta_ClientLib
 {
-    // ui->facade->chatManager->webClient  --->
-    // ui<-facade<-mesageReciever<-webClient <---
+    // ui->facade->chatManager->(DB)->webClient  --->
+    // ui<-facade<-(DB)<-mesageReciever<-webClient <---
     internal class ClientFacade(
         IAccountManager accManager,
         IChatManager chatManager,
         IMessageReciever messReciever,
         ISettingsHolder settingsProvider,
+        IMessageHolder messHolder,
         IWebClient client
        ) : IClientFacade
     {
@@ -21,9 +22,10 @@ namespace Penta_ClientLib
         private ISettingsHolder _settingsProvider=settingsProvider;
         private IMessageReciever _messReciever = messReciever;
         private IWebClient _client = client;
+        private IMessageHolder _messHolder=messHolder;
 
 
-        public event ChatChanged CreatedNewChat
+    public event ChatChanged CreatedNewChat
         {
             add => _messReciever.CreatedNewChat += value;
             remove=> _messReciever.CreatedNewChat -= value;
@@ -83,13 +85,20 @@ namespace Penta_ClientLib
         }
 
 
-        public Task<Tuple<bool, Exception>> SendMessageToUser(string userContactID, MessageType type, byte[] data)
+        public Task<Tuple<bool, Exception>> SendMessageToUser(int chatID,string userContactID, MessageType type, byte[] data)
         {
             if(string.IsNullOrEmpty(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
 
             int recieverUserID = ContactConverter.ExtractUserID(userContactID);
-            return  _chatManager.AddMessageToChat(-1, recieverUserID, type, data);
+            return  _chatManager.AddMessageToChat(chatID, recieverUserID, type, data);
+        }
+        public Task<Tuple<bool, Exception>> SendMessageToUser(int chatID,int userID, MessageType type, byte[] data)
+        {
+            if (userID==-1)
+                return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
+
+            return _chatManager.AddMessageToChat(chatID, userID, type, data);
         }
         public Task<Tuple<bool, Exception>> SendMessageToChat(int chatID, MessageType type, byte[] data) => _chatManager.AddMessageToChat(chatID,-1,  type, data);
         public Task<Tuple<bool, Exception>> CreateGroupChat(string chatName)
@@ -125,6 +134,7 @@ namespace Penta_ClientLib
         public Task<Tuple<bool, Exception>> DeleteGroupChat(int chatID)=>_chatManager.SendDeleteGroupChat(chatID);
         public Task<Tuple<List<ChatInfo>, Exception>> GetAllChatsInfo() => _chatManager.GetAllChatsInfo();
 
+        public Task<List<Message>> GetMessagesByChat(int chatID, int maxLastMessageCount)=>_messHolder.GetMessagesByChat(chatID, maxLastMessageCount);
 
 
         public ISettingsHolder GetSettings()

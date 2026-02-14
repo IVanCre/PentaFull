@@ -5,7 +5,10 @@
              Title="Авторизация"
              BackgroundColor="{StaticResource OffBlack}">
 
-    <StackLayout  Spacing="40" VerticalOptions="CenterAndExpand" BackgroundColor ="{StaticResource OffBlack}">
+    <StackLayout  
+        Spacing="30" 
+        VerticalOptions="StartAndExpand" 
+        BackgroundColor ="{StaticResource OffBlack}">
         <Entry x:Name="UsernameEntry"
                TextColor="{StaticResource White}"
                PlaceholderColor="{StaticResource PrimaryDark}"
@@ -30,6 +33,11 @@
                 Text="Войти"
                 TextColor="{StaticResource PrimaryDark}"
                 Clicked="OnLoginButtonClicked" />
+
+        <Button x:Name="StopService"
+                Text="отключить сервис"                
+                TextColor="{StaticResource PrimaryDark}"
+                Clicked="OffServiceClicked" />
 
     </StackLayout>
 </ContentPage>

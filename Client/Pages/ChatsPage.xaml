@@ -4,25 +4,28 @@
              x:Class="Client.Pages.ChatsPage"
              Title="Чаты">
 
-    <Grid RowDefinitions="*,Auto"   >
-        <CollectionView Grid.Row="0" ItemsSource="{Binding ChatsList}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Button Text="{Binding Name}"
+    <VerticalStackLayout>
+        <Grid RowDefinitions="*,Auto" VerticalOptions="StartAndExpand">
+            <CollectionView Grid.Row="0" ItemsSource="{Binding ChatsList}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Button Text="{Binding ChatName}"
                             TextColor="{StaticResource White}"
                             Clicked="OnChatClick"
                             HorizontalOptions="Fill"
                             VerticalOptions="CenterAndExpand"
                             Margin="10"/>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-        <!-- Кнопка, всегда внизу -->
-        <Button Text="Новый групповой чат" Grid.Row="1"
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+
+        <Button Text="Новый групповой чат"
+                BackgroundColor="{StaticResource Secondary}"
+                TextColor="{StaticResource Black}"
                 HorizontalOptions="Fill"
                 VerticalOptions="End"
                 Margin="10"
                 Clicked="OnStartNewClick" />
-    </Grid>
-
+    </VerticalStackLayout>
 </ContentPage>

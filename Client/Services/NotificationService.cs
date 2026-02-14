@@ -1,9 +1,12 @@
 ﻿
+using Client.Interfaces;
+
 namespace Client.Services
 {
-    public static class NotificationService
+
+    public class NotificationService: IUINotificator
     {
-        public static async Task<bool> ShowConfirmDialog(string title, string message, string accept, string cancel)
+        public async Task<bool> ShowConfirmDialog(string title, string message, string accept, string cancel)
         {
             var currentPage = Application.Current.MainPage;
             if (currentPage == null)
@@ -16,7 +19,7 @@ namespace Client.Services
             return await currentPage.DisplayAlert(title, message, accept, cancel);
         }
 
-        public static async Task ShowMessage(string title, string message, string cancel)
+        public async Task ShowMessage(string title, string message, string cancel)
         {
             var currentPage = Application.Current.MainPage;
             if (currentPage is NavigationPage navPage)

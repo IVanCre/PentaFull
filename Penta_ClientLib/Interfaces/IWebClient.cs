@@ -8,9 +8,9 @@ namespace Penta_ClientLib.Interfaces
         Task<int> TryRegisterAsync(string userName, string pass);
         Task<bool> TryLoginAsync(string userName, string password);
         Task<bool> TryDeleteAccountAsync();
+        Task<bool> CheckNewMessages();
 
         Task<bool> ConnectToMessageHub();
-
 
         Task<bool> SendMessage(Message message);
 

@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Client.Pages"
              x:Class="Client.Pages.ActiveChatPage"
-             Title="{Binding Name}">
+             Title="{Binding ChatName}">
 
-<Grid RowDefinitions="*,Auto">
+    <ContentPage.Resources>
+        <local:LabelAlignConverter x:Key="AlignConverter_1" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto">
     <CollectionView Grid.Row="0" ItemsSource="{Binding MessageList}">
         <CollectionView.ItemTemplate>
             <DataTemplate>
                 <Label Text="{Binding Text}"
-                            HorizontalOptions="Fill"
-                            VerticalOptions="CenterAndExpand"
-                            Margin="5"
-                            BackgroundColor="{StaticResource Gray100}"/>
+                       HorizontalOptions="Fill"
+                       HorizontalTextAlignment="{Binding From, Converter={StaticResource AlignConverter_1}}"
+                       VerticalOptions="CenterAndExpand"
+                       Margin="5"
+                       BackgroundColor="{StaticResource Gray100}"/>
             </DataTemplate>
         </CollectionView.ItemTemplate>
     </CollectionView>

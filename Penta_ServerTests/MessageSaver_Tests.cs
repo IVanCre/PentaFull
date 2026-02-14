@@ -28,6 +28,11 @@ namespace Penta_ServerTests
             {
                 throw new NotImplementedException();
             }
+
+            Task<bool> IMessageRepository.HasNonSended(int userID)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         [Test]
@@ -37,8 +42,8 @@ namespace Penta_ServerTests
 
             var saver = new MessageSaver(repo);
             var list = new List<Message>();
-            list.Add(new Message(0, 1, 1, 1, MessageType.Unknown, null));
-            list.Add(new Message(1, 2, 3, 4, MessageType.Unknown, null));
+            list.Add(new Message(0, 1, 1, 1, MessageType.Unknown, null,DateTime.Now));
+            list.Add(new Message(1, 2, 3, 4, MessageType.Unknown, null, DateTime.Now));
 
             saver.Save(list);
 
@@ -52,7 +57,7 @@ namespace Penta_ServerTests
             var repo = new Repo();
 
             var saver = new MessageSaver(repo);
-            saver.Save(new Message(0, 1, 1, 1, MessageType.Unknown, null));
+            saver.Save(new Message(0, 1, 1, 1, MessageType.Unknown, null, DateTime.Now));
 
             Thread.Sleep(1000);
             Assert.That(repo.counter, Is.EqualTo(1));

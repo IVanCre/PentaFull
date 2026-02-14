@@ -7,7 +7,7 @@ namespace ConsoleClient_Tests
     /// <summary>
     /// Заглушка для замены БД(для тестов нескольких клиентов на одной машине)
     /// </summary>
-    internal class MemoryDB : ISettingsHolder, IChatHolder, IMessageHolder
+    internal class MemoryDB : ISettingsHolder, IChatHolder, IMessageHolder,IContactHolder
     {
         // Внутренние словари
         private readonly Dictionary<string, object> _settings = new();
@@ -157,8 +157,43 @@ namespace ConsoleClient_Tests
 
             return await Task.FromResult(true);
         }
+        #endregion        
 
-        #endregion
+
+        public Task<List<Message>> GetMessagesByChat(int chatID, int maxLastMessageCount)
+        {
+            return Task.FromResult(new List<Message>());
+        }
+
+        public Task<bool> AddContact(string name, string contactID)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<List<ContactInfo>> GetAllContacts()
+        {
+            return Task.FromResult(new List<ContactInfo>());
+        }
+
+        public Task<string> GetUserNameByContactID(string contactID)
+        {
+            return Task.FromResult(string.Empty);
+        }
+
+        public Task<string> GetContactIDByName(string name)
+        {
+            return Task.FromResult(string.Empty);
+        }
+
+        public Task<int> GetUserIDByName(string name)
+        {
+            return Task.FromResult(0);
+        }
+
+        public Task<bool> DeleteByContactID(string contactID)
+        {
+            return Task.FromResult(false);
+        }
     }
 }
 

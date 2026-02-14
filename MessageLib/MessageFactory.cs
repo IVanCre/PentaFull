@@ -15,7 +15,8 @@ namespace MessageLib
                     -1,
                     -1,
                     MessageType.CreateGroupRequest,
-                    MessageUtils.TextToBytes(chatName));
+                    MessageUtils.TextToBytes(chatName),
+                    DateTime.Now);
         }
         public static Message CreateGroupChat_Response(int chatID,Message request)
         {
@@ -25,7 +26,8 @@ namespace MessageLib
                     chatID,//его определяет сервер при создании у себя
                     request.FromID,
                     MessageType.CreateGroupResponce,
-                    request.Data);//имя тоже возвращаем(если успешно)
+                    request.Data,
+                    DateTime.Now);//имя тоже возвращаем(если успешно)
         }
 
 
@@ -37,7 +39,8 @@ namespace MessageLib
                     chatID,
                     -1,
                     MessageType.DeleteGroupRequest,
-                    null);
+                    null,
+                    DateTime.Now);
         }
         public static Message DeleteGroupChat_Response(Message request, int userRecieverID)
         {
@@ -47,7 +50,8 @@ namespace MessageLib
                          request.ChatID,
                          userRecieverID,
                          MessageType.DeleteGroupResponce,
-                         null);
+                         null,
+                         DateTime.Now);
         }
 
 
@@ -60,7 +64,8 @@ namespace MessageLib
                     chatID,
                     userRecieverID,
                     MessageType.InviteToGroupRequest,
-                    null);
+                    null,
+                    DateTime.Now);
         }
         //2.userReciever->server
         public static Message InviteUserToGroupChat_UserResponse(int senderUserID, int chatID, bool acceptInvite)
@@ -71,7 +76,8 @@ namespace MessageLib
                             chatID,
                             -1,
                             MessageType.InviteToGroupResponce,
-                            MessageUtils.BooleanToBytes(acceptInvite));
+                            MessageUtils.BooleanToBytes(acceptInvite),
+                            DateTime.Now);
         }
         //3.server->all users (for each in groupChat)
         public static Message InviteUserToGroupChat_ServerResponse(Message request,int recieverUserID)
@@ -82,7 +88,8 @@ namespace MessageLib
                              request.ChatID,
                              recieverUserID,
                              MessageType.InviteToGroupResponce,
-                             null);
+                             null,
+                             DateTime.Now);
         }
 
 
@@ -95,7 +102,8 @@ namespace MessageLib
                 chatID,
                 userForDeleteID,
                 MessageType.RemoveUserFromGroupRequest,
-                null);
+                null,
+                DateTime.Now);
         }
         //2.server->all users
         public static Message DeleteUserFromGroupChat_Response(Message request, int recieverUserID)
@@ -106,7 +114,8 @@ namespace MessageLib
                  request.ChatID,
                  recieverUserID,
                  MessageType.RemoveUserFromGroupResponce,
-                 MessageUtils.IntToBytes(request.ToID));
+                 MessageUtils.IntToBytes(request.ToID),
+                 DateTime.Now);
         }
 
 
@@ -119,7 +128,8 @@ namespace MessageLib
                 -1,
                 recieverUserID,
                 type,
-                data);
+                data,
+                DateTime.Now);
         }
         public static Message UserToGroupChat(int senderUserID, int chatID, MessageType type, byte[] data)
         {
@@ -129,7 +139,8 @@ namespace MessageLib
                 chatID,
                 -1,
                 type,
-                data);
+                data,
+                DateTime.Now);
         }
 
         public static Message DeleteAccountRequest(int senderUserID)
@@ -140,7 +151,8 @@ namespace MessageLib
                 -1,
                 -1,
                 MessageType.DeleteSelfAccountRequest,
-                null);
+                null,
+                DateTime.Now);
         }
         public static Message DeleteAccountResponce(Message request)
         {
@@ -150,7 +162,8 @@ namespace MessageLib
             -1,
             request.FromID,
             MessageType.DeleteSelfAccountRequest,
-            null);
+            null,
+            DateTime.Now);
         }
     }
 }

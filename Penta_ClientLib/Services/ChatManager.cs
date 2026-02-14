@@ -137,11 +137,24 @@ namespace Penta_ClientLib.Services
             {
                 int currentUserID = await _settingsHolder.GetValueByName<int>("userID");
                 Message msg;
-                if (chatID == -1)//значит это НЕ групповой чат
+                if (chatID < 0)//значит это приватный чат
+                {
                     msg = MessageFactory.UserToUser(currentUserID, recieverID, type, data);
+                    await _messHolder.SaveMessage(//сохраняем копию, у которой указа локальный идентификатор чата(чтоб знать от какого чата это сообщение)
+                        new Message(
+                            msg.ID,
+                            msg.FromID,
+                            chatID,
+                            msg.ToID,
+                            msg.Type,
+                            msg.Data,
+                            msg.UtcTimestamp));
+                }
                 else
+                {
                     msg = MessageFactory.UserToGroupChat(currentUserID, chatID, type, data);
-                await _messHolder.SaveMessage(msg);
+                    await _messHolder.SaveMessage(msg);
+                }
 
                 var sended = await _messSender.SendMessage(msg);
                 return Tuple.Create<bool, Exception>(sended, null);

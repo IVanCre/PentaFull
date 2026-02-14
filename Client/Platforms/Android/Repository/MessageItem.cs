@@ -18,5 +18,6 @@ namespace Client.Platforms.Android.Repository
         public int ToID { get; set; }
         public MessageType Type { get; set; }
         public byte[] Data { get; set; }
+        public DateTime UtcTimestamp { get; set; }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Penta_ClientLib;
+﻿using Client.Services;
+using Penta_ClientLib;
+using Client.Interfaces;
 
 namespace Client
 {
@@ -10,6 +12,7 @@ namespace Client
                 builder = MauiApp.CreateBuilder();
             
             builder.Services.AddClientDependencies();
+            builder.Services.AddSingleton<IUINotificator,NotificationService>();
             builder.UseMauiApp<App>();
 
             return builder.Build();

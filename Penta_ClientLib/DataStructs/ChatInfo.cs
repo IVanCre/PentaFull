@@ -4,7 +4,7 @@
         int id,
         string name)
     {
-        public readonly int ID=id;
-        public readonly string Name=name;
+        public  int ID { get; private set; } =id;
+        public string ChatName { get; private set; } = name;
     }
 }

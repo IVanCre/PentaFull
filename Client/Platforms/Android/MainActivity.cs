@@ -1,6 +1,7 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.Content.PM;
+using Client.Interfaces;
 
 
 
@@ -20,7 +21,7 @@ namespace Client.Platforms.Android
             ConfigChanges.Density)]
     public class MainActivity : MauiAppCompatActivity
     {
-
+        public MainActivity(){ }
     }
 
 }

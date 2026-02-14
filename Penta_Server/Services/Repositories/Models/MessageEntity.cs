@@ -19,6 +19,7 @@ namespace Penta_Server.Services.Repositories.Models
 
         public MessageType Type { get; set; }//чтобы EF в бибилотеку исходного класа не тащить
         public byte[] Data { get; set; }//по факту тут всегда byte[]
+        public DateTime UtcTimestamp { get; set; }
 
     }
 }

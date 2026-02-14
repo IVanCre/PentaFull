@@ -55,7 +55,8 @@ namespace Penta_Server.Services.Repositories
                                 f.GroupID,
                                 f.ToUserID,
                                 f.Type,
-                                f.Data));
+                                f.Data,
+                                f.UtcTimestamp));
                         }
                     }
                 }
@@ -63,11 +64,11 @@ namespace Penta_Server.Services.Repositories
             });
         }
 
-        public bool HasNonSended(int userID)
+        public async Task<bool> HasNonSended(int userID)
         {
             using (DB db = new DB(connStr))
             {
-                var finded = db.Messages.FirstOrDefault(x => x.ToUserID==userID&& !x.IsSended);
+                var finded = await db.Messages.FirstOrDefaultAsync(x => x.ToUserID==userID&& !x.IsSended);
                 return finded != null;   
             }
         }

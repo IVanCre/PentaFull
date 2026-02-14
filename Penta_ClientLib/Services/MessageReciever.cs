@@ -8,6 +8,7 @@ namespace Penta_ClientLib.Services
         private IChatHolder _chatHolder;
         private IWebClient _messListener;
         private IMessageHolder _messHolder;
+        private IContactHolder _contactHolder;
 
         public event ChatChanged CreatedNewChat;
         public event ChatChanged ChatDeleted;
@@ -21,9 +22,11 @@ namespace Penta_ClientLib.Services
         public MessageReciever(
             IWebClient messListener,
             IChatHolder chatProvider,
-            IMessageHolder messHolder
+            IMessageHolder messHolder,
+            IContactHolder contactHolder
             )
         {
+            _contactHolder=contactHolder;
             _messListener = messListener;
             _messListener.RecievedMessage += ProcessResponce;
             _chatHolder = chatProvider;
@@ -32,10 +35,9 @@ namespace Penta_ClientLib.Services
         
         private async void ProcessResponce(Message msg)//просматриваем ответы от сервера
         {
-            await _messHolder.SaveMessage(msg);//сразу сохраняем
-
             switch (msg.Type)
             {
+                //сохранение системных сообщений не требуется
                 case MessageType.InviteToGroupResponce:         await ProcessInviteUserToGroupResponce(msg); break;
                 case MessageType.RemoveUserFromGroupResponce:   await ProcessDeleteUserFromGroupResponce(msg); break;
                 case MessageType.CreateGroupResponce:           await ProcessCreateGroupChatResponce(msg);break;
@@ -43,6 +45,7 @@ namespace Penta_ClientLib.Services
                 case MessageType.InviteToGroupRequest:          RecieveInvite?.Invoke(msg); break;
                 case MessageType.DeleteSelfAccountResponce:     AccountDeleted?.Invoke(); ; break;
 
+                //указанные сообщения сохранятся
                 case MessageType.Text:
                 case MessageType.Picture:
                 case MessageType.Voice:                         await ProcessMessageFromUser(msg);break;
@@ -81,26 +84,75 @@ namespace Penta_ClientLib.Services
         }        
         private async Task ProcessMessageFromUser(Message msg)
         {
-            if(msg.ChatID==-1)//личное сообщение
+
+            if (msg.ChatID==-1)//личное сообщение
             {
                 var userConnectionID = ContactConverter.ConvertUserIDToContactID(msg.FromID);
-                var chatID= await _chatHolder.CreatePrivateChat(userConnectionID);//чат называется именем собеседника
-                if (chatID != 0)//значит чат создан
+                var userName=await _contactHolder.GetUserNameByContactID(userConnectionID);//ищем имя в наших контактах
+                if (!string.IsNullOrEmpty(userName))// данный юзер есть в наших контактах
                 {
-                    CreatedNewChat?.Invoke(chatID, userConnectionID);
-                    UserAdded?.Invoke(chatID, msg.FromID);
+                    var chatID = await _chatHolder.GetChatID(userName);
+                    if (chatID != 0)//чат с этим юзером уже есть
+                    {
+                        await _messHolder.SaveMessage(
+                            new Message(
+                                msg.ID,
+                                msg.FromID,
+                                chatID,//сохраняем с указанным  идентификатором чата
+                                msg.ToID,
+                                msg.Type,
+                                msg.Data,
+                                msg.UtcTimestamp));
+                        MessageAddedToChat?.Invoke(chatID, msg);
+                    }
+                    else
+                    {
+                        chatID = await _chatHolder.CreatePrivateChat(userName);//чат называется именем собеседника
+                        if (chatID != 0)//значит чат создан
+                        {
+                            await _messHolder.SaveMessage(
+                                new Message(
+                                    msg.ID,
+                                    msg.FromID,
+                                    chatID,//сохраняем с указанным  идентификатором чата
+                                    msg.ToID,
+                                    msg.Type,
+                                    msg.Data,
+                                    msg.UtcTimestamp));
+                            CreatedNewChat?.Invoke(chatID, userName);
+                            MessageAddedToChat?.Invoke(chatID, msg);
+                        }
+                    }
+                }
+                else//нам пишет неизвестный юзер
+                {
+                    var chatID = await _chatHolder.CreatePrivateChat(userConnectionID);//чат называется именем собеседника
+                    if (chatID != 0)//значит чат создан
+                    {
+                        await _messHolder.SaveMessage(
+                            new Message(
+                                msg.ID,
+                                msg.FromID,
+                                chatID,//сохраняем с указанным  идентификатором чата
+                                msg.ToID,
+                                msg.Type,
+                                msg.Data,
+                                msg.UtcTimestamp));
+                        CreatedNewChat?.Invoke(chatID, userConnectionID);
+                        MessageAddedToChat?.Invoke(chatID,msg);
+                    }
                 }
             }
             else//групповое сообщение
             {
-                //тут уже есть чат
+                //тут уже есть чат(т.к. сервак делает рассылку только тем, кто в группе состоит)
                 var added =await _chatHolder.AddUserToChat(msg.FromID, msg.ChatID);// прикрепляем нового юзера к чату(чтобы видеть его у себя)
                 if(added)
                     UserAdded?.Invoke(msg.ChatID, msg.FromID);
+
+                await _messHolder.SaveMessage(msg);
+                MessageAddedToChat?.Invoke(msg.ChatID,msg);
             }
-
-            MessageAddedToChat?.Invoke(msg.ChatID,msg);
         }
-
     }
 }

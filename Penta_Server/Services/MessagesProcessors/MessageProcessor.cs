@@ -139,7 +139,8 @@ namespace Penta_Server.Services.MessagesProcessors
                                 msg.ChatID,
                                 userID,
                                 msg.Type,
-                                msg.Data));
+                                msg.Data,
+                                msg.UtcTimestamp));
                     }
                 }
             }

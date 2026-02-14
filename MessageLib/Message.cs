@@ -13,6 +13,7 @@ namespace MessageLib
         public int ToID { get; private set; }
         public MessageType Type { get; private set; }
         public byte[] Data { get; private set; }
+        public DateTime UtcTimestamp { get; private set; }
 
         [JsonConstructor]
         public Message(
@@ -21,7 +22,8 @@ namespace MessageLib
            int ChatID,
            int ToID,
            MessageType Type,
-           byte[] Data)
+           byte[] Data,
+           DateTime UtcTimestamp)
         {
             this.ID = ID;
             this.FromID = FromID;
@@ -29,6 +31,7 @@ namespace MessageLib
             this.ToID = ToID;
             this.Type = Type;
             this.Data = Data;
+            this.UtcTimestamp = UtcTimestamp.ToUniversalTime();
         }
 
         public static long GenerateIDByTime()//при высокой интенсивности, могут выскакивать повторы))

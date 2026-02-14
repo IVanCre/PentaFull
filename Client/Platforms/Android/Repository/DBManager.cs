@@ -4,6 +4,7 @@ using Penta_ClientLib.Interfaces;
 using Penta_ClientLib.Services;
 using SQLite;
 
+
 namespace Client.Platforms.Android.Repository
 {
     internal class DBManager : ISettingsHolder, IChatHolder, IMessageHolder,IContactHolder
@@ -80,7 +81,15 @@ namespace Client.Platforms.Android.Repository
 
             return inserted == 1;
         }
-        public async Task<int> GetContactIDAsync(string userName)
+        public async Task<string> GetContactIDByName(string userName)
+        {
+            var findedID = await GetUserIDByName(userName);
+            if (findedID != -1)
+                return  ContactConverter.ConvertUserIDToContactID(findedID);
+            else
+                return string.Empty;
+        }
+        public async Task<int> GetUserIDByName(string userName)
         {
             InitConnect();
 
@@ -89,6 +98,17 @@ namespace Client.Platforms.Android.Repository
                 return finded.ID;
             else
                 return -1;
+        }
+        public async Task<string> GetUserNameByContactID(string contactID)
+        {
+            InitConnect();
+
+            int userID = ContactConverter.ExtractUserID(contactID);
+            var finded = await _connection.Table<Contact>().FirstOrDefaultAsync(x => x.ID == userID);
+            if (finded != null)
+                return finded.UserName;
+            else
+                return string.Empty;
         }
         public async Task<List<ContactInfo>> GetAllContacts()
         {
@@ -106,6 +126,7 @@ namespace Client.Platforms.Android.Repository
             var deleted = await _connection.ExecuteAsync("delete from Contact where ID = ?", ContactConverter.ExtractUserID(contactID));
             return deleted == 1;
         }
+
         #endregion
 
 
@@ -131,12 +152,16 @@ namespace Client.Platforms.Android.Repository
         {
             int id = 0;
             InitConnect();
-            var finded = _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
+            var finded = await _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
             if (finded == null)
             {
                 id = GenerateLocalIDByTime();
-                await AddChat(id, chatName);
+                if (!await AddChat(id, chatName))
+                    id = 0;
             }
+            else
+                id = finded.ID;//значит уже есть созданный
+
             return id;
         }
 
@@ -146,7 +171,7 @@ namespace Client.Platforms.Android.Repository
             if (finded != null)
                 return finded.ID;
             else
-                return -1;
+                return 0;
         }
 
         public async Task<bool> DeleteChat(int chatID)
@@ -204,7 +229,8 @@ namespace Client.Platforms.Android.Repository
                      ChatID = msg.ChatID,
                      ToID = msg.ToID,
                      Type = msg.Type,
-                     Data = msg.Data
+                     Data = msg.Data,
+                     UtcTimestamp = DateTime.Now
                  });
 
             return result == 1;
@@ -221,7 +247,8 @@ namespace Client.Platforms.Android.Repository
                         item.ChatID,
                         item.ToID,
                         item.Type,
-                        item.Data));
+                        item.Data,
+                        item.UtcTimestamp));
 
             return result;
         }
@@ -231,6 +258,29 @@ namespace Client.Platforms.Android.Repository
             return deleted > 0;
         }
 
+
+        public async Task<List<Message>> GetMessagesByChat(int chatID, int maxLenCount)
+        {
+            List<Message> result = new();
+            var finded = await _connection.Table<MessageItem>()
+                .Where(x=>x.ChatID==chatID)
+                .OrderBy(x=>x.UtcTimestamp)
+                .Take(maxLenCount)
+                .ToListAsync();
+
+            foreach (var item in finded)
+                result.Add(
+                    new Message(
+                        item.ID,
+                        item.FromID,
+                        item.ChatID,
+                        item.ToID,
+                        item.Type,
+                        item.Data,
+                        item.UtcTimestamp));
+
+            return result;
+        }
         #endregion
 
         private int GenerateLocalIDByTime()

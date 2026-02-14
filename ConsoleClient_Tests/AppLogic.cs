@@ -77,6 +77,7 @@ namespace ConsoleClient_Tests
             Console.WriteLine("сообщение:");
             string text = Console.ReadLine();
 
+
             if (toGroupChat)
             {
                 Console.WriteLine("ID чата:");
@@ -87,7 +88,7 @@ namespace ConsoleClient_Tests
             {
                 Console.WriteLine("connectID получателя:");
                 string userConnectID = Console.ReadLine();
-                facade.SendMessageToUser(userConnectID, MessageType.Text, MessageUtils.TextToBytes(text));
+                facade.SendMessageToUser(-1,userConnectID, MessageType.Text, MessageUtils.TextToBytes(text));
             }
         }
 
@@ -95,7 +96,7 @@ namespace ConsoleClient_Tests
         {
             var finded = await facade.GetAllChatsInfo();
             foreach (var item in finded.Item1)
-                Console.WriteLine($"ChatID={item.ID} ChatName={item.Name}");
+                Console.WriteLine($"ChatID={item.ID} ChatName={item.ChatName}");
         }
         private static void ResponseToInviteChat(IClientFacade facade)
         {

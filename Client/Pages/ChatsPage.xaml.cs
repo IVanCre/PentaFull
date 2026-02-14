@@ -7,7 +7,7 @@ namespace Client.Pages
 {
     public partial class ChatsPage : ContentPage
     {
-        public ObservableCollection<ChatInfo> ChatsList { get;private set; } = new();
+        public ObservableCollection<ChatInfo> ChatsList { get;set; } = new();
         private IClientFacade _clientFacade;
 
 
@@ -34,7 +34,7 @@ namespace Client.Pages
             var button = sender as Button;
             var chat = (ChatInfo)button?.BindingContext;
 
-            await Navigation.PushAsync(new ActiveChatPage(chat.Name,chat.ID));//сразу переходим в переписку чата
+            await Navigation.PushAsync(new ActiveChatPage(chat.ChatName,chat.ID));//сразу переходим в переписку чата
         }
 
         private async void OnStartNewClick(object sender, EventArgs e)

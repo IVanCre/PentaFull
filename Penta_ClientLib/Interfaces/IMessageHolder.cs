@@ -11,6 +11,7 @@ namespace Penta_ClientLib.Interfaces
         Task<bool> SaveMessage(Message msg);
         Task<List<Message>> GetNonSended();
 
+        Task<List<Message>> GetMessagesByChat(int chatID, int maxLastMessageCount);
         Task<bool> DeleteByChatID(int chatID);
     }
 }

@@ -2,19 +2,30 @@
 
 
 using Penta_ClientLib.Interfaces;
-using Client.Services;
+using Client.Interfaces;
 
 namespace Client.Pages
 {
 	public partial class AuthPage : ContentPage
 	{
 		private IClientFacade _clientFacade;
+		private IUINotificator _notifier;
+		private INewMessageCheckerManager _newMessageListener;
+
         public AuthPage()
 		{
 			InitializeComponent();
 
 			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
-			TryInicializeCredsFromSettings(App.Services.GetRequiredService<ISettingsHolder>());
+			_notifier = App.Services.GetRequiredService<IUINotificator>();
+			_newMessageListener = App.Services.GetRequiredService<INewMessageCheckerManager>();
+
+            TryInicializeCredsFromSettings(App.Services.GetRequiredService<ISettingsHolder>());
+
+			if(string.IsNullOrEmpty(UsernameEntry.Text))//значит есть данные с прошлой регистрации
+				LoginButton.IsVisible = false;
+			else
+				RegButton.IsVisible = false;
         }
 
 
@@ -23,16 +34,16 @@ namespace Client.Pages
 			if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
 			{
 				var result = await _clientFacade.Registration(UsernameEntry.Text, PasswordEntry.Text);
-				if (result.Item1)
+                if (result.Item1)
 				{
-					await NotificationService.ShowMessage("", "–егистраци€ успешно завершена", "ок");
+					_newMessageListener.StartService();
                     await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу „атов
                 }
 				else
-					await NotificationService.ShowMessage("¬нимание", $"ќшибка регистрации на сервере:{result.Item2.Message}", "ок");
+					await _notifier.ShowMessage("¬нимание", $"ќшибка регистрации на сервере:{result.Item2.Message}", "ок");
 			}
 			else
-				await NotificationService.ShowMessage("¬нимание", "¬ведите логин и пароль", "ок");
+				await _notifier.ShowMessage("¬нимание", "¬ведите логин и пароль", "ок");
 		}
 
         private async void OnLoginButtonClicked(object sender, EventArgs e)
@@ -42,14 +53,14 @@ namespace Client.Pages
 				var result = await _clientFacade.Login(UsernameEntry.Text, PasswordEntry.Text);
 				if (result.Item1)
 				{
-					await NotificationService.ShowMessage("", "¬ход успешно завершен", "ок");
+					_newMessageListener.StartService();
                     await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу „атов
                 }
 				else
-					await NotificationService.ShowMessage("¬нимание", $"ќшибка ¬хода на сервере:{result.Item2.Message}", "ок");
+					await _notifier.ShowMessage("¬нимание", $"ќшибка ¬хода на сервере:{result.Item2.Message}", "ок");
 			}
 			else
-				await NotificationService.ShowMessage("¬нимание", "¬ведите логин и пароль", "ок");
+				await _notifier.ShowMessage("¬нимание", "¬ведите логин и пароль", "ок");
 		}
 
 		private async void TryInicializeCredsFromSettings(ISettingsHolder settings)
@@ -57,5 +68,12 @@ namespace Client.Pages
             UsernameEntry.Text = await settings.GetValueByName<string>("userLogin");
             PasswordEntry.Text = await settings.GetValueByName<string>("userPassword");
         }
-	}
+
+
+		private void OffServiceClicked(object sender, EventArgs e)
+		{
+            _newMessageListener.StopService();
+        }
+
+    }
 }

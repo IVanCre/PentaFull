@@ -2,6 +2,8 @@
 using Android.Runtime;
 using Penta_ClientLib.Interfaces;
 using Client.Platforms.Android.Repository;
+using Android.OS;
+using Client.Interfaces;
 
 
 namespace Client.Platforms.Android
@@ -24,8 +26,10 @@ namespace Client.Platforms.Android
             builder.Services.AddSingleton<IMessageHolder, DBManager>();
             builder.Services.AddSingleton<IContactHolder, DBManager>();
 
+            builder.Services.AddSingleton<INewMessageCheckerManager, MessageCheckerService>();
 
             return MauiProgram.CreateMauiApp(builder);
         }
+        
     }
 }

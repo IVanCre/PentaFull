@@ -3,29 +3,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Client.Pages.ContactsPage"
              Title="Контакты">
-    
-    <Grid RowDefinitions="*,Auto">
-        <Label Grid.Row="0" 
-               Text="{Binding MyContactID}"/>
 
-        <CollectionView Grid.Row="1" ItemsSource="{Binding ContactsList}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Button Text="{Binding UserName}"
+    <VerticalStackLayout>
+        <Grid RowDefinitions="*,Auto" VerticalOptions="StartAndExpand">
+            <Label Grid.Row="0"
+               HorizontalOptions="CenterAndExpand"
+               VerticalOptions="End"
+               BackgroundColor="{StaticResource Gray100}"
+               TextColor="{StaticResource Black}"
+               x:Name="MyContactIDLabel"
+               Margin="10"/>
+
+            <CollectionView Grid.Row="1" ItemsSource="{Binding ContactsList}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Button Text="{Binding UserName}"
+                            TextColor="{StaticResource White}"
                             Clicked="OnContactClick"
                             HorizontalOptions="Fill"
-                            VerticalOptions="CenterAndExpand"
+                            VerticalOptions= "CenterAndExpand"
                             Margin="10"/>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
 
-
-        <Button Grid.Row="2"
-                Text="NewContact" 
+        <Button 
+                Text="AddNewContact" 
+                BackgroundColor="{StaticResource Secondary}"
+                TextColor="{StaticResource Black}"
                 HorizontalOptions="Fill"
                 VerticalOptions="End"
                 Margin="10"
                 Clicked="OnContactCreateClick" />
-    </Grid>
+    </VerticalStackLayout>
 </ContentPage>

@@ -10,8 +10,6 @@ namespace Client.Pages
         public ObservableCollection<ContactInfo> ContactsList { get; set; } = new();
         private IContactHolder _contactHolder;
         private IClientFacade _clientFacade;
-        public string MyContactID { get; private set; }
-
 
         public ContactsPage()
 		{
@@ -21,13 +19,14 @@ namespace Client.Pages
             _contactHolder= App.Services.GetRequiredService<IContactHolder>();
             BindingContext = this;
         }
+        
 
         protected override async void OnAppearing()//вызывается при отображении страницы
         {
             base.OnAppearing();
 
-            if (string.IsNullOrEmpty(MyContactID))
-                MyContactID = await _clientFacade.GetMyContactID();
+            if (string.IsNullOrEmpty(MyContactIDLabel.Text))
+                MyContactIDLabel.Text ="Your ContactID: "+ await _clientFacade.GetMyContactID();
 
             ContactsList?.Clear();//сносим старое
             var result =await _contactHolder.GetAllContacts();//т.к. чаты могут быть созданы в длругом месте тоже
@@ -41,7 +40,7 @@ namespace Client.Pages
             var contact = (ContactInfo)button?.BindingContext;
 
             var chatID = await _clientFacade.CreatePrivateChat(contact.UserName);//сразу создаем новый чат
-            if (chatID != 0)
+            if (chatID != 0)//успешно создан
             {
                 await Navigation.PushAsync(new ActiveChatPage(contact.UserName, chatID));//переходим в чат
             }

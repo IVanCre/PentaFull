@@ -16,6 +16,7 @@ namespace ConsoleClient_Tests
             builder.Services.AddSingleton<ISettingsHolder, MemoryDB>();//библиотека предоставляет способ реализации хранилищ самому разрабу
             builder.Services.AddSingleton<IChatHolder, MemoryDB>();
             builder.Services.AddSingleton<IMessageHolder, MemoryDB>();
+            builder.Services.AddSingleton<IContactHolder, MemoryDB>();
 
             var host = builder.Build();
             host.RunAsync();

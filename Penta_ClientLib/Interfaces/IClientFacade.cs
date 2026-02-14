@@ -141,11 +141,12 @@ namespace Penta_ClientLib.Interfaces
         /// <summary>
         /// Отправка сообщения в приватный чат
         /// </summary>
-        /// <param name="userConnectID"></param>
+        /// <param name="userConnectID">текстовый идентикатор пользователя</param>
         /// <param name="type"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        Task<Tuple<bool, Exception>> SendMessageToUser(string userConnectID, MessageType type, byte[] data);
+        Task<Tuple<bool, Exception>> SendMessageToUser(int chatID, string userConnectID, MessageType type, byte[] data);//это для клиентов,которые не имеют хранения контактов
+        Task<Tuple<bool, Exception>> SendMessageToUser(int chatID,int userID, MessageType type, byte[] data);
 
         /// <summary>
         /// Вызывается, когда с сервера приходит новое сообщение в конкретный чат
@@ -167,6 +168,14 @@ namespace Penta_ClientLib.Interfaces
         /// Вызывается, когда сервер присылает результат удаления аккаунта(удалет только аккаунт отправителя)
         /// </summary>
         event AccountDeleted AccountDeleted;
+
+        /// <summary>
+        /// Возвращает список сообщений из чата за указанный период
+        /// </summary>
+        /// <param name="chatID">номер чата</param>
+        /// <param name="lastMessageCount">сколько самых свежих сообщений подгрузить</param>
+        /// <returns></returns>
+        Task<List<Message>> GetMessagesByChat(int chatID, int lastMessageCount);
 
         /// <summary>
         /// вызывает закрытие всех ресурсов клиента.

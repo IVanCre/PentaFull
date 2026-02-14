@@ -37,8 +37,8 @@ namespace Penta_Server.Controllers
 
             if (userID != -1)
             {
-                _logger?.SaveSystemInfo("Получен запрос на проверку новых сообщений");
-                return _msgRepo.HasNonSended(userID);
+                _logger?.SaveSystemInfo($"Получен запрос на проверку новых сообщений для юзера={userID}");
+                return await _msgRepo.HasNonSended(userID);
             }
             else
                 return false;

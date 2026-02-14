@@ -9,7 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace Penta_ClientLib.Services
 {
-    public class WebClient : IWebClient
+    internal class WebClient : IWebClient
     {
         private int _waitRequestSeconds = 90;
         private HubConnection _messHabConnection;
@@ -83,6 +83,29 @@ namespace Penta_ClientLib.Services
 
             return userID;
         }
+        public async Task<bool> CheckNewMessages()
+        {
+            bool hasUnreded = false;
+            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _jwtToken);
+                var fullUrl = $"{_serverUrl}/Message/FindUnreaded";
+
+                var response = await httpClient.GetAsync(fullUrl);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    var finded = await response.Content.ReadAsStringAsync();
+                    hasUnreded = bool.Parse(finded);
+                }
+            }
+            return hasUnreded;
+        }
+        private async Task<bool> RefreshJwtToken()
+        {
+           throw new NotImplementedException();
+        }
         private int GetUserID(string token)
         {
             int userID = -1;
@@ -102,6 +125,25 @@ namespace Penta_ClientLib.Services
         }
 
 
+        public async Task<bool> SendMessage(Message message)
+        {
+            try
+            {
+                await ConnectToMessageHub();
+
+                if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
+                {
+                    await _messHabConnection.InvokeAsync("SendToServer", message);
+                    return true;
+                }
+            }
+            catch(Exception ex) 
+            {
+                Console.WriteLine(ex);
+            }
+
+            return false;
+        }
 
 
         public async Task<bool> ConnectToMessageHub()
@@ -125,8 +167,8 @@ namespace Penta_ClientLib.Services
                     // Обработка входящих сообщений с сервера
                     _messHabConnection.On<Message>("RecieveMessage", async (message) =>
                     {
-                        RecievedMessage?.Invoke(message);//вызываем внешний делегат
                         await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении
+                        RecievedMessage?.Invoke(message);//вызываем внешний делегат
                     });
 
                     await _messHabConnection.StartAsync();
@@ -176,7 +218,6 @@ namespace Penta_ClientLib.Services
                 }
             };
         }
-
         private async void DisconnectFromMessageHub()
         {
             if (_messHabConnection != null)
@@ -185,26 +226,6 @@ namespace Penta_ClientLib.Services
                 await _messHabConnection.DisposeAsync();
                 _messHabConnection = null;
             }
-        }
-
-        public async Task<bool> SendMessage(Message message)
-        {
-            try
-            {
-                await ConnectToMessageHub();
-
-                if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
-                {
-                    await _messHabConnection.InvokeAsync("SendToServer", message);
-                    return true;
-                }
-            }
-            catch(Exception ex) 
-            {
-                Console.WriteLine(ex);
-            }
-
-            return false;
         }
 
         public void Dispose()
