@@ -7,15 +7,15 @@ namespace Client.Pages;
 
 public partial class ContactCreatorPage : ContentPage
 {
-    private IContactHolder _contactHolder;
+    private IClientFacade _facade;
     private Collection<ContactInfo> _uiContacts;
 
     public ContactCreatorPage(
         Collection<ContactInfo> uiContacts,
-        IContactHolder contactHolder)
+        IClientFacade contactHolder)
 	{
 		InitializeComponent();
-        _contactHolder = contactHolder;
+        _facade = contactHolder;
         _uiContacts= uiContacts;
     }
 
@@ -26,7 +26,7 @@ public partial class ContactCreatorPage : ContentPage
         if (!string.IsNullOrEmpty(userName) && !string.IsNullOrEmpty(contactID))
         {
             var contact = new ContactInfo(userName,contactID);
-            if (await _contactHolder.AddContact(userName, contactID))
+            if (await _facade.AddNewContactAsync(userName, contactID))
             {
                 _uiContacts.Add(contact);
                 await Navigation.PopAsync();//сразщу возвращаемся на страницу контактов

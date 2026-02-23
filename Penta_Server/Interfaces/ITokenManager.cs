@@ -5,9 +5,8 @@
     /// </summary>
     public interface ITokenManager
     {
-        public string CreateToken(int userID, string username, string pass);
-        public string GetToken( string username, string pass);
-        public string CreateRefreshToken();
+        public string[] CreateTokenPack(int userID, string username, string pass);
+        public string[] RefreshJwtToken(string refreshToken);
         public int FindUserByToken(string token);
     }
 }

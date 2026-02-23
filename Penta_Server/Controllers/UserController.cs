@@ -17,9 +17,8 @@ namespace Penta_Server.Controllers
         private readonly ILogWriter _logger = logger;
 
 
-
         [HttpPost("Registration")]
-        public async Task<string> Registration(string name, string pass)
+        public async Task<string[]> Registration(string name, string pass)
         {
             if (string.IsNullOrEmpty(name) || name.Length > 50 || name.Length<1)
                 throw new ArgumentException("Invalid name len");
@@ -27,44 +26,17 @@ namespace Penta_Server.Controllers
             if (string.IsNullOrEmpty(pass) || pass.Length > 50 || pass.Length<1)
                 throw new ArgumentException("Invalid password len");
 
-
             var userID = await _userRepository.AddNewUserAsync(name, pass);
             if (userID != -1)
             {
                 _logger?.SaveSystemInfo($"Зарегистрирован новый юзер: {name}");
-                return _tokenMngr.CreateToken(userID, name, pass);
+                return _tokenMngr.CreateTokenPack(userID, name, pass);
             }
             else
             {
                 _logger?.SaveWarning($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть");
-                return string.Empty;
+                return null;
             }
-        }
-
-        [HttpGet("Login")]
-        public async Task<string> Login(string name, string pass)
-        {
-            if (string.IsNullOrEmpty(name) || name.Length > 50 || name.Length < 1)
-                throw new ArgumentException("Invalid name len");
-
-            if (string.IsNullOrEmpty(pass) || pass.Length > 50 || pass.Length < 1)
-                throw new ArgumentException("Invalid password len");
-
-            var userID = await _userRepository.FindUserAsync(name, pass);
-            if (userID != -1)
-            {
-                _logger?.SaveSystemInfo("Юзер вошел в аккаунт");
-                return _tokenMngr.GetToken(name, pass);
-            }
-
-            return string.Empty;
-        }
-
-        [HttpPost("Logout")]
-        [Authorize]
-        public void Logout()
-        {
-            throw new NotImplementedException();
         }
 
         [HttpPost("DeleteSelfAccount")]
@@ -75,8 +47,17 @@ namespace Penta_Server.Controllers
             token=token.Replace("Bearer ", "");
             var result =await _userRepository.DeleteUserByTokenAsync(token);
             if(result)
-                _logger?.SaveSystemInfo("Юзер вышел из аккаунта");
+                _logger?.SaveSystemInfo("Юзер удалил свой аккаунт");
+        }
 
+        [HttpGet("RefreshToken")]
+        public string[] RefreshToken()
+        {
+            string refreshToken = Request.Headers["Authorization"];
+            var token = refreshToken.Replace("Bearer ", "");
+
+            _logger?.SaveSystemInfo($"Поступил запрос на обновление токена");
+            return _tokenMngr.RefreshJwtToken(token);
         }
     }
 }

@@ -2,6 +2,7 @@
 using AndroidX.Core.App;
 using Android.App;
 using Android.OS;
+using Android.Graphics;
 
 
 
@@ -11,12 +12,17 @@ namespace Client.Platforms.Android
     {
         private readonly Context _context;
         private const string ChannelId = "penta_msg_channel";
-        private int _counterID = 0;
+        private static int _counterID = 0;//чтобы между экземплярами сохранялся
+        private int smallIconID;
+        private int largeIconID;
 
         public NotificationHelper(Context context)
         {
             _context = context;
             CreateNotificationChannel();
+
+            smallIconID = context.Resources.GetIdentifier("hands", "drawable", context.PackageName);//объявляется в манифесте, живет в папке Images
+            largeIconID = context.Resources.GetIdentifier("appicon", "mipmap", context.PackageName);
         }
 
         private void CreateNotificationChannel()
@@ -67,7 +73,8 @@ namespace Client.Platforms.Android
             var builder = new NotificationCompat.Builder(_context, ChannelId)
                 .SetContentTitle(title)
                 .SetContentText(text)
-                .SetSmallIcon(Resource.Drawable.AppIcon) // Иконка(типа системной) в левом верхнем углу экрана
+                .SetSmallIcon(smallIconID) // Иконка(типа системной) в левом верхнем углу экрана
+                .SetLargeIcon(BitmapFactory.DecodeResource(_context.Resources, largeIconID))//иконка в уведомлении
                 .SetContentIntent(pendingIntent)
                 .SetAutoCancel(true)
                 .SetPriority(NotificationCompat.PriorityHigh) // важное уведомление

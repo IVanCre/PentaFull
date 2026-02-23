@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860039753215",
+    "project_id": "penta-client-1928",
+    "storage_bucket": "penta-client-1928.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860039753215:android:3a98d54fdb6f4aa51c8bca",
+        "android_client_info": {
+          "package_name": "com.companyname.penta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfGpDyrltsvx3ujzSy2awGrH98gKRSSXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

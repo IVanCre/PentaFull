@@ -1,6 +1,8 @@
 ﻿using Penta_Server.Interfaces;
 using MessageLib;
 using Microsoft.EntityFrameworkCore;
+using Penta_Server.Services.Repositories.Models;
+
 
 namespace Penta_Server.Services.Repositories
 {
@@ -9,7 +11,7 @@ namespace Penta_Server.Services.Repositories
        private string connStr = config["WorkDB:ConnString"];
 
 
-        public async void MarkForDelete(int messageID)
+        public async void MarkForDelete(long messageID)
         {
             using (DB db = new DB(connStr))
             {
@@ -23,16 +25,22 @@ namespace Penta_Server.Services.Repositories
             {
                 if(db.Users.FirstOrDefault(x=>x.ID==msg.ToID) !=null)//получатель должен быть зарегистрированнным
                 {
-                    db.Messages.Add(new Models.MessageEntity()
+                    var createdEntity = new MessageEntity()
                     {
+                        //оригинальный message.id(сгенеренный клиентом) не используем- т.к. клиенты шлют отрицательные идентификаторы(и они могут повторяться)
                         IsSended = false,
+                        ClientNotified = false,
                         FromUserID = msg.FromID,
                         GroupID = msg.ChatID,
                         ToUserID = msg.ToID,
                         Type = msg.Type,
-                        Data = msg.Data
-                    });
+                        Data = msg.Data,
+                        UtcTimestamp = msg.UtcTimestamp,
+                    };
+                    db.Messages.Add(createdEntity);
                     db.SaveChanges();
+
+                    msg.SetNewID(createdEntity.ID);//меняем на серверный идентификатор
                 }
             }
         }
@@ -68,8 +76,11 @@ namespace Penta_Server.Services.Repositories
         {
             using (DB db = new DB(connStr))
             {
-                var finded = await db.Messages.FirstOrDefaultAsync(x => x.ToUserID==userID&& !x.IsSended);
-                return finded != null;   
+                var finded = await db.Messages.Where(x => x.ToUserID==userID && !x.IsSended && !x.ClientNotified).ToListAsync();
+                finded.ForEach(x => x.ClientNotified = true);//отмечаем, что клиент уведомлен об этих сообщениях
+                db.SaveChanges();
+
+                return finded != null && finded.Count>0;   
             }
         }
     }

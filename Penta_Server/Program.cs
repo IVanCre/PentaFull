@@ -57,11 +57,13 @@ namespace Penta_Server
             services.AddSingleton<IGroupChatRepository, GroupRepository>();
             services.AddSingleton<MessagesDBCleaner>();
             services.AddSingleton<IConnectionsRepository, ConnectionsRepository>();
+            services.AddSingleton<IDeviceTokenRepository, DeviceTokenRepository>();
 
             services.AddSingleton<IMessageSaver, MessageSaver>();
             services.AddSingleton<ITokenManager, TokenManager>();
             services.AddSingleton<IMessageProcessor, MessageProcessor>();
             services.AddSingleton<IClientNotifier, ClientNotifier>();
+            services.AddSingleton<IPushManager, PushManager>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();

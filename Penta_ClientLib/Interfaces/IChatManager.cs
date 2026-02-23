@@ -18,8 +18,9 @@ namespace Penta_ClientLib.Interfaces
         Task<Tuple<bool, Exception>> AddMessageToChat(int chatID, int recieverID, MessageType type, byte[] data);
 
 
-
+        Task<bool> DeletePrivateChat(int chatID);
         Task<int> CreatePrivateChat(string chatName);
-        Task<Tuple<List<ChatInfo>,Exception>> GetAllChatsInfo();
+
+        Task<List<ChatInfo>> GetAllChatsInfo();
     }
 }

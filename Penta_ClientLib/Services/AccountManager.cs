@@ -6,19 +6,18 @@ namespace Penta_ClientLib.Services
 {
 
     internal class AccountManager(
-        ISettingsHolder settings,
+        ISettingsProvider settings,
         IWebClient webClient):IAccountManager
     {
-        private ISettingsHolder _settings=settings;
+        private ISettingsProvider _settings=settings;
         private IWebClient _webClient=webClient;
 
         public async Task<Tuple<bool, Exception>> DeleteAccount()
         {
             try
             {
-                var id = await _settings.GetValueByName<string>("userID");
-                var result = await _webClient.SendMessage(
-                    MessageFactory.DeleteAccountRequest(int.Parse(id)));
+                var userID = await _settings.GetUserID();
+                var result = await _webClient.SendMessage(MessageFactory.DeleteAccountRequest(userID));
 
                 return Tuple.Create<bool, Exception>(result, null);
             }
@@ -35,9 +34,9 @@ namespace Penta_ClientLib.Services
                 int userID = await _webClient.TryRegisterAsync(login, password);
                 if (userID > -1)
                 {
-                    _settings.SetValueByName("userLogin",login);
-                    _settings.SetValueByName("userPassword", password);
-                    _settings.SetValueByName("userID",userID);
+                    await _settings.SetUserLogin(login);
+                    await _settings.SetUserPassword(password);
+                    await _settings.SetUserID(userID);
                     return Tuple.Create<bool,Exception>(true, null);
                 }
                 else
@@ -47,23 +46,6 @@ namespace Penta_ClientLib.Services
             {
                 return Tuple.Create(false, e);
             }
-        }
-
-        public async Task<Tuple<bool,Exception>> Login(string login=null, string password = null)
-        {
-            bool result = false;
-            if (!string.IsNullOrEmpty( await _settings.GetValueByName<string>("userID")))
-            {
-                if(login==null)
-                    login=await _settings.GetValueByName<string>("userLogin");
-                if(password==null)
-                    password=await _settings.GetValueByName<string>("userPassword");
-
-                result = await _webClient.TryLoginAsync(login, password);
-                return Tuple.Create<bool, Exception>(result, null);
-            }
-            else
-                return Tuple.Create(false, new Exception("Клиент не зарегистрирован"));
         }
 
     }

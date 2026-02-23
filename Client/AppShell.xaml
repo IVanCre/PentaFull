@@ -7,16 +7,20 @@
     BackgroundColor="{StaticResource SecondaryDarkText}"
     FlyoutBackgroundColor="{StaticResource Gray600}">
 
+    <FlyoutItem Title=""  Route="LoadingPage">
+        <ShellContent ContentTemplate="{DataTemplate local:LoadingPage}" Shell.NavBarIsVisible="False" Route="LoadingPage" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Авторизация"  Route="AuthPage">
         <ShellContent ContentTemplate="{DataTemplate local:AuthPage}" Route="AuthPage" />
     </FlyoutItem>
-
+    
     <FlyoutItem Title="Чаты"  Route="ChatsPage">
         <ShellContent ContentTemplate="{DataTemplate local:ChatsPage}" Route="ChatsPage" />
     </FlyoutItem>
-
+    
     <FlyoutItem Title="Контакты"  Route="ContactsPage">
         <ShellContent ContentTemplate="{DataTemplate local:ContactsPage}" Route="ContactsPage" />
     </FlyoutItem>
-    
+
 </Shell>

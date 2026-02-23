@@ -29,6 +29,11 @@ namespace Penta_ServerTests
                 throw new NotImplementedException();
             }
 
+            public void MarkForDelete(long messageID)
+            {
+                throw new NotImplementedException();
+            }
+
             Task<bool> IMessageRepository.HasNonSended(int userID)
             {
                 throw new NotImplementedException();

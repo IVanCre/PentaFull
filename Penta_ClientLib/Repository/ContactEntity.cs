@@ -1,9 +1,9 @@
 ﻿using SQLite;
 
 
-namespace Client.Platforms.Android.Repository
+namespace Penta_ClientLib.Repository
 {
-    internal class Contact
+    internal  class ContactEntity
     {
         [PrimaryKey]
         public int ID { get; set; }

@@ -57,6 +57,8 @@ namespace Penta_Server.Migrations
                     table.PrimaryKey("PK_Users", x => x.ID);
                 });
 
+            migrationBuilder.Sql("DBCC CHECKIDENT ('Users', RESEED, 1);");
+
             migrationBuilder.CreateTable(
                 name: "Tokens",
                 columns: table => new

@@ -2,9 +2,9 @@
 using SQLite;
 
 
-namespace Client.Platforms.Android.Repository
+namespace Penta_ClientLib.Repository
 {
-    internal class MessageItem
+    internal class MessageItemEntity
     {
         [PrimaryKey]
         public long ID { get; set; }

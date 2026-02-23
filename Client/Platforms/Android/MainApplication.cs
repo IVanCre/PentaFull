@@ -1,9 +1,5 @@
 ﻿using Android.App;
 using Android.Runtime;
-using Penta_ClientLib.Interfaces;
-using Client.Platforms.Android.Repository;
-using Android.OS;
-using Client.Interfaces;
 
 
 namespace Client.Platforms.Android
@@ -20,16 +16,11 @@ namespace Client.Platforms.Android
         {
             var builder = MauiApp.CreateBuilder();
 
-            //библиотека Penta_ClientLib предоставляет способ реализации указанных хранилищ самому разрабу
-            builder.Services.AddSingleton<ISettingsHolder, DBManager>();
-            builder.Services.AddSingleton<IChatHolder, DBManager>();
-            builder.Services.AddSingleton<IMessageHolder, DBManager>();
-            builder.Services.AddSingleton<IContactHolder, DBManager>();
-
-            builder.Services.AddSingleton<INewMessageCheckerManager, MessageCheckerService>();
+            //тут можно добавить специфичные платформо-зависимые сервисы
+            builder.Services.AddScoped<DeviceTokenSender>();
 
             return MauiProgram.CreateMauiApp(builder);
         }
-        
+
     }
 }

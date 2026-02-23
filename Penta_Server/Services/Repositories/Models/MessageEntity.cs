@@ -7,11 +7,13 @@ namespace Penta_Server.Services.Repositories.Models
 {
     [Index("ID",IsUnique=true)]
     [Index("ToUserID","IsSended")]
+    [Index("ToUserID","ClientNotified")]
     [Index("Type")]
     public class MessageEntity
     {
         public long ID { get; set; }
 
+        public bool ClientNotified { get; set; }//получил ли клиент уведомление, о появлении этого сообщения
         public bool IsSended { get; set; }//была ли выполнена автодоставка при покдлючении(чтобы потом удалить это сообщение)
         public int FromUserID { get; set; }
         public int GroupID { get; set; }

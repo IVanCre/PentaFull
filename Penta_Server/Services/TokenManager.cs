@@ -2,7 +2,6 @@
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 using Penta_Server.Interfaces;
@@ -20,45 +19,27 @@ namespace Penta_Server.Services
         private ILogWriter _logger = logger;
 
 
-        public string CreateToken(int maskedID,string username, string pass)
+        public string[] CreateTokenPack(int maskedID,string username, string pass)
         {
-            var token = GenerateToken(maskedID, username, pass);
+            string[] tokenPack = GenerateTokenPack(maskedID, username, pass);
             using (DB db= new DB(config["WorkDB:ConnString"]))
             {
                 string maskedPass = PasswordManager.Encrypt(pass, username);
                 var finded =db.Users.FirstOrDefault(x => x.Name == username && x.MaskedPassword == maskedPass);
-                db.Tokens.Add(new TokenEntity() {User= finded,Token= token });
+                db.Tokens.Add(
+                    new TokenEntity() {
+                        User= finded,
+                        AccessToken= tokenPack[0],
+                        RefreshToken = tokenPack[1]
+                    });
                 db.SaveChanges();
             }
 
-            return token;
-        }
-
-        public string GetToken(string username, string pass)
-        {
-            string token= string.Empty;
-            using (DB db= new DB(config["WorkDB:ConnString"]))
-            {
-                string maskedPass = PasswordManager.Encrypt(pass, username);
-                var findedUser = db.Users.FirstOrDefault(x => x.Name == username && x.MaskedPassword == maskedPass);
-                if(findedUser!=null)
-                {
-                    var finded = db.Tokens.FirstOrDefault(x => x.User.ID== findedUser.ID);
-                    if (TokenLifeTime(finded.Token).TotalMinutes > 5)
-                        token = finded.Token;
-                    else//почти просрочен, надо делать новый
-                    {
-                        finded.Token = GenerateToken(findedUser.ID,username, pass);
-                        token = finded.Token;
-                        db.SaveChanges();
-                    }
-                }
-            }
-            return token;
+            return tokenPack;
         }
 
         // На основе связки ник-пароль генерирует токен. Роль так же генерируется на основе связки
-        private string GenerateToken(int userID,string username, string pass)
+        private string[] GenerateTokenPack(int userID,string username, string pass)
         {
             string roleName = UserRoleCreator.GenerateRole(username, pass);
             var claims = new List<Claim> 
@@ -67,31 +48,62 @@ namespace Penta_Server.Services
                 new Claim(ClaimTypes.Role,roleName )//роли вшиваем в токен
             };
 
-            var jwt = new JwtSecurityToken(
+            return GenerateTokenPack(claims);
+        }
+        private string[] GenerateTokenPack(IEnumerable<Claim> claims)
+        {
+            var accessJwt = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(Convert.ToInt32(_config["Jwt:LifeTimeMinutes"]))),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"])), SecurityAlgorithms.HmacSha256));
+                signingCredentials: new SigningCredentials(
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(config["Jwt:Key"])),
+                        SecurityAlgorithms.HmacSha256));
 
+            var refreshJwt = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                expires: DateTime.UtcNow.Add(TimeSpan.FromDays(Convert.ToInt32(365))),//ну типа если ты год не заходишь -ну сорямба((
+                signingCredentials: new SigningCredentials(
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(config["Jwt:Key"])),
+                        SecurityAlgorithms.HmacSha256));
 
-            return new JwtSecurityTokenHandler().WriteToken(jwt);
+            return new string[]{
+                new JwtSecurityTokenHandler().WriteToken(accessJwt),
+                new JwtSecurityTokenHandler().WriteToken(refreshJwt) };
         }
 
 
 
 
-
-        public string CreateRefreshToken()
+        public string[] RefreshJwtToken(string refreshToken)
         {
-            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            string[] tokenPack = new string[2];
+            using (DB db = new DB(config["WorkDB:ConnString"]))
+            {
+                var finded = db.Tokens.FirstOrDefault(x => x.RefreshToken == refreshToken);
+                if(finded!=null)
+                {
+                    var claims = GetClaims(finded.AccessToken);//берем старую инфу
+                    var newPack = GenerateTokenPack(claims);
+                    finded.AccessToken = newPack[0];
+                    finded.RefreshToken = newPack[1];
+                    tokenPack = newPack;
+
+                    db.SaveChanges();
+                }
+            }
+            return tokenPack;
         }
 
-        public int FindUserByToken(string token)
+        public int FindUserByToken(string accessToken)
         {
             using (DB db = new DB(config["WorkDB:ConnString"]))
             {
-                var finded =db.Tokens.FirstOrDefault(x => x.Token == token);
+                var finded =db.Tokens.FirstOrDefault(x => x.AccessToken == accessToken);
                 if (finded != null)
                 {
                     var findedUser = db.Users.FirstOrDefault(x => x.ID == finded.ID);
@@ -104,7 +116,7 @@ namespace Penta_Server.Services
             return -1;
         }
 
-        private TimeSpan TokenLifeTime(string token)
+        private TimeSpan GetTokenLifeTime(string token)
         {
             var handler = new JwtSecurityTokenHandler();
             JwtSecurityToken jwtToken;
@@ -119,12 +131,27 @@ namespace Penta_Server.Services
                     return TimeSpan.FromSeconds(remainingSeconds);
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-
+                _logger?.SaveError($"Ошибка чтения даты jwtToken: {e.Message}");
             }
 
             return TimeSpan.Zero;
+        }
+        private IEnumerable<Claim> GetClaims(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            JwtSecurityToken jwtToken;
+            try
+            {
+                jwtToken = handler.ReadJwtToken(token);
+                return jwtToken.Payload.Claims;
+
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

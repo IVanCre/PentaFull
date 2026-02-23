@@ -34,9 +34,14 @@ namespace MessageLib
             this.UtcTimestamp = UtcTimestamp.ToUniversalTime();
         }
 
+        public void SetNewID(long newID)
+        {
+            this.ID = newID;
+        }
         public static long GenerateIDByTime()//при высокой интенсивности, могут выскакивать повторы))
         {
-            return (long)(DateTime.Now- DateTime.Parse("01.01.2025")).TotalMilliseconds;
+            return (long)(DateTime.Now- DateTime.Parse("01.01.2025")).TotalMilliseconds * -1;//*-1 позволит разграничивать локальные сообщения и от сервера в локальной БД
         }
+
     }
 }

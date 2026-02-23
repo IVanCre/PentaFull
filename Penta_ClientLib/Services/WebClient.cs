@@ -4,191 +4,27 @@ using Penta_ClientLib.Interfaces;
 using MessageLib;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Text.Json;
 
 
 
 namespace Penta_ClientLib.Services
 {
-    internal class WebClient : IWebClient
+    public abstract class BaseClient
     {
-        private int _waitRequestSeconds = 90;
-        private HubConnection _messHabConnection;
-        private string _serverUrl = "https://192.168.1.35:9093";
-        private string _jwtToken= string.Empty;//здесь хранится токен от доступа от сервака
+        protected ISettingsProvider _settingsHolder;
+        protected int _waitRequestSeconds = 90;        
+        protected string _serverUrl = "https://192.168.1.35:9093";
 
-        public event MessageRecieved RecievedMessage;//внешний делегат для обработки входящих сообщений ОТ сервера
-
-
-        public async Task<bool> TryDeleteAccountAsync()
+        protected BaseClient(ISettingsProvider settings)
         {
-            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
-            {
-                httpClient.Timeout= TimeSpan.FromSeconds(_waitRequestSeconds);
-                var fullUrl = $"{_serverUrl}/User/DeleteSelfAccount";
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _jwtToken);//по токену сервак 
-
-                var response = await httpClient.PostAsync(fullUrl, null);
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    Console.WriteLine("-Аккаунт удален");
-                    return true;
-                }
-                else
-                    Console.WriteLine("Сервер ответил ошибкой");
-            }
-
-            return false;
-        }
-        public async Task<bool> TryLoginAsync(string login, string pass)
-        {
-            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
-            {
-                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
-                var fullUrl = $"{_serverUrl}/User/Login?name={login}&pass={pass}";
-
-                var response = await httpClient.GetAsync(fullUrl);
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    _jwtToken = await response.Content.ReadAsStringAsync();
-
-                    await ConnectToMessageHub();
-                    Console.WriteLine("-Вход завершен");
-                    return true;
-                }
-                else
-                    Console.WriteLine("-Сервер отверг вход");
-            }
-
-            return false;
-        }
-        public async Task<int> TryRegisterAsync(string login, string pass)
-        {
-            int userID = -1;
-            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
-            {
-                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
-                var fullUrl = $"{_serverUrl}/User/Registration?name={login}&pass={pass}";
-
-                var response = await httpClient.PostAsync(fullUrl, null);
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    _jwtToken = await response.Content.ReadAsStringAsync();
-                    userID = GetUserID(_jwtToken);
-                    await ConnectToMessageHub();
-                    Console.WriteLine("-Регистрация успешно завершена");
-                }
-                else
-                    Console.WriteLine("-Сервер отверг регистрацию");
-            }
-
-            return userID;
-        }
-        public async Task<bool> CheckNewMessages()
-        {
-            bool hasUnreded = false;
-            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
-            {
-                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _jwtToken);
-                var fullUrl = $"{_serverUrl}/Message/FindUnreaded";
-
-                var response = await httpClient.GetAsync(fullUrl);
-
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    var finded = await response.Content.ReadAsStringAsync();
-                    hasUnreded = bool.Parse(finded);
-                }
-            }
-            return hasUnreded;
-        }
-        private async Task<bool> RefreshJwtToken()
-        {
-           throw new NotImplementedException();
-        }
-        private int GetUserID(string token)
-        {
-            int userID = -1;
-            var handler = new JwtSecurityTokenHandler();
-            var jwtTokenObj = handler.ReadJwtToken(token);
-            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(jwtTokenObj.Claims));
-            foreach (var claim in claimsPrincipal.Claims)
-            {
-                if(claim.Type=="userID")
-                {
-                    userID= int.Parse(claim.Value);
-                    break;
-                }
-            }
-
-            return userID;
+            if(settings==null)
+                throw new ArgumentNullException(nameof(settings));
+            _settingsHolder = settings;
         }
 
-
-        public async Task<bool> SendMessage(Message message)
-        {
-            try
-            {
-                await ConnectToMessageHub();
-
-                if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
-                {
-                    await _messHabConnection.InvokeAsync("SendToServer", message);
-                    return true;
-                }
-            }
-            catch(Exception ex) 
-            {
-                Console.WriteLine(ex);
-            }
-
-            return false;
-        }
-
-
-        public async Task<bool> ConnectToMessageHub()
-        {
-            try
-            {
-                if (_messHabConnection == null)
-                {
-                    _messHabConnection = new HubConnectionBuilder()
-                        .WithUrl($"{_serverUrl}/exchanger", options =>
-                        {
-                            options.AccessTokenProvider = () => Task.FromResult(_jwtToken);//передаем токен,чтоб пропустили на хаб
-                            options.HttpMessageHandlerFactory = _ =>
-                            {
-                                return HandlerCustomCertCheck();
-                            };
-                        })
-                        .Build();
-
-
-                    // Обработка входящих сообщений с сервера
-                    _messHabConnection.On<Message>("RecieveMessage", async (message) =>
-                    {
-                        await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении
-                        RecievedMessage?.Invoke(message);//вызываем внешний делегат
-                    });
-
-                    await _messHabConnection.StartAsync();
-                }
-                else
-                {
-                    if (_messHabConnection.State == HubConnectionState.Disconnected)//соединение может закрыться, если кто-то долго не отвечает
-                       await _messHabConnection.StartAsync();
-                }
-
-                return true;
-            }
-            catch (Exception ex) 
-            {  
-                return false;
-            }
-
-
-        }
-        private HttpClientHandler HandlerCustomCertCheck()
+        protected HttpClientHandler HandlerCustomCertCheck()
         {
             return new HttpClientHandler
             {
@@ -218,6 +54,254 @@ namespace Penta_ClientLib.Services
                 }
             };
         }
+        protected async Task<bool> TryRefreshToken(HttpStatusCode response)
+        {
+            bool result = false;
+            switch (response)
+            {
+                case HttpStatusCode.Unauthorized://возможно, токен истек
+                    {
+                        if (await TryRefreshJwtToken())
+                            result= true;
+                    }
+                    break;
+                case HttpStatusCode.OK:
+                    result = true;
+                    break;
+            }
+            return result;
+        }
+        private async Task<bool> TryRefreshJwtToken()
+        {
+            var _refreshJwtToken = await _settingsHolder.GetRefreshToken();//нет токена-нет запроса))
+            if (!string.IsNullOrEmpty(_refreshJwtToken))
+            {
+                using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
+                {
+                    httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
+                    var fullUrl = $"{_serverUrl}/User/RefreshToken";
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _refreshJwtToken);//по токену сервак 
+
+                    var response = await httpClient.GetAsync(fullUrl);
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var serialized = await response.Content.ReadAsStringAsync();
+                        string[] tokenPack = JsonSerializer.Deserialize<string[]>(serialized);
+                        await SaveTokenPack(tokenPack);
+
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Сервер ответил ошибкой");
+                        return false;
+                    }
+                }
+            }
+            else
+                return false;
+        }
+        protected async Task SaveTokenPack(string[] tokenPack)
+        {
+            await _settingsHolder.SetAccessToken(tokenPack[0]);
+            await _settingsHolder.SetRefreshToken(tokenPack[1]);
+        }
+    }
+
+
+
+    internal class WebClient :BaseClient, IWebClient
+    {
+        public event ConnectionStateChanged ConnectionStateChanged;
+        private HubConnection _messHabConnection;
+        public event MessageRecieved RecievedMessage;//внешний делегат для обработки входящих сообщений ОТ сервера
+
+        public WebClient(ISettingsProvider settings) : base(settings) { }
+
+
+#region withoutJwt
+        public async Task<int> TryRegisterAsync(string login, string pass)
+        {
+            int userID = -1;
+            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
+                var fullUrl = $"{_serverUrl}/User/Registration?name={login}&pass={pass}";
+
+                var response = await httpClient.PostAsync(fullUrl, null);
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var serialized = await response.Content.ReadAsStringAsync();
+                    string[] tokenPack= JsonSerializer.Deserialize<string[]>(serialized);
+                    await SaveTokenPack(tokenPack);
+
+                    userID = GetUserID(await _settingsHolder.GetAccessToken());
+                    await ConnectToMessageHub();
+                    Console.WriteLine("-Регистрация успешно завершена");
+                }
+                else
+                    Console.WriteLine("-Сервер отверг регистрацию");
+            }
+
+            return userID;
+        }
+        private int GetUserID(string token)
+        {
+            int userID = -1;
+            var handler = new JwtSecurityTokenHandler();
+            var jwtTokenObj = handler.ReadJwtToken(token);
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(jwtTokenObj.Claims));
+            foreach (var claim in claimsPrincipal.Claims)
+            {
+                if(claim.Type=="userID")
+                {
+                    userID= int.Parse(claim.Value);
+                    break;
+                }
+            }
+
+            return userID;
+        }
+        #endregion
+
+
+#region withJwtOnly
+        public async Task<bool> SendDeviceToken(string tokenDevice)
+        {
+            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
+            {
+                var accessToken = await _settingsHolder.GetAccessToken();
+                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",accessToken );//по токену сервак 
+
+                var fullUrl = $"{_serverUrl}/Message/SetDeviceForPush?tokenDevice={tokenDevice}";
+
+                var response = await httpClient.PostAsync(fullUrl, null);
+                if(await TryRefreshToken(response.StatusCode))
+                {
+                    return true;
+                }
+                else
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);//тут уже новый токен 
+                    response = await httpClient.PostAsync(fullUrl, null);
+                    return response.StatusCode == HttpStatusCode.OK;
+                }
+            }
+        }
+        public async Task<bool> TryDeleteAccountAsync()
+        {
+            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
+            {
+                var accessToken = await _settingsHolder.GetAccessToken();
+                httpClient.Timeout= TimeSpan.FromSeconds(_waitRequestSeconds);
+                var fullUrl = $"{_serverUrl}/User/DeleteSelfAccount";
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);//по токену сервак 
+
+                var response = await httpClient.PostAsync(fullUrl, null);
+                if(await TryRefreshToken(response.StatusCode))
+                {
+                    Console.WriteLine("-Аккаунт удален");
+                    return true;
+                }
+                else
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);//тут уже новый токен 
+                    response = await httpClient.PostAsync(fullUrl, null);
+                    return response.StatusCode == HttpStatusCode.OK;
+                }
+            }
+        }
+
+        public async Task<bool> SendMessage(Message message)
+        {
+            try
+            {
+                if (await ConnectToMessageHub())
+                {
+                    if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
+                    {
+                        await _messHabConnection.InvokeAsync("SendToServer", message);
+                        return true;
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                DisconnectFromMessageHub();
+            }
+
+            return false;
+        }
+
+        public async Task<bool> ConnectToMessageHub()
+        {
+            try
+            {
+                if (_messHabConnection == null)
+                {
+                    _messHabConnection = new HubConnectionBuilder()
+                        .WithUrl($"{_serverUrl}/exchanger", options =>
+                        {
+                            options.AccessTokenProvider = async () =>// Динамический провайдер: вызывается ПЕРЕД каждым (пере)подключением
+                            {
+                                var token = await _settingsHolder.GetAccessToken();
+                                var secondsToDie = _settingsHolder.GetLifetimeSecondsLeft(token);//сколько секунд до истечения осталось
+                                if (secondsToDie.TotalSeconds<30)
+                                {
+                                    var refreshed = await TryRefreshToken(HttpStatusCode.Unauthorized);
+                                    if (refreshed)
+                                        token = await _settingsHolder.GetAccessToken();
+                                }
+                                return token;
+                            };
+                            options.HttpMessageHandlerFactory = _ => HandlerCustomCertCheck();
+                        })
+                        .WithAutomaticReconnect()
+                        .Build();
+
+                    _messHabConnection.Closed += async (ex) =>
+                    {
+                        ConnectionStateChanged?.Invoke(false);
+                        await InicializeConnect();// Сюда попадаем, если переподключение не удалось (например, нет сети)
+                    };
+                }
+
+                await InicializeConnect();
+                return _messHabConnection.State == HubConnectionState.Connected;
+            }
+            catch (Exception ex) when (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized"))
+            {
+                // Если все же проскочила ошибка 401 на этапе StartAsync
+                if (await TryRefreshToken(HttpStatusCode.Unauthorized))
+                    return await ConnectToMessageHub();//пробуем подключиться снова с новым токеном
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return false;
+        }
+
+        private async Task InicializeConnect()
+        {
+            if (_messHabConnection.State == HubConnectionState.Disconnected)
+            {
+                _messHabConnection.On<Message>("RecieveMessage", async (message) =>
+                {
+                    RecievedMessage?.Invoke(message);//вызываем внешний делегат
+                    await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении для сервака
+                });
+                await _messHabConnection.StartAsync();
+
+                if (_messHabConnection.State == HubConnectionState.Connected)
+                    ConnectionStateChanged?.Invoke(true);
+            }
+        }
+        #endregion
+
+
         private async void DisconnectFromMessageHub()
         {
             if (_messHabConnection != null)
@@ -227,11 +311,9 @@ namespace Penta_ClientLib.Services
                 _messHabConnection = null;
             }
         }
-
         public void Dispose()
         {
             DisconnectFromMessageHub();
-            _jwtToken = string.Empty;
         }
     }
 }

@@ -10,18 +10,30 @@ namespace Penta_Server.Services.MessagesProcessors
     /// </summary>
     /// <param name="groupRepo"></param>
     /// <param name="clientNotifier"></param>
-    public class MessageProcessor(
-        IGroupChatRepository groupRepo,
-        IClientNotifier clientNotifier,
-        IUserRepository userRepo,
-        ILogWriter logger) : IMessageProcessor
+    public class MessageProcessor : IMessageProcessor
     {
-        private IGroupChatRepository _groupRepo = groupRepo;
-        private IClientNotifier _clientNotifier= clientNotifier;
-        private IUserRepository _userRepo= userRepo;
-        private ILogWriter _logger= logger;
+        private IMessageSaver _messageSaver;
+        private IGroupChatRepository _groupRepo;
+        private IClientNotifier _clientNotifier;
+        private IUserRepository _userRepo;
+        private ILogWriter _logger;
 
+        public MessageProcessor(
+            IGroupChatRepository groupRepo,
+            IClientNotifier clientNotifier,
+            IUserRepository userRepo,
+            IMessageSaver messSaver,
+            ILogWriter logger)
+        {
+            _messageSaver = messSaver;
+            _messageSaver.MessageSaved += ProcessSavedMessage;
+            _groupRepo = groupRepo;
+            _clientNotifier = clientNotifier;
+            _userRepo = userRepo;
+            _logger = logger;
+        }
 
+        //в этом методе поступившие сообщения обрабатываются и ставятся в очередь на сохранение 
         public void ProcessingMessage(Message msg)
         {
             switch (msg.Type)
@@ -47,7 +59,8 @@ namespace Penta_Server.Services.MessagesProcessors
             _logger?.SaveSystemInfo("Получен запрос на создание чата");
             var groupID = await _groupRepo.CreatGroupAsync(msg.FromID,msg.GetDataLikeString());
 
-            _ = _clientNotifier.SendToUser(MessageFactory.CreateGroupChat_Response(groupID, msg));
+            var createdMsg = MessageFactory.CreateGroupChat_Response(groupID, msg);
+            _messageSaver.Save(createdMsg);//сохраняем в БД(вдруг хаба нет или связь плохая)
         }
 
         private async void InviteToGroupChatResponce(Message msg)
@@ -63,8 +76,8 @@ namespace Penta_Server.Services.MessagesProcessors
                         var usersID = finded.UserIDsInGroup();
                         foreach (var userID in usersID)//для каждого юзера делаем отдельную копию сообщения
                         {
-                            _ = _clientNotifier.SendToUser(
-                                MessageFactory.InviteUserToGroupChat_ServerResponse(msg, userID));
+                            var createdMsg = MessageFactory.InviteUserToGroupChat_ServerResponse(msg, userID);
+                            _messageSaver.Save(createdMsg);
                         }
                     }
                 }
@@ -85,8 +98,8 @@ namespace Penta_Server.Services.MessagesProcessors
                     var usersID = finded.UserIDsInGroup();
                     foreach (var userID in usersID)//для каждого юзера делаем отдельную копию сообщения
                     {
-                        _ = _clientNotifier.SendToUser(
-                            MessageFactory.DeleteUserFromGroupChat_Response(msg, userID));
+                        var createdMsg = MessageFactory.DeleteUserFromGroupChat_Response(msg, userID);
+                        _messageSaver.Save(createdMsg);
                     }
                 }
             }
@@ -103,8 +116,8 @@ namespace Penta_Server.Services.MessagesProcessors
                 {
                     foreach (var userID in usersID)//для каждого юзера делаем отдельную копию сообщения
                     {
-                        _ = _clientNotifier.SendToUser(
-                            MessageFactory.DeleteGroupChat_Response(msg,userID));
+                        var createdMsg = MessageFactory.DeleteGroupChat_Response(msg, userID);
+                        _messageSaver.Save(createdMsg);
                     }
                 }
             }
@@ -118,7 +131,7 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 if(group.AdminGroupID== msg.FromID)//только создатель группы может приглашать в нее
                 {
-                    _ = _clientNotifier.SendToUser(msg);
+                    _messageSaver.Save(msg);
                 }
             }
         }
@@ -132,21 +145,21 @@ namespace Penta_Server.Services.MessagesProcessors
                 {
                     foreach (int userID in group.UserIDsInGroup())//если данные в сообщении большие, то для каждого юзера будет сохранена в БД копия сообщения(что не совсем эффективно)
                     {
-                        _ = _clientNotifier.SendToUser(
-                            new Message(
+                        var createdMsg = new Message(
                                 Message.GenerateIDByTime(),
                                 msg.FromID,
                                 msg.ChatID,
                                 userID,
                                 msg.Type,
                                 msg.Data,
-                                msg.UtcTimestamp));
+                                msg.UtcTimestamp);
+                        _messageSaver.Save(createdMsg);
                     }
                 }
             }
             else//сообщение для конкретного юзера
             {
-                _ = _clientNotifier.SendToUser(msg);
+                _messageSaver.Save(msg);
             }
         }
 
@@ -156,9 +169,16 @@ namespace Penta_Server.Services.MessagesProcessors
             var result = await _userRepo.DeleteUserByIDAsync(msg.FromID);
             if (result)
             {
-                _ = _clientNotifier.SendToUser(
-                    MessageFactory.DeleteAccountResponce(msg));
+                var createdMsg = MessageFactory.DeleteAccountResponce(msg);
+                _messageSaver.Save(createdMsg);
             }
+        }
+
+
+        //в этом методе берется последнее сохраненное сообщение
+        private void ProcessSavedMessage(Message savedMsg)
+        {
+            _ = _clientNotifier.SendToUser(savedMsg);
         }
     }
 }

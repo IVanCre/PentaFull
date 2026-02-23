@@ -15,12 +15,12 @@ namespace Penta_Server.Services.SignalR
         IMessageRepository messageRepo,
         IConnectionsRepository connRepo,
         IHubContext<MessageHub> hubContext,
-        IMessageSaver messSaver,
-        ILogWriter logger) : IClientNotifier
+        ILogWriter logger,
+        IPushManager pushMngr) : IClientNotifier
     {
+        private IPushManager _pushMngr = pushMngr;
         private IMessageRepository _messageRepo= messageRepo;
         private IConnectionsRepository _connRepo = connRepo;
-        private IMessageSaver _messSaver=messSaver;
         private ILogWriter _logger = logger;
         private IHubContext<MessageHub> _hubContext=hubContext;
 
@@ -43,8 +43,6 @@ namespace Penta_Server.Services.SignalR
         }
         public async Task SendToUser(Message msg)
         {
-            _messSaver.Save(msg);//сохраняем в БД(вдруг хаба нет или связь плохая)
-
             var connectionID = _connRepo.GetConnectionID(msg.ToID);
             if (!string.IsNullOrEmpty(connectionID))//что такой юзер все еще подключен
             {
@@ -55,10 +53,13 @@ namespace Penta_Server.Services.SignalR
                     await client.SendAsync("RecieveMessage", msg);
                 }
             }
+            else//пытаемся отослать пуш-уведомление(чтобы юзер открыл приложение и получил сообщение)
+            {
+                _ = _pushMngr.SendPushToUserDevices(msg.ToID);
+            }
         }
 
 
-        public void MessageSended(int messageID) => _messageRepo.MarkForDelete(messageID);
-
+        public void MessageSended(long messageID) => _messageRepo.MarkForDelete(messageID);
     }
 }

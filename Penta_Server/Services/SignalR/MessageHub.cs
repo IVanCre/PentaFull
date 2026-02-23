@@ -6,14 +6,6 @@ using MessageLib;
 
 namespace Penta_Server.Services.SignalR
 {
-    public interface IMessageHub
-    {
-        void  SendToServer(Message msg);
-
-        IHubCallerClients GetClientsProvider();
-
-    }
-
     /// <summary>
     /// Обработчик клиентских подключений и запросов
     /// </summary>
@@ -25,7 +17,7 @@ namespace Penta_Server.Services.SignalR
         ILogWriter logger,
         IMessageProcessor messProcessor,
         IClientNotifier clientNotifier,
-        IConnectionsRepository connRepo) : Hub, IMessageHub
+        IConnectionsRepository connRepo) : Hub
     {
         private IConnectionsRepository _connRepo = connRepo;//чтобы отслеживать ассоциацию пользователя и его подключение
         private ILogWriter _logger = logger;
@@ -38,12 +30,14 @@ namespace Penta_Server.Services.SignalR
             if (!string.IsNullOrEmpty(userMaskedID))
             {
                 var userID_int = int.Parse(userMaskedID);
-                _logger?.SaveSystemInfo($"Пользователь {userID_int} подключился с ConnectionId: {Context.ConnectionId}");
+                _logger?.SaveSystemInfo($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
                 _connRepo.Add(userID_int, Context.ConnectionId);
 
                 await base.OnConnectedAsync();
                 await _clientNotifier?.SendAllNonSended(userID_int, Context.ConnectionId);//сразу отдаем накопившиеся сообщения
             }
+            else
+                _logger?.SaveSystemInfo($"Отказ в подключении юзеру к хабу");
         }
 
         public override async Task OnDisconnectedAsync(Exception? exep)//отключение клиента
@@ -56,10 +50,17 @@ namespace Penta_Server.Services.SignalR
             await base.OnDisconnectedAsync(null);
         }
 
-        public async Task AcknowledgeReceived(int messageID)
+        public void AcknowledgeReceived(long messageID)
         {
-            _clientNotifier.MessageSended(messageID);//подтверждение получения сообщения от клиента
-            _logger?.SaveSystemInfo($"Клиент подтвердил получение сообщения");
+            try
+            {
+                _clientNotifier.MessageSended(messageID);//подтверждение получения сообщения от клиента
+                _logger?.SaveSystemInfo($"Клиент подтвердил получение сообщения id={messageID}");
+            }
+            catch (Exception ex)
+            {
+                _logger?.SaveSystemInfo($"Ошибка подтверждения получения сообщения: {ex.Message}");
+            }
         }
 
 

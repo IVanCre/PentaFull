@@ -56,7 +56,7 @@ namespace Penta_Server.Services.Repositories
             {
                 var user =db.Tokens
                     .Include(x=>x.User)
-                    .FirstOrDefault(x=>x.Token==token)?.User;
+                    .FirstOrDefault(x=>x.AccessToken==token)?.User;
 
                 if (user != null)
                 {

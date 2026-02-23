@@ -13,11 +13,6 @@ namespace ConsoleClient_Tests
             var builder = Host.CreateApplicationBuilder(args);
             builder.Services.AddClientDependencies();
 
-            builder.Services.AddSingleton<ISettingsHolder, MemoryDB>();//библиотека предоставляет способ реализации хранилищ самому разрабу
-            builder.Services.AddSingleton<IChatHolder, MemoryDB>();
-            builder.Services.AddSingleton<IMessageHolder, MemoryDB>();
-            builder.Services.AddSingleton<IContactHolder, MemoryDB>();
-
             var host = builder.Build();
             host.RunAsync();
 

@@ -10,6 +10,6 @@ namespace Penta_Server.Interfaces
         void Add(Message msg);
         Task<List<Message>> GetNonSendedForUserAsync(int userID);
         Task<bool> HasNonSended(int userID);
-        void MarkForDelete(int messageID);
+        void MarkForDelete(long messageID);
     }
 }

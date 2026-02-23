@@ -22,7 +22,7 @@ namespace Client.Pages
             var chatName = ChatName.Text;
             if (!string.IsNullOrEmpty(chatName))
             {
-                var sended = await _clientFacade.CreateGroupChat(chatName);
+                var sended = await _clientFacade.CreateGroupChatAsync(chatName);
                 if (sended.Item1)
                     await Navigation.PopAsync();
                 else

@@ -5,11 +5,11 @@ using Penta_ClientLib.Services;
 using SQLite;
 
 
-namespace Client.Platforms.Android.Repository
+namespace Penta_ClientLib.Repository
 {
-    internal class DBManager : ISettingsHolder, IChatHolder, IMessageHolder,IContactHolder
+    internal class DBManager :  ISettingsHolder, IChatHolder, IMessageHolder,IContactHolder
     {
-        private string _dbFileName = $"WorkDB.db3";
+        private string _dbFileName = $"PentaClientDB.db3";
         private SQLiteOpenFlags _creationFlags =
             SQLiteOpenFlags.ReadWrite |// open the database in read/write mode
             SQLiteOpenFlags.Create |// create the database if it doesn't exist
@@ -19,14 +19,14 @@ namespace Client.Platforms.Android.Repository
 
         public DBManager()
         {
-            _dbFullPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _dbFileName);
+            _dbFullPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _dbFileName);//в винде: C:\Users\UsernameX\AppData\Roaming
             InitConnect();
 
-            _connection.CreateTableAsync<Settings>();
-            _connection.CreateTableAsync<Contact>();
-            _connection.CreateTableAsync<Chat>();
-            _connection.CreateTableAsync<UserInChat>();
-            _connection.CreateTableAsync<MessageItem>();
+            _connection.CreateTableAsync<SettingsEntity>();
+            _connection.CreateTableAsync<ContactEntity>();
+            _connection.CreateTableAsync<ChatEntity>();
+            _connection.CreateTableAsync<UserInChatEntity>();
+            _connection.CreateTableAsync<MessageItemEntity>();
         }
         private void InitConnect()
         {
@@ -40,25 +40,25 @@ namespace Client.Platforms.Android.Repository
         {
             InitConnect();
 
-            var finded = await _connection.Table<Settings>().FirstOrDefaultAsync(x => x.Name == paramName);
+            var finded = await _connection.Table<SettingsEntity>().FirstOrDefaultAsync(x => x.Name == paramName);
             if (finded != null)
                 return (T)Convert.ChangeType(finded.Value, typeof(T));
             else
-                return default;
+                return default(T);
         }
-        public async void SetValueByName<T>(string paramName, T value)
+        public async Task SetValueByName<T>(string paramName, T value)
         {
             InitConnect();
 
-            var finded = await _connection.Table<Settings>().FirstOrDefaultAsync(x => x.Name == paramName);
+            var finded = await _connection.Table<SettingsEntity>().FirstOrDefaultAsync(x => x.Name == paramName);
             if (finded != null)
             {
                 finded.Value = value.ToString();
-                _ = _connection.UpdateAsync(finded);
+                await _connection.UpdateAsync(finded);
             }
             else
-                _ = _connection.InsertAsync(
-                    new Settings()
+                await _connection.InsertAsync(
+                    new SettingsEntity()
                     {
                         Name = paramName,
                         Value = value.ToString()
@@ -73,7 +73,7 @@ namespace Client.Platforms.Android.Repository
             InitConnect();
 
             var inserted = await _connection.InsertAsync(
-                new Contact()
+                new ContactEntity()
                 {
                     ID = ContactConverter.ExtractUserID(connectID),
                     UserName = userName,
@@ -93,7 +93,7 @@ namespace Client.Platforms.Android.Repository
         {
             InitConnect();
 
-            var finded = await _connection.Table<Contact>().FirstOrDefaultAsync(x => x.UserName == userName);
+            var finded = await _connection.Table<ContactEntity>().FirstOrDefaultAsync(x => x.UserName == userName);
             if (finded != null)
                 return finded.ID;
             else
@@ -104,7 +104,7 @@ namespace Client.Platforms.Android.Repository
             InitConnect();
 
             int userID = ContactConverter.ExtractUserID(contactID);
-            var finded = await _connection.Table<Contact>().FirstOrDefaultAsync(x => x.ID == userID);
+            var finded = await _connection.Table<ContactEntity>().FirstOrDefaultAsync(x => x.ID == userID);
             if (finded != null)
                 return finded.UserName;
             else
@@ -113,17 +113,20 @@ namespace Client.Platforms.Android.Repository
         public async Task<List<ContactInfo>> GetAllContacts()
         {
             List<ContactInfo> list = new();
-            var finded = await _connection.Table<Contact>().ToListAsync();
+            var finded = await _connection.Table<ContactEntity>().ToListAsync();
             foreach (var contact in finded)
                 list.Add(new ContactInfo( contact.UserName,ContactConverter.ConvertUserIDToContactID(contact.ID)));
 
             return list;
         }
-        public async Task<bool> DeleteByContactID(string contactID)
+        public async Task<bool> DeleteByName(string userName)
         {
             InitConnect();
 
-            var deleted = await _connection.ExecuteAsync("delete from Contact where ID = ?", ContactConverter.ExtractUserID(contactID));
+            var deleted=await _connection.Table<ContactEntity>()
+                .Where(c => c.UserName == userName)
+                .DeleteAsync();
+
             return deleted == 1;
         }
 
@@ -136,7 +139,7 @@ namespace Client.Platforms.Android.Repository
             InitConnect();
 
             var added = await _connection.InsertAsync(
-                new Chat()
+                new ChatEntity()
                 {
                     ID = chatID,
                     Name = chatName
@@ -152,7 +155,8 @@ namespace Client.Platforms.Android.Repository
         {
             int id = 0;
             InitConnect();
-            var finded = await _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
+
+            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.Name == chatName);
             if (finded == null)
             {
                 id = GenerateLocalIDByTime();
@@ -167,7 +171,9 @@ namespace Client.Platforms.Android.Repository
 
         public async Task<int> GetChatID(string chatName)
         {
-            var finded = await _connection.Table<Chat>().FirstOrDefaultAsync(x => x.Name == chatName);
+            InitConnect();
+
+            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.Name == chatName);
             if (finded != null)
                 return finded.ID;
             else
@@ -178,8 +184,14 @@ namespace Client.Platforms.Android.Repository
         {
             InitConnect();
 
-            var deleted = await _connection.ExecuteAsync("delete from Chat where ID = ?", chatID);
-            await DeleteByChatID(chatID);
+            await _connection.Table<MessageItemEntity>()
+                .Where(c => c.ChatID == chatID)
+                .DeleteAsync();
+
+            var deleted = await _connection.Table<ChatEntity>()
+                .Where(c => c.ID == chatID)
+                .DeleteAsync();
+
             return deleted == 1;
         }
 
@@ -188,7 +200,7 @@ namespace Client.Platforms.Android.Repository
             InitConnect();
 
             var inserted = await _connection.InsertAsync(
-                new UserInChat()
+                new UserInChatEntity()
                 {
                     ContactId = userid,
                     ChatId = chatID
@@ -201,15 +213,15 @@ namespace Client.Platforms.Android.Repository
         {
             InitConnect();
 
-            object[] param = { userid, chatID };
-            var deleted = await _connection.ExecuteAsync("delete from UserInChat where ContactId = ? and ChatId = ?", param);
-
+            var deleted = await _connection.Table<UserInChatEntity>()
+                .Where(c => c.ContactId == userid && c.ChatId==chatID)
+                .DeleteAsync();
             return deleted == 1;
         }
         public async Task<List<ChatInfo>> GetAllChats()
         {
             List<ChatInfo> finded = new();
-            var list = await _connection.Table<Chat>().ToListAsync();
+            var list = await _connection.Table<ChatEntity>().ToListAsync();
             foreach (var item in list)
                 finded.Add(new ChatInfo(item.ID, item.Name));
 
@@ -222,7 +234,7 @@ namespace Client.Platforms.Android.Repository
         public async Task<bool> SaveMessage(Message msg)
         {
             var result = await _connection.InsertAsync(
-                 new MessageItem()
+                 new MessageItemEntity()
                  {
                      ID = msg.ID,
                      FromID = msg.FromID,
@@ -230,7 +242,8 @@ namespace Client.Platforms.Android.Repository
                      ToID = msg.ToID,
                      Type = msg.Type,
                      Data = msg.Data,
-                     UtcTimestamp = DateTime.Now
+                     UtcTimestamp = DateTime.Now,
+                     IsSended = false
                  });
 
             return result == 1;
@@ -238,7 +251,7 @@ namespace Client.Platforms.Android.Repository
         public async Task<List<Message>> GetNonSended()
         {
             List<Message> result = new();
-            var finded = await _connection.Table<MessageItem>().Where(x => x.IsSended == false).ToListAsync();
+            var finded = await _connection.Table<MessageItemEntity>().Where(x => x.IsSended == false).ToListAsync();
             foreach (var item in finded)
                 result.Add(
                     new Message(
@@ -252,17 +265,21 @@ namespace Client.Platforms.Android.Repository
 
             return result;
         }
-        public async Task<bool> DeleteByChatID(int chatID)
+        public async Task MarkMessageLikeSended(long msgID)
         {
-            var deleted = await _connection.ExecuteAsync("delete from MessageItem where  ChatID = ?", chatID);
-            return deleted > 0;
+            var finded = await _connection.Table<MessageItemEntity>().FirstOrDefaultAsync(x => x.ID== msgID);
+            if (finded != null)
+            {
+                finded.IsSended = true;
+                await _connection.UpdateAsync(finded);
+            }
         }
 
 
         public async Task<List<Message>> GetMessagesByChat(int chatID, int maxLenCount)
         {
             List<Message> result = new();
-            var finded = await _connection.Table<MessageItem>()
+            var finded = await _connection.Table<MessageItemEntity>()
                 .Where(x=>x.ChatID==chatID)
                 .OrderBy(x=>x.UtcTimestamp)
                 .Take(maxLenCount)

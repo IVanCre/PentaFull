@@ -53,7 +53,7 @@ namespace ConsoleClient_Tests
 
         private static bool EnterToSystem(IClientFacade facade)
         {
-            Console.WriteLine("Регистрация(R) или Вход(L)");
+            Console.WriteLine("Регистрация(R)");
             string enter = Console.ReadLine();
 
             Console.WriteLine("Ведите логин и пароль");
@@ -63,8 +63,7 @@ namespace ConsoleClient_Tests
             Tuple<bool, Exception> result = default;
             switch (enter)
             {
-                case "R": result = facade.Registration(login, pass).Result; break;
-                case "L": result = facade.Login(login, pass).Result; break;
+                case "R": result = facade.RegistrationAsync(login, pass).Result; break;
             }
             Console.WriteLine($"Вход выполнен:{result.Item1}");
             return result.Item1;
@@ -82,20 +81,20 @@ namespace ConsoleClient_Tests
             {
                 Console.WriteLine("ID чата:");
                 string chatName = Console.ReadLine();
-                facade.SendMessageToChat(int.Parse(chatName), MessageType.Text, MessageUtils.TextToBytes(text));
+                facade.SendMessageToGroupChatAsync(int.Parse(chatName), MessageType.Text, MessageUtils.TextToBytes(text));
             }
             else
             {
                 Console.WriteLine("connectID получателя:");
                 string userConnectID = Console.ReadLine();
-                facade.SendMessageToUser(-1,userConnectID, MessageType.Text, MessageUtils.TextToBytes(text));
+                facade.SendMessageToUserAsync(-1,userConnectID, MessageType.Text, MessageUtils.TextToBytes(text));
             }
         }
 
         private static async void GetAllChats(IClientFacade facade)
         {
-            var finded = await facade.GetAllChatsInfo();
-            foreach (var item in finded.Item1)
+            var finded = await facade.GetAllChatsInfoAsync();
+            foreach (var item in finded)
                 Console.WriteLine($"ChatID={item.ID} ChatName={item.ChatName}");
         }
         private static void ResponseToInviteChat(IClientFacade facade)
@@ -105,7 +104,7 @@ namespace ConsoleClient_Tests
             Console.WriteLine("согласны Y|N:");
             var symbol = Console.ReadLine();
 
-            _=facade.SendResponseToInvite(int.Parse(chatID), symbol=="Y");
+            _=facade.SendResponseToInviteAsync(int.Parse(chatID), symbol=="Y");
         }
 
 
@@ -127,7 +126,7 @@ namespace ConsoleClient_Tests
                 if (EnterToSystem(facade))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"Ваш контактный номер: {facade.GetMyContactID().Result}");
+                    Console.WriteLine($"Ваш контактный номер: {facade.GetMyContactID()}");
                     Console.ForegroundColor = ConsoleColor.White;
                     ActionSelector(facade);
                 }
@@ -165,33 +164,33 @@ namespace ConsoleClient_Tests
                     case "4":
                         {
                             var chatName = Console.ReadLine();
-                            facade.CreateGroupChat(chatName);
+                            facade.CreateGroupChatAsync(chatName);
                         }
                         break;
                     case "5":
                         {
                             var userContactID = Console.ReadLine(); 
                             var chatID = Console.ReadLine();                     
-                            facade.InviteUserToGroupChat(int.Parse(chatID), userContactID);
+                            facade.InviteUserToGroupChatAsync(int.Parse(chatID), userContactID);
                         }
                         break;
                     case "6":
                         {
                             var chatID = Console.ReadLine();
                             var userContactID = Console.ReadLine();
-                            facade.DeleteUserFromGroupChat(int.Parse(chatID), userContactID);
+                            facade.DeleteUserFromGroupChatAsync(int.Parse(chatID), userContactID);
                         }
                         break;
                     case "7":
                         {
                             var chatID = Console.ReadLine();
-                            facade.LeaveGroupChat(int.Parse(chatID));
+                            facade.LeaveGroupChatAsync(int.Parse(chatID));
                         }
                         break;
                     case "8":
                         {
                             var chatID = Console.ReadLine();
-                            facade.DeleteGroupChat(int.Parse(chatID));
+                            facade.DeleteGroupChatAsync(int.Parse(chatID));
                         }
                         break;
 
@@ -199,7 +198,7 @@ namespace ConsoleClient_Tests
                     case "10": SendMessage(facade, false); break;
                     case "12": GetAllChats(facade); break;
                     case "13": ResponseToInviteChat(facade); break;
-                    case "14": facade.DeleteAccount();break;
+                    case "14": facade.DeleteAccountAsync();break;
                 }
             }
         }

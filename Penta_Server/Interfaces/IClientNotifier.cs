@@ -8,7 +8,7 @@ namespace Penta_Server.Interfaces
     public interface IClientNotifier
     {
         Task SendAllNonSended(int userID, string connID);
-        void MessageSended(int messageID);
+        void MessageSended(long messageID);
         Task SendToUser(Message msg);
     }
 }

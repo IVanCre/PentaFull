@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using MessageLib;
 using Client.Interfaces;
 using System.Globalization;
+using Penta_ClientLib.Services;
 
 namespace Client.Pages
 {
@@ -40,8 +41,7 @@ namespace Client.Pages
 		private int _currentUserID;//идентификатор юзера
 		private IClientFacade _clientFacade;
 		private IUINotificator _notifier;
-		private IContactHolder _contactHolder;
-		private ISettingsHolder _settingsHolder;
+		private ISettingsProvider _settingsHolder;
 		private const int messageLoadedNum = 100;//количество последних сообщений для загрузки при старте
 
 
@@ -51,8 +51,7 @@ namespace Client.Pages
 
 			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
 			_notifier = App.Services.GetRequiredService<IUINotificator>();
-			_contactHolder = App.Services.GetRequiredService<IContactHolder>();
-			_settingsHolder =App.Services.GetRequiredService<ISettingsHolder>();
+			_settingsHolder =App.Services.GetRequiredService<ISettingsProvider>();
             
             _clientFacade.MessageAddedToChat += TryAddIncomingMessageToChat;
 			MessageList = new();
@@ -64,8 +63,8 @@ namespace Client.Pages
 		}
 		private async void LoadLastMessages()
 		{
-			var finded = await _clientFacade.GetMessagesByChat(_chatID, messageLoadedNum);
-			_currentUserID =await _settingsHolder.GetValueByName<int>("userID");
+			var finded = await _clientFacade.GetMessagesByChatAsync(_chatID, messageLoadedNum);
+			_currentUserID =await _settingsHolder.GetUserID();
 			string from=string.Empty;
 			foreach (var mess in finded)
 			{
@@ -113,24 +112,21 @@ namespace Client.Pages
 		{
 			var input = MessageText.Text;
 			MessageList.Add(new MessageInfo() { Text = input });
+			MessageText.Text = "";
 
 			Tuple<bool, Exception> result = default;
 			if (_chatID > 0)
 			{
-				result = await _clientFacade.SendMessageToChat(_chatID, MessageType.Text, MessageUtils.TextToBytes(input));
+				result = await _clientFacade.SendMessageToGroupChatAsync(_chatID, MessageType.Text, MessageUtils.TextToBytes(input));
 			}
 			else
 			{
-				if (_recieverUserID == -1)
-					_recieverUserID = await _contactHolder.GetUserIDByName(ChatName);//тянем идентификатор юзера
-
-				result = await _clientFacade.SendMessageToUser(_chatID,_recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input));
+				_recieverUserID =await _clientFacade.GetRecieverIDFromChatAsync(ChatName);
+                result = await _clientFacade.SendMessageToUserAsync(_chatID,_recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input));
 			}
 
 			if (!result.Item1)
 				await _notifier.ShowMessage("Ошибка", $"Сообщение НЕ ОТПРАВЛЕНО:{result.Item2.Message}", "ок");
-
-			MessageText.Text = "";
 		}
 	}
 }

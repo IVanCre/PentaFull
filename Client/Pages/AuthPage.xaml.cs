@@ -3,6 +3,7 @@
 
 using Penta_ClientLib.Interfaces;
 using Client.Interfaces;
+using Client.Platforms.Android;
 
 namespace Client.Pages
 {
@@ -10,7 +11,6 @@ namespace Client.Pages
 	{
 		private IClientFacade _clientFacade;
 		private IUINotificator _notifier;
-		private INewMessageCheckerManager _newMessageListener;
 
         public AuthPage()
 		{
@@ -18,14 +18,6 @@ namespace Client.Pages
 
 			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
 			_notifier = App.Services.GetRequiredService<IUINotificator>();
-			_newMessageListener = App.Services.GetRequiredService<INewMessageCheckerManager>();
-
-            TryInicializeCredsFromSettings(App.Services.GetRequiredService<ISettingsHolder>());
-
-			if(string.IsNullOrEmpty(UsernameEntry.Text))//значит есть данные с прошлой регистрации
-				LoginButton.IsVisible = false;
-			else
-				RegButton.IsVisible = false;
         }
 
 
@@ -33,10 +25,12 @@ namespace Client.Pages
 		{
 			if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
 			{
-				var result = await _clientFacade.Registration(UsernameEntry.Text, PasswordEntry.Text);
+				var result = await _clientFacade.RegistrationAsync(UsernameEntry.Text, PasswordEntry.Text);
                 if (result.Item1)
 				{
-					_newMessageListener.StartService();
+					SetBatteryOptimizations();
+                    RegistrationDevice();
+
                     await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
                 }
 				else
@@ -46,34 +40,29 @@ namespace Client.Pages
 				await _notifier.ShowMessage("Внимание", "Введите логин и пароль", "ок");
 		}
 
-        private async void OnLoginButtonClicked(object sender, EventArgs e)
-		{
-			if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
-			{
-				var result = await _clientFacade.Login(UsernameEntry.Text, PasswordEntry.Text);
-				if (result.Item1)
-				{
-					_newMessageListener.StartService();
-                    await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
-                }
-				else
-					await _notifier.ShowMessage("Внимание", $"Ошибка Входа на сервере:{result.Item2.Message}", "ок");
-			}
-			else
-				await _notifier.ShowMessage("Внимание", "Введите логин и пароль", "ок");
-		}
 
-		private async void TryInicializeCredsFromSettings(ISettingsHolder settings)
-		{
-            UsernameEntry.Text = await settings.GetValueByName<string>("userLogin");
-            PasswordEntry.Text = await settings.GetValueByName<string>("userPassword");
+
+        private void RegistrationDevice()
+        {
+#if ANDROID
+            var sender =App.Services.GetRequiredService<DeviceTokenSender>();
+            sender.SendTokenToServer();
+#endif
         }
-
-
-		private void OffServiceClicked(object sender, EventArgs e)
+		private void SetBatteryOptimizations()//это чтобы фоновая активность не убивалась ОС
 		{
-            _newMessageListener.StopService();
+#if ANDROID
+            var intent = new Android.Content.Intent();
+            var packageName = Android.App.Application.Context.PackageName;
+            var pm = (Android.OS.PowerManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.PowerService);
+            if (!pm.IsIgnoringBatteryOptimizations(packageName))
+            {
+                intent.SetAction(Android.Provider.Settings.ActionRequestIgnoreBatteryOptimizations);
+                intent.SetData(Android.Net.Uri.Parse("package:" + packageName));
+                intent.SetFlags(Android.Content.ActivityFlags.NewTask);
+                Android.App.Application.Context.StartActivity(intent);
+            }
+#endif
         }
-
     }
 }

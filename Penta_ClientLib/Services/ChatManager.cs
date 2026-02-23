@@ -8,18 +8,18 @@ namespace Penta_ClientLib.Services
     internal class ChatManager : IChatManager
     {
         private IChatHolder _chatHolder;
-        private IWebClient _messSender;
-        private ISettingsHolder _settingsHolder;
+        private IWebClient _webClient;
+        private ISettingsProvider _settingsHolder;
         private IMessageHolder _messHolder;
 
         public ChatManager(
             IChatHolder chatProvider,
-            ISettingsHolder settings,
-            IWebClient messSender,
+            ISettingsProvider settings,
+            IWebClient client,
             IMessageHolder messHolder)
         {
             _chatHolder = chatProvider;
-            _messSender = messSender;
+            _webClient = client;
             _settingsHolder = settings;
             _messHolder = messHolder;
         }
@@ -28,11 +28,14 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                int currentUserID = await _settingsHolder.GetValueByName<int>("userID");
-                var msg = MessageFactory.CreateGroupChat_Request(currentUserID, chatName); 
+                var currUserID = await _settingsHolder.GetUserID();
+                var msg = MessageFactory.CreateGroupChat_Request(currUserID, chatName); 
                 await _messHolder.SaveMessage(msg);
 
-                var sended= await _messSender.SendMessage(msg);
+                var sended= await _webClient.SendMessage(msg);
+                if (sended)
+                    await _messHolder.MarkMessageLikeSended(msg.ID);
+
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -46,11 +49,14 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                int currentUserID = await _settingsHolder.GetValueByName<int>("userID");
-                var msg = MessageFactory.InviteUserToGroupChat_UserResponse(currentUserID, chatID, acceptInvite);
+                var currUserID = await _settingsHolder.GetUserID();
+                var msg = MessageFactory.InviteUserToGroupChat_UserResponse(currUserID, chatID, acceptInvite);
                 await _messHolder.SaveMessage(msg);
 
-                var sended = await _messSender.SendMessage(msg);
+                var sended = await _webClient.SendMessage(msg);
+                if (sended)
+                    await _messHolder.MarkMessageLikeSended(msg.ID);
+
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -62,12 +68,15 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                int currentUserID =await _settingsHolder.GetValueByName<int>("userID");
+                var currUserID = await _settingsHolder.GetUserID();
                 int userID = ContactConverter.ExtractUserID(userConnectID);
-                var msg = MessageFactory.InviteUserToGroupChat_Request(currentUserID,chatID,userID);
+                var msg = MessageFactory.InviteUserToGroupChat_Request(currUserID, chatID,userID);
                 await _messHolder.SaveMessage(msg);
 
-                var sended = await _messSender.SendMessage(msg);
+                var sended = await _webClient.SendMessage(msg);
+                if (sended)
+                    await _messHolder.MarkMessageLikeSended(msg.ID);
+
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -81,12 +90,15 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                int currentUserID =await _settingsHolder.GetValueByName<int>("userID");
+                var currUserID = await _settingsHolder.GetUserID();
                 int userID =ContactConverter.ExtractUserID(userConnectID);
-                var msg = MessageFactory.DeleteUserFromGroupChat_Request(currentUserID, userID, chatID);
+                var msg = MessageFactory.DeleteUserFromGroupChat_Request(currUserID, userID, chatID);
                 await _messHolder.SaveMessage(msg);
 
-                var sended = await _messSender.SendMessage(msg);
+                var sended = await _webClient.SendMessage(msg);
+                if (sended)
+                    await _messHolder.MarkMessageLikeSended(msg.ID);
+
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -99,11 +111,14 @@ namespace Penta_ClientLib.Services
 
             try
             {
-                int currentUserID = await _settingsHolder.GetValueByName<int>("userID");
-                var msg = MessageFactory.DeleteUserFromGroupChat_Request(currentUserID, currentUserID, chatID);
+                var currUserID = await _settingsHolder.GetUserID();
+                var msg = MessageFactory.DeleteUserFromGroupChat_Request(currUserID, currUserID, chatID);
                 await _messHolder.SaveMessage(msg);
 
-                var sended = await _messSender.SendMessage(msg);
+                var sended = await _webClient.SendMessage(msg);
+                if (sended)
+                    await _messHolder.MarkMessageLikeSended(msg.ID);
+
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -117,11 +132,14 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                int currentUserID =await _settingsHolder.GetValueByName<int>("userID");
-                var msg =MessageFactory.DeleteGroupChat_Request(currentUserID, chatID);
+                var currUserID = await _settingsHolder.GetUserID();
+                var msg =MessageFactory.DeleteGroupChat_Request(currUserID, chatID);
                 await _messHolder.SaveMessage(msg);
 
-                var sended = await _messSender.SendMessage(msg);
+                var sended = await _webClient.SendMessage(msg);
+                if (sended)
+                    await _messHolder.MarkMessageLikeSended(msg.ID);
+
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch(Exception e)
@@ -135,11 +153,11 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                int currentUserID = await _settingsHolder.GetValueByName<int>("userID");
                 Message msg;
+                var currUserID = await _settingsHolder.GetUserID();
                 if (chatID < 0)//значит это приватный чат
                 {
-                    msg = MessageFactory.UserToUser(currentUserID, recieverID, type, data);
+                    msg = MessageFactory.UserToUser(currUserID, recieverID, type, data);
                     await _messHolder.SaveMessage(//сохраняем копию, у которой указа локальный идентификатор чата(чтоб знать от какого чата это сообщение)
                         new Message(
                             msg.ID,
@@ -152,11 +170,14 @@ namespace Penta_ClientLib.Services
                 }
                 else
                 {
-                    msg = MessageFactory.UserToGroupChat(currentUserID, chatID, type, data);
+                    msg = MessageFactory.UserToGroupChat(currUserID, chatID, type, data);
                     await _messHolder.SaveMessage(msg);
                 }
 
-                var sended = await _messSender.SendMessage(msg);
+                var sended = await _webClient.SendMessage(msg);
+                if (sended)
+                    await _messHolder.MarkMessageLikeSended(msg.ID);
+
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -166,14 +187,8 @@ namespace Penta_ClientLib.Services
         }
 
 
-        public async Task<Tuple<List<ChatInfo>, Exception>> GetAllChatsInfo()
-        {
-            var list =await _chatHolder.GetAllChats();
-            return Tuple.Create<List<ChatInfo>,Exception>(list, null);
-        }
-        public async Task<int> CreatePrivateChat(string chatName)
-        {
-            return await _chatHolder.CreatePrivateChat(chatName);
-        }
+        public Task<List<ChatInfo>> GetAllChatsInfo() => _chatHolder.GetAllChats();
+        public Task<int> CreatePrivateChat(string chatName) => _chatHolder.CreatePrivateChat(chatName);
+        public Task<bool> DeletePrivateChat(int chatID) => _chatHolder.DeleteChat(chatID);
     }
 }

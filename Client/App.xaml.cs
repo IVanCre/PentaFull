@@ -1,6 +1,4 @@
 ﻿
-using Penta_ClientLib.Interfaces;
-
 namespace Client
 {
     public partial class App : Application
@@ -13,20 +11,6 @@ namespace Client
 
             Services = services;
             MainPage = new AppShell();
-
-            TryAutoLogin();
         }
-
-        private async void TryAutoLogin()
-        {
-            var _clientFacade = Services.GetRequiredService<IClientFacade>();
-
-            var result = await _clientFacade.Login();
-            if (result.Item1)
-            {
-                await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
-            }
-        }
-
     }
 }

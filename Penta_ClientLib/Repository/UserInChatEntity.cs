@@ -1,9 +1,9 @@
 ﻿using SQLite;
 
 
-namespace Client.Platforms.Android.Repository
+namespace Penta_ClientLib.Repository
 {
-    internal class UserInChat
+    internal class UserInChatEntity
     {
         [PrimaryKey, AutoIncrement]
         public int ID { get; set; }

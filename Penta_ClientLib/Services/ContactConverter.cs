@@ -26,7 +26,7 @@ namespace Penta_ClientLib.Services
             }
         }
         public static string ConvertUserIDToContactID(int userID)
-        {            
+        {
             var masked = (_mask - userID).ToString();
             StringBuilder str = new(masked);
             str.Insert(0, "8");

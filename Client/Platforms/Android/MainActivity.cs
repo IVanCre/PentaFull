@@ -1,7 +1,5 @@
 ﻿using Android.App;
-using Android.Content;
 using Android.Content.PM;
-using Client.Interfaces;
 
 
 
