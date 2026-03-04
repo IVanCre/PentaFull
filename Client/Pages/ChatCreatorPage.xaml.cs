@@ -26,7 +26,7 @@ namespace Client.Pages
                 if (sended.Item1)
                     await Navigation.PopAsync();
                 else
-                    await _notifier.ShowMessage("Ошибка",$"Ошибка при отправке запроса: {sended.Item2.Message}","ОК");
+                    await _notifier.ShowMessage("Ошибка",$"Ошибка при отправке запроса: {sended.Item2?.Message}","ОК");
             }
         }
     }

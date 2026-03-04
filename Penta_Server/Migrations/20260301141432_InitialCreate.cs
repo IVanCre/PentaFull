@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Penta_Server.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -36,7 +37,8 @@ namespace Penta_Server.Migrations
                     GroupID = table.Column<int>(type: "int", nullable: false),
                     ToUserID = table.Column<int>(type: "int", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
-                    Data = table.Column<byte[]>(type: "varbinary(max)", nullable: true)
+                    Data = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    UtcTimestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -57,7 +59,19 @@ namespace Penta_Server.Migrations
                     table.PrimaryKey("PK_Users", x => x.ID);
                 });
 
-            migrationBuilder.Sql("DBCC CHECKIDENT ('Users', RESEED, 1);");
+            migrationBuilder.CreateTable(
+                name: "UsersDevices",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserID = table.Column<int>(type: "int", nullable: false),
+                    DeviceToken = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsersDevices", x => x.ID);
+                });
 
             migrationBuilder.CreateTable(
                 name: "Tokens",
@@ -66,7 +80,8 @@ namespace Penta_Server.Migrations
                     ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserID = table.Column<int>(type: "int", nullable: true),
-                    Token = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    AccessToken = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    RefreshToken = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -106,15 +121,20 @@ namespace Penta_Server.Migrations
                 column: "Type");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Tokens_AccessToken",
+                table: "Tokens",
+                column: "AccessToken");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tokens_ID",
                 table: "Tokens",
                 column: "ID",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tokens_Token",
+                name: "IX_Tokens_RefreshToken",
                 table: "Tokens",
-                column: "Token");
+                column: "RefreshToken");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tokens_UserID",
@@ -131,6 +151,17 @@ namespace Penta_Server.Migrations
                 name: "IX_Users_Name_MaskedPassword",
                 table: "Users",
                 columns: new[] { "Name", "MaskedPassword" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UsersDevices_ID",
+                table: "UsersDevices",
+                column: "ID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UsersDevices_UserID_DeviceToken",
+                table: "UsersDevices",
+                columns: new[] { "UserID", "DeviceToken" });
         }
 
         /// <inheritdoc />
@@ -144,6 +175,9 @@ namespace Penta_Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Tokens");
+
+            migrationBuilder.DropTable(
+                name: "UsersDevices");
 
             migrationBuilder.DropTable(
                 name: "Users");

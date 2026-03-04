@@ -10,6 +10,6 @@ namespace Penta_ClientLib.Interfaces
 
 
         Task<List<Message>> GetNonSended();
-        Task MarkMessageLikeSended(long msgID);
+        Task<bool> MarkMessageLikeSended(long msgID);
     }
 }

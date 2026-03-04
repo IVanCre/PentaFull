@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Text.Json;
+using Penta_ClientLib.DataStructs;
 
 
 
@@ -107,13 +108,12 @@ namespace Penta_ClientLib.Services
             await _settingsHolder.SetRefreshToken(tokenPack[1]);
         }
     }
-
-
-
     internal class WebClient :BaseClient, IWebClient
     {
-        public event ConnectionStateChanged ConnectionStateChanged;
+        private int _pingIntervalSeconds = 5;
         private HubConnection _messHabConnection;
+        public event MessageSended MessageSended;
+        public event ConnectionStateChanged ConnectionStateChanged;
         public event MessageRecieved RecievedMessage;//внешний делегат для обработки входящих сообщений ОТ сервера
 
         public WebClient(ISettingsProvider settings) : base(settings) { }
@@ -132,15 +132,12 @@ namespace Penta_ClientLib.Services
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     var serialized = await response.Content.ReadAsStringAsync();
-                    string[] tokenPack= JsonSerializer.Deserialize<string[]>(serialized);
+                    string[] tokenPack = JsonSerializer.Deserialize<string[]>(serialized);
                     await SaveTokenPack(tokenPack);
 
                     userID = GetUserID(await _settingsHolder.GetAccessToken());
                     await ConnectToMessageHub();
-                    Console.WriteLine("-Регистрация успешно завершена");
                 }
-                else
-                    Console.WriteLine("-Сервер отверг регистрацию");
             }
 
             return userID;
@@ -162,10 +159,44 @@ namespace Penta_ClientLib.Services
 
             return userID;
         }
+
+
+        public async Task<string> GetNewestClientFilaName(string currentClientVersion, ClientType type)//просто запрашиваем имя файла самого свежего билда клиента
+        {
+            string urlWithNewVersion = string.Empty;
+            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
+
+                var fullUrl = $"{_serverUrl}/Updates/GetNewestClientFileName?currentClientVersion={currentClientVersion}&type={type}";
+
+                var response = await httpClient.GetAsync(fullUrl);
+                if(response.StatusCode == HttpStatusCode.OK)
+                {
+                    urlWithNewVersion=await response.Content.ReadAsStringAsync();
+                }
+            }
+            return urlWithNewVersion;
+        }        
+        public async Task<HttpContent> LoadClientFileAsync(string fileName, ClientType type)
+        {
+            using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
+
+                var fullUrl = $"{_serverUrl}/Updates/LoadFile?fileName={fileName}&type={type}";
+
+                var response = await httpClient.GetAsync(fullUrl);
+                if (response.StatusCode == HttpStatusCode.OK)
+                    return response.Content;
+                else
+                    return null;
+            }
+        }
         #endregion
 
 
-#region withJwtOnly
+        #region withJwtOnly
         public async Task<bool> SendDeviceToken(string tokenDevice)
         {
             using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
@@ -213,77 +244,79 @@ namespace Penta_ClientLib.Services
             }
         }
 
+
+
         public async Task<bool> SendMessage(Message message)
         {
-            try
+            if (await ConnectToMessageHub())
             {
-                if (await ConnectToMessageHub())
+                if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
                 {
-                    if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
-                    {
-                        await _messHabConnection.InvokeAsync("SendToServer", message);
-                        return true;
-                    }
+                    await _messHabConnection.InvokeAsync("SendToServer", message);
+                    MessageSended?.Invoke(message.ID);//чтобы БД смогла отметить отправленные
+                    return true;
                 }
             }
-            catch(Exception ex)
-            {
-                DisconnectFromMessageHub();
-            }
+            //ошибки не ловим -позволяем всплыть вверх по стеку вызовов
 
             return false;
         }
-
         public async Task<bool> ConnectToMessageHub()
         {
-            try
-            {
-                if (_messHabConnection == null)
-                {
-                    _messHabConnection = new HubConnectionBuilder()
-                        .WithUrl($"{_serverUrl}/exchanger", options =>
-                        {
-                            options.AccessTokenProvider = async () =>// Динамический провайдер: вызывается ПЕРЕД каждым (пере)подключением
-                            {
-                                var token = await _settingsHolder.GetAccessToken();
-                                var secondsToDie = _settingsHolder.GetLifetimeSecondsLeft(token);//сколько секунд до истечения осталось
-                                if (secondsToDie.TotalSeconds<30)
-                                {
-                                    var refreshed = await TryRefreshToken(HttpStatusCode.Unauthorized);
-                                    if (refreshed)
-                                        token = await _settingsHolder.GetAccessToken();
-                                }
-                                return token;
-                            };
-                            options.HttpMessageHandlerFactory = _ => HandlerCustomCertCheck();
-                        })
-                        .WithAutomaticReconnect()
-                        .Build();
 
-                    _messHabConnection.Closed += async (ex) =>
+            if (_messHabConnection == null)
+            {
+                 _messHabConnection = new HubConnectionBuilder()
+                    .WithUrl($"{_serverUrl}/exchanger", options =>
                     {
-                        ConnectionStateChanged?.Invoke(false);
-                        await InicializeConnect();// Сюда попадаем, если переподключение не удалось (например, нет сети)
-                    };
-                }
+                        options.AccessTokenProvider = async () =>// Динамический провайдер: вызывается ПЕРЕД каждым (пере)подключением
+                        {
+                            var token = await _settingsHolder.GetAccessToken();
+                            var secondsToDie = _settingsHolder.GetLifetimeSecondsLeft(token);//сколько секунд до истечения осталось
+                            if (secondsToDie.TotalSeconds < 30)
+                            {
+                                var refreshed = await TryRefreshToken(HttpStatusCode.Unauthorized);
+                                if (refreshed)
+                                    token = await _settingsHolder.GetAccessToken();
+                            }
+                            return token;
+                        };
+                        options.HttpMessageHandlerFactory = _ => HandlerCustomCertCheck();
+                        
+                    })
+                    .WithAutomaticReconnect(new InfiniteReconnectPolicy())
+                    .Build();
 
-                await InicializeConnect();
-                return _messHabConnection.State == HubConnectionState.Connected;
-            }
-            catch (Exception ex) when (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized"))
-            {
-                // Если все же проскочила ошибка 401 на этапе StartAsync
-                if (await TryRefreshToken(HttpStatusCode.Unauthorized))
-                    return await ConnectToMessageHub();//пробуем подключиться снова с новым токеном
-            }
-            catch (Exception ex)
-            {
-                return false;
+                _messHabConnection.KeepAliveInterval=TimeSpan.FromSeconds(_pingIntervalSeconds);
+
+
+                _messHabConnection.Closed += async (ex) =>
+                {
+                    ConnectionStateChanged?.Invoke(false);
+                    await InicializeConnect();// Сюда попадаем, если переподключение не удалось (например, нет сети)
+                };
+                _messHabConnection.Reconnecting += async (ex) =>
+                {
+                    ConnectionStateChanged?.Invoke(false);
+                    await Task.CompletedTask;
+                };
+                _messHabConnection.Reconnected += async (ex) =>
+                {
+                    ConnectionStateChanged?.Invoke(true);
+                    await Task.CompletedTask;
+                };
             }
 
-            return false;
+            await InicializeConnect();
+            return _messHabConnection.State == HubConnectionState.Connected;
         }
-
+        private class InfiniteReconnectPolicy : IRetryPolicy//кастомный 
+        {
+            public TimeSpan? NextRetryDelay(RetryContext retryContext)
+            {
+                return TimeSpan.FromSeconds(5);
+            }
+        }
         private async Task InicializeConnect()
         {
             if (_messHabConnection.State == HubConnectionState.Disconnected)
@@ -301,7 +334,6 @@ namespace Penta_ClientLib.Services
         }
         #endregion
 
-
         private async void DisconnectFromMessageHub()
         {
             if (_messHabConnection != null)
@@ -309,11 +341,13 @@ namespace Penta_ClientLib.Services
                 await _messHabConnection.StopAsync();
                 await _messHabConnection.DisposeAsync();
                 _messHabConnection = null;
+                ConnectionStateChanged?.Invoke(false);
             }
         }
         public void Dispose()
         {
             DisconnectFromMessageHub();
         }
+
     }
 }

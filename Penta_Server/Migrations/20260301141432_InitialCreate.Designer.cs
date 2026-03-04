@@ -12,8 +12,8 @@ using Penta_Server.Services.Repositories;
 namespace Penta_Server.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20260118142441_Init")]
-    partial class Init
+    [Migration("20260301141432_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -79,6 +79,9 @@ namespace Penta_Server.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("UtcTimestamp")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("ID");
 
                     b.HasIndex("ID")
@@ -99,10 +102,43 @@ namespace Penta_Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<string>("Token")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<string>("AccessToken")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
 
                     b.Property<int?>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("AccessToken");
+
+                    b.HasIndex("ID")
+                        .IsUnique();
+
+                    b.HasIndex("RefreshToken");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("Tokens");
+                });
+
+            modelBuilder.Entity("Penta_Server.Services.Repositories.Models.UserDeviceEntity", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<string>("DeviceToken")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("ID");
@@ -110,11 +146,9 @@ namespace Penta_Server.Migrations
                     b.HasIndex("ID")
                         .IsUnique();
 
-                    b.HasIndex("Token");
+                    b.HasIndex("UserID", "DeviceToken");
 
-                    b.HasIndex("UserID");
-
-                    b.ToTable("Tokens");
+                    b.ToTable("UsersDevices");
                 });
 
             modelBuilder.Entity("Penta_Server.Services.Repositories.Models.UserEntity", b =>

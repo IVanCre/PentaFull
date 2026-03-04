@@ -36,6 +36,7 @@ namespace Penta_ClientLib
             _client = client;
 
             _client.ConnectionStateChanged += SendNonSended;
+            _client.MessageSended +=(messageID) => _messHolder.MarkMessageLikeSended(messageID);
         }
 
 
@@ -191,9 +192,13 @@ namespace Penta_ClientLib
         {
             if(connectionToServer)
             {
-                var finded =await _messHolder.GetNonSended();
-                foreach(var msg in finded)
-                    await _client.SendMessage(msg);
+                try
+                {
+                    var finded = await _messHolder.GetNonSended();
+                    foreach (var msg in finded)
+                        await _client.SendMessage(msg);
+                }
+                catch (Exception ex) { }
             }
         }
 

@@ -24,7 +24,9 @@
                             ShortPressClicked="OnShortClick"
                             HorizontalOptions="Fill"
                             VerticalOptions= "CenterAndExpand"
-                            BackgroundColor="{StaticResource PrimaryDark}"
+                            BackgroundColor="{StaticResource Gray100}"
+                            BorderColor="{StaticResource PrimaryDark}"
+                            BorderWidth="3"
                             Margin="10"/>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

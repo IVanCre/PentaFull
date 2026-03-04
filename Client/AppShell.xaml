@@ -23,4 +23,8 @@
         <ShellContent ContentTemplate="{DataTemplate local:ContactsPage}" Route="ContactsPage" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Настройки"  Route="ContactsPage">
+        <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" Route="SettingsPage" />
+    </FlyoutItem>
+
 </Shell>

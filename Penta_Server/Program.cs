@@ -64,6 +64,7 @@ namespace Penta_Server
             services.AddSingleton<IMessageProcessor, MessageProcessor>();
             services.AddSingleton<IClientNotifier, ClientNotifier>();
             services.AddSingleton<IPushManager, PushManager>();
+            services.AddSingleton<IClientFileObserver, ClientFileObserver>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();
@@ -137,7 +138,7 @@ namespace Penta_Server
         private static void StartServices(IServiceProvider sprovider)
         {
             var logger = sprovider.GetRequiredService<ILogWriter>();
-            logger.SaveInfo("<---start-work--->");//чтобы по логам можно было понять когда стартовал\схлопнулся
+            logger.SaveInfo("<---start-new-work--->");//чтобы по логам можно было понять когда стартовал\схлопнулся
 
             var config = sprovider.GetRequiredService<IConfiguration>();
             using (DB db= new DB(config["WorkDB:ConnString"]))

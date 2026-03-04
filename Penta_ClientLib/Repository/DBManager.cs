@@ -265,14 +265,17 @@ namespace Penta_ClientLib.Repository
 
             return result;
         }
-        public async Task MarkMessageLikeSended(long msgID)
+        public async Task<bool> MarkMessageLikeSended(long msgID)
         {
             var finded = await _connection.Table<MessageItemEntity>().FirstOrDefaultAsync(x => x.ID== msgID);
             if (finded != null)
             {
                 finded.IsSended = true;
-                await _connection.UpdateAsync(finded);
+                var updated = await _connection.UpdateAsync(finded);
+                return updated == 1;
             }
+            else
+                return false;
         }
 
 

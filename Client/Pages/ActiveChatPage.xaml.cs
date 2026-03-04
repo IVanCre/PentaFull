@@ -126,7 +126,7 @@ namespace Client.Pages
 			}
 
 			if (!result.Item1)
-				await _notifier.ShowMessage("Ошибка", $"Сообщение НЕ ОТПРАВЛЕНО:{result.Item2.Message}", "ок");
+				await _notifier.ShowMessage("Ошибка", $"Сообщение НЕ ОТПРАВЛЕНО:{result.Item2?.Message}", "ок");
 		}
 	}
 }

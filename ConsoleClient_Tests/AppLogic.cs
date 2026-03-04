@@ -53,20 +53,35 @@ namespace ConsoleClient_Tests
 
         private static bool EnterToSystem(IClientFacade facade)
         {
-            Console.WriteLine("Регистрация(R)");
+            Console.WriteLine("Регистрация(R) или Вход(L)");
             string enter = Console.ReadLine();
 
-            Console.WriteLine("Ведите логин и пароль");
-            string login = Console.ReadLine();
-            string pass = Console.ReadLine();
-
-            Tuple<bool, Exception> result = default;
+            bool enterComplete = false;
             switch (enter)
             {
-                case "R": result = facade.RegistrationAsync(login, pass).Result; break;
+                case "R":
+                    {
+                        Console.WriteLine("Ведите логин и пароль");
+                        string login = Console.ReadLine();
+                        string pass = Console.ReadLine();
+                        if (!string.IsNullOrEmpty(login) && string.IsNullOrEmpty(pass))
+                        {
+                            var result = facade.RegistrationAsync(login, pass).Result;//потому что в консоли рабоатем-это 1 поток
+                            enterComplete = result.Item1;
+                        }
+                        else
+                            Console.WriteLine("Некорректные логин или пароль");
+
+                        break;
+                    }
+                case "L":
+                    {
+                        enterComplete = facade.ConnectToServerAsync().Result;
+                        break;
+                    }
             }
-            Console.WriteLine($"Вход выполнен:{result.Item1}");
-            return result.Item1;
+            Console.WriteLine($"Вход выполнен:{enterComplete}");
+            return enterComplete;
         }
 
        
@@ -108,7 +123,7 @@ namespace ConsoleClient_Tests
         }
 
 
-        public static void WorkLoop(IServiceProvider services)
+        public static async void WorkLoop(IServiceProvider services)
         {
             try
             {
@@ -126,7 +141,7 @@ namespace ConsoleClient_Tests
                 if (EnterToSystem(facade))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"Ваш контактный номер: {facade.GetMyContactID()}");
+                    Console.WriteLine($"Ваш контактный номер: {facade.GetMyContactID().Result}");
                     Console.ForegroundColor = ConsoleColor.White;
                     ActionSelector(facade);
                 }
@@ -158,47 +173,50 @@ namespace ConsoleClient_Tests
                     "14-удалить свой аккаунт\n");
 
                 input = Console.ReadLine();
-                switch (input)
+                if (!string.IsNullOrEmpty(input))
                 {
+                    switch (input)
+                    {
 
-                    case "4":
-                        {
-                            var chatName = Console.ReadLine();
-                            facade.CreateGroupChatAsync(chatName);
-                        }
-                        break;
-                    case "5":
-                        {
-                            var userContactID = Console.ReadLine(); 
-                            var chatID = Console.ReadLine();                     
-                            facade.InviteUserToGroupChatAsync(int.Parse(chatID), userContactID);
-                        }
-                        break;
-                    case "6":
-                        {
-                            var chatID = Console.ReadLine();
-                            var userContactID = Console.ReadLine();
-                            facade.DeleteUserFromGroupChatAsync(int.Parse(chatID), userContactID);
-                        }
-                        break;
-                    case "7":
-                        {
-                            var chatID = Console.ReadLine();
-                            facade.LeaveGroupChatAsync(int.Parse(chatID));
-                        }
-                        break;
-                    case "8":
-                        {
-                            var chatID = Console.ReadLine();
-                            facade.DeleteGroupChatAsync(int.Parse(chatID));
-                        }
-                        break;
+                        case "4":
+                            {
+                                var chatName = Console.ReadLine();
+                                facade.CreateGroupChatAsync(chatName);
+                            }
+                            break;
+                        case "5":
+                            {
+                                var userContactID = Console.ReadLine();
+                                var chatID = Console.ReadLine();
+                                facade.InviteUserToGroupChatAsync(int.Parse(chatID), userContactID);
+                            }
+                            break;
+                        case "6":
+                            {
+                                var chatID = Console.ReadLine();
+                                var userContactID = Console.ReadLine();
+                                facade.DeleteUserFromGroupChatAsync(int.Parse(chatID), userContactID);
+                            }
+                            break;
+                        case "7":
+                            {
+                                var chatID = Console.ReadLine();
+                                facade.LeaveGroupChatAsync(int.Parse(chatID));
+                            }
+                            break;
+                        case "8":
+                            {
+                                var chatID = Console.ReadLine();
+                                facade.DeleteGroupChatAsync(int.Parse(chatID));
+                            }
+                            break;
 
-                    case "9": SendMessage(facade, true); break;
-                    case "10": SendMessage(facade, false); break;
-                    case "12": GetAllChats(facade); break;
-                    case "13": ResponseToInviteChat(facade); break;
-                    case "14": facade.DeleteAccountAsync();break;
+                        case "9": SendMessage(facade, true); break;
+                        case "10": SendMessage(facade, false); break;
+                        case "12": GetAllChats(facade); break;
+                        case "13": ResponseToInviteChat(facade); break;
+                        case "14": facade.DeleteAccountAsync(); break;
+                    }
                 }
             }
         }

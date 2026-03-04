@@ -1,5 +1,6 @@
 ﻿using Android.App;
 using Android.Runtime;
+using Client.Interfaces;
 
 
 namespace Client.Platforms.Android
@@ -17,6 +18,7 @@ namespace Client.Platforms.Android
             var builder = MauiApp.CreateBuilder();
 
             //тут можно добавить специфичные платформо-зависимые сервисы
+            builder.Services.AddSingleton<IUpdateManager, AndroidUpdateManager>();
             builder.Services.AddScoped<DeviceTokenSender>();
 
             return MauiProgram.CreateMauiApp(builder);

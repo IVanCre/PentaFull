@@ -56,7 +56,7 @@ namespace MessageLib
 
 
         //1.userSender->userReciever  
-        public static Message InviteUserToGroupChat_Request(int senderUserID, int chatID, int userRecieverID)
+        public static Message AddUserToGroupChat_Request(int senderUserID, int chatID, int userRecieverID)
         {
             return new Message(
                     Message.GenerateIDByTime(),

@@ -29,7 +29,6 @@ namespace Penta_Server.Services.Repositories
                     {
                         //оригинальный message.id(сгенеренный клиентом) не используем- т.к. клиенты шлют отрицательные идентификаторы(и они могут повторяться)
                         IsSended = false,
-                        ClientNotified = false,
                         FromUserID = msg.FromID,
                         GroupID = msg.ChatID,
                         ToUserID = msg.ToID,
@@ -76,11 +75,10 @@ namespace Penta_Server.Services.Repositories
         {
             using (DB db = new DB(connStr))
             {
-                var finded = await db.Messages.Where(x => x.ToUserID==userID && !x.IsSended && !x.ClientNotified).ToListAsync();
-                finded.ForEach(x => x.ClientNotified = true);//отмечаем, что клиент уведомлен об этих сообщениях
+                var finded = await db.Messages.Where(x => x.ToUserID == userID && !x.IsSended).ToListAsync();
                 db.SaveChanges();
 
-                return finded != null && finded.Count>0;   
+                return finded != null && finded.Count > 0;
             }
         }
     }

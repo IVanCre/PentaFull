@@ -1,5 +1,6 @@
 
 using Penta_ClientLib.Interfaces;
+using Client.Interfaces;
 
 namespace Client.Pages;
 
@@ -20,6 +21,8 @@ public partial class LoadingPage : ContentPage
     private async Task TryAutoLogin()
     {
         var _clientFacade = App.Services.GetRequiredService<IClientFacade>();
+        var _updateMngr= App.Services.GetRequiredService<IUpdateManager>();
+
         var myContact = await _clientFacade.GetMyContactID();
         if (!string.IsNullOrEmpty(myContact))
         {

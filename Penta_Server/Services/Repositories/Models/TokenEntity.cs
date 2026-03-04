@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace Penta_Server.Services.Repositories.Models
 {
@@ -9,7 +10,10 @@ namespace Penta_Server.Services.Repositories.Models
     {
         public int ID {  get; set; }
         public UserEntity User{ get; set; }
+
+        [MaxLength(1024)]
         public string AccessToken { get; set; }
+        [MaxLength(1024)]
         public string RefreshToken { get; set; }
     }
 }

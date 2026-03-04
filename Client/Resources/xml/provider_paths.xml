@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<paths>
+	<!-- Разрешаем доступ к кэш-директории, куда скачали APK -->
+	<external-cache-path name="my_downloads" path="." />
+	<cache-path name="my_cache" path="." />
+</paths>

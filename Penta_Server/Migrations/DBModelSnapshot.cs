@@ -58,9 +58,6 @@ namespace Penta_Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"));
 
-                    b.Property<bool>("ClientNotified")
-                        .HasColumnType("bit");
-
                     b.Property<byte[]>("Data")
                         .HasColumnType("varbinary(max)");
 
@@ -89,8 +86,6 @@ namespace Penta_Server.Migrations
 
                     b.HasIndex("Type");
 
-                    b.HasIndex("ToUserID", "ClientNotified");
-
                     b.HasIndex("ToUserID", "IsSended");
 
                     b.ToTable("Messages");
@@ -105,10 +100,12 @@ namespace Penta_Server.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
                     b.Property<string>("AccessToken")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
 
                     b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
 
                     b.Property<int?>("UserID")
                         .HasColumnType("int");

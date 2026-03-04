@@ -33,9 +33,6 @@ namespace Penta_ClientLib.Services
                 await _messHolder.SaveMessage(msg);
 
                 var sended= await _webClient.SendMessage(msg);
-                if (sended)
-                    await _messHolder.MarkMessageLikeSended(msg.ID);
-
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -54,9 +51,6 @@ namespace Penta_ClientLib.Services
                 await _messHolder.SaveMessage(msg);
 
                 var sended = await _webClient.SendMessage(msg);
-                if (sended)
-                    await _messHolder.MarkMessageLikeSended(msg.ID);
-
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -70,13 +64,10 @@ namespace Penta_ClientLib.Services
             {
                 var currUserID = await _settingsHolder.GetUserID();
                 int userID = ContactConverter.ExtractUserID(userConnectID);
-                var msg = MessageFactory.InviteUserToGroupChat_Request(currUserID, chatID,userID);
+                var msg = MessageFactory.AddUserToGroupChat_Request(currUserID, chatID,userID);
                 await _messHolder.SaveMessage(msg);
 
                 var sended = await _webClient.SendMessage(msg);
-                if (sended)
-                    await _messHolder.MarkMessageLikeSended(msg.ID);
-
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -96,9 +87,6 @@ namespace Penta_ClientLib.Services
                 await _messHolder.SaveMessage(msg);
 
                 var sended = await _webClient.SendMessage(msg);
-                if (sended)
-                    await _messHolder.MarkMessageLikeSended(msg.ID);
-
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -116,9 +104,6 @@ namespace Penta_ClientLib.Services
                 await _messHolder.SaveMessage(msg);
 
                 var sended = await _webClient.SendMessage(msg);
-                if (sended)
-                    await _messHolder.MarkMessageLikeSended(msg.ID);
-
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)
@@ -137,9 +122,6 @@ namespace Penta_ClientLib.Services
                 await _messHolder.SaveMessage(msg);
 
                 var sended = await _webClient.SendMessage(msg);
-                if (sended)
-                    await _messHolder.MarkMessageLikeSended(msg.ID);
-
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch(Exception e)
@@ -175,9 +157,6 @@ namespace Penta_ClientLib.Services
                 }
 
                 var sended = await _webClient.SendMessage(msg);
-                if (sended)
-                    await _messHolder.MarkMessageLikeSended(msg.ID);
-
                 return Tuple.Create<bool, Exception>(sended, null);
             }
             catch (Exception e)

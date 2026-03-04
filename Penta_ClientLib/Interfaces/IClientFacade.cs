@@ -64,6 +64,8 @@ namespace Penta_ClientLib.Interfaces
         /// </summary>
         event ConnectionStateChanged ConnectionToServerChanged;
 
+
+
         /// <summary>
         /// Регистрация в системе(через сервер)
         /// </summary>
