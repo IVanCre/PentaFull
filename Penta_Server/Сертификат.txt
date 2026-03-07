@@ -16,6 +16,6 @@ PS C:\Users\user> $cert = New-Object System.Security.Cryptography.X509Certificat
 PS C:\Users\user> $cert.Import("E:\Certs\MySelfSignedCert.pfx", "certPass", 'Exportable,PersistKeySet')
 PS C:\Users\user> $cert.Export("Cert") | Set-Content -Encoding byte -Path "E:\Certs\MySelfSigned_CertPart.cer"
 
-
+-
 
 admin_1991/validPass_917
