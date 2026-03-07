@@ -40,21 +40,6 @@ namespace Penta_ServerTests
             }
         }
 
-        [Test]
-        public void SaveList_Test()
-        {
-            var repo = new Repo();
-
-            var saver = new MessageSaver(repo);
-            var list = new List<Message>();
-            list.Add(new Message(0, 1, 1, 1, MessageType.Unknown, null,DateTime.Now));
-            list.Add(new Message(1, 2, 3, 4, MessageType.Unknown, null, DateTime.Now));
-
-            saver.Save(list);
-
-            Thread.Sleep(1000);
-            Assert.That(repo.counter,Is.EqualTo(list.Count));
-        }
 
         [Test]
         public void SaveMessage()

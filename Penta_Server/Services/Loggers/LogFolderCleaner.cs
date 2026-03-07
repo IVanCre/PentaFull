@@ -39,7 +39,7 @@ namespace Penta_Server.Services.Loggers
                     if ((curDay.Date - new FileInfo(file).CreationTime.Date).TotalDays >= _maxDaysSave)
                     {
                         File.Delete(file);
-                        _logWriter?.SaveSystemInfo($"Logfile {file} auto deletetd");
+                        _logWriter?.SaveForDEBUG($"Logfile {file} auto deletetd");
                     }
                 }
             }

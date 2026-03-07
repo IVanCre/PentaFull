@@ -116,7 +116,7 @@ namespace Penta_Server.Services
                 }
             }
 
-            _logger?.SaveSystemInfo("Юзер, указанный в токене, не обнаружен в БД");
+            _logger?.SaveForDEBUG("Юзер, указанный в токене, не обнаружен в БД");
             return -1;
         }
 

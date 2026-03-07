@@ -32,7 +32,7 @@ namespace Penta_Server.Services.Loggers
             AddToSave($"INFO : {DateTime.Now} {text}");
             Console.ForegroundColor = ConsoleColor.White;
         }
-        public void SaveSystemInfo(string text)
+        public void SaveForDEBUG(string text)
         {
 #if DEBUG
             Console.ForegroundColor = ConsoleColor.Yellow;

@@ -35,7 +35,7 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 int deletetd= db.Database.ExecuteSqlRaw("DELETE FROM Messages WHERE IsSended=1");
                 if (deletetd > 0)
-                    _logger?.SaveSystemInfo("Помеченные сообщения удалены");
+                    _logger?.SaveForDEBUG("Помеченные сообщения удалены");
             }
         }
 

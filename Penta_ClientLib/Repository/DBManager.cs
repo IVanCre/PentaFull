@@ -237,7 +237,7 @@ namespace Penta_ClientLib.Repository
 
 
         #region Messages
-        public async Task<bool> SaveMessage(Message msg)
+        public async Task<bool> SaveMessage(Message msg, bool isMessageFromServer)
         {
             var result = await _connection.InsertAsync(
                  new MessageItemEntity()
@@ -249,7 +249,7 @@ namespace Penta_ClientLib.Repository
                      Type = msg.Type,
                      Data = msg.Data,
                      UtcTimestamp = DateTime.Now,
-                     IsSended = false
+                     IsSended = isMessageFromServer//если оно с сервера -значит оно успешно доставлено и маркер выключаем
                  });
 
             return result == 1;

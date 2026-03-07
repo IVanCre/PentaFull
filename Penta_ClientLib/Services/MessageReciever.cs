@@ -99,7 +99,8 @@ namespace Penta_ClientLib.Services
                             msg.ToID,
                             msg.Type,
                             msg.Data,
-                            msg.UtcTimestamp)))
+                            msg.UtcTimestamp),
+                        true))
                         MessageAddedToChat?.Invoke(chatID, msg);
                 }
                 else//нет чата с указанным connectID
@@ -117,7 +118,8 @@ namespace Penta_ClientLib.Services
                                 msg.ToID,
                                 msg.Type,
                                 msg.Data,
-                                msg.UtcTimestamp)))
+                                msg.UtcTimestamp),
+                            true))
                             MessageAddedToChat?.Invoke(chatID, msg);
                     }
                 }
@@ -129,7 +131,7 @@ namespace Penta_ClientLib.Services
                 if (added)
                     UserAdded?.Invoke(msg.ChatID, msg.FromID);
 
-                if (await _messHolder.SaveMessage(msg))
+                if (await _messHolder.SaveMessage(msg,true))
                     MessageAddedToChat?.Invoke(msg.ChatID, msg);
             }
         }

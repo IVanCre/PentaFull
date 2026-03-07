@@ -11,7 +11,7 @@ namespace Penta_Server.Services.Repositories
        private string connStr = config["WorkDB:ConnString"];
 
 
-        public async void MarkForDelete(int userID, long messageID)
+        public async void MarkForDelete( long messageID)
         {
             using (DB db = new DB(connStr))
             {
@@ -81,5 +81,7 @@ namespace Penta_Server.Services.Repositories
                 return finded != null && finded.Count > 0;
             }
         }
+
+
     }
 }

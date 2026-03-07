@@ -91,6 +91,30 @@ namespace Penta_Server.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("Penta_Server.Services.Repositories.Models.SendOrderEntity", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<long>("MessageID")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RecieverID")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("ID")
+                        .IsUnique();
+
+                    b.HasIndex("RecieverID", "MessageID");
+
+                    b.ToTable("OrdersToSend");
+                });
+
             modelBuilder.Entity("Penta_Server.Services.Repositories.Models.TokenEntity", b =>
                 {
                     b.Property<int>("ID")

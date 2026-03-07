@@ -22,4 +22,6 @@ namespace Penta_Server.Services.Repositories.Models
         public DateTime UtcTimestamp { get; set; }
 
     }
+
+
 }

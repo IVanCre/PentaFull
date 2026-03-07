@@ -19,6 +19,7 @@ namespace Penta_Server.Services.Repositories
         public DbSet<UserDeviceEntity> UsersDevices => Set<UserDeviceEntity>();
 
 
+
         public DB(string connString)
         {
             _connString = connString;
