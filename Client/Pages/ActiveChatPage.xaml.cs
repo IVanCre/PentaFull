@@ -37,7 +37,7 @@ namespace Client.Pages
 		public ObservableCollection<MessageInfo> MessageList { get; set; }
 		public string ChatName { get; private set; }//если приватный -имя контакта
 		private int _recieverUserID = -1;//используется,только если это приватный чат
-		private int _chatID;
+		private int _currentChatID;
 		private int _currentUserID;//идентификатор юзера
 		private IClientFacade _clientFacade;
 		private IUINotificator _notifier;
@@ -54,16 +54,17 @@ namespace Client.Pages
 			_settingsHolder =App.Services.GetRequiredService<ISettingsProvider>();
             
             _clientFacade.MessageAddedToChat += TryAddIncomingMessageToChat;
+			_clientFacade.UserAdded += NotifyToUserAdded;
 			MessageList = new();
 			ChatName = name;
-			_chatID = chatID;
+			_currentChatID = chatID;
 
 			LoadLastMessages();
 			BindingContext = this;
 		}
 		private async void LoadLastMessages()
 		{
-			var finded = await _clientFacade.GetMessagesByChatAsync(_chatID, messageLoadedNum);
+			var finded = await _clientFacade.GetMessagesByChatAsync(_currentChatID, messageLoadedNum);
 			_currentUserID =await _settingsHolder.GetUserID();
 			string from=string.Empty;
 			foreach (var mess in finded)
@@ -84,9 +85,20 @@ namespace Client.Pages
 			}
 		}
 
-		private void TryAddIncomingMessageToChat(int chatID, Message msg)
+		private void NotifyToUserAdded(int chatID, int addedUserID)
 		{
-			if (chatID == _chatID)//групповой чат
+			if (chatID == _currentChatID)
+			{
+                MessageList.Add(
+					new MessageInfo()
+					{
+						Text = "Добавлен новый участник"
+					});
+            }
+		}
+        private void TryAddIncomingMessageToChat(int chatID, Message msg)
+		{
+			if (chatID == _currentChatID)//групповой чат
 			{
 				MessageList.Add(
 					new MessageInfo()
@@ -115,14 +127,14 @@ namespace Client.Pages
 			MessageText.Text = "";
 
 			Tuple<bool, Exception> result = default;
-			if (_chatID > 0)
+			if (_currentChatID > 0)
 			{
-				result = await _clientFacade.SendMessageToGroupChatAsync(_chatID, MessageType.Text, MessageUtils.TextToBytes(input));
+				result = await _clientFacade.SendMessageToGroupChatAsync(_currentChatID, MessageType.Text, MessageUtils.TextToBytes(input));
 			}
 			else
 			{
 				_recieverUserID =await _clientFacade.GetRecieverIDFromChatAsync(ChatName);
-                result = await _clientFacade.SendMessageToUserAsync(_chatID,_recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input));
+                result = await _clientFacade.SendMessageToUserAsync(_currentChatID,_recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input));
 			}
 
 			if (!result.Item1)

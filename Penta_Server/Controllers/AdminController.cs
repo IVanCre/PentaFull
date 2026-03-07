@@ -19,6 +19,7 @@ namespace Penta_Server.Controllers
         {
             return _logReader.GetLogFileNames();
         }
+
         [HttpGet("GetLogFile")]
         public async Task<IEnumerable<string>> GetLogs(string filePath)
         {

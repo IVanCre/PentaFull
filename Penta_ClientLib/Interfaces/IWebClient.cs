@@ -8,7 +8,7 @@ namespace Penta_ClientLib.Interfaces
 
     public interface IWebClient :IDisposable
     {
-        Task<int> TryRegisterAsync(string userName, string pass);
+        Task<Tuple<int, Exception>> TryEnterAsync(string userName, string pass, bool isRegistration);
         Task<bool> TryDeleteAccountAsync();
         Task<bool> SendDeviceToken(string tokenDevice);
 

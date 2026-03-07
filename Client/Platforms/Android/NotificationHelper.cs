@@ -29,7 +29,9 @@ namespace Client.Platforms.Android
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                var channel = new NotificationChannel(ChannelId, "PentaChannel", NotificationImportance.Default);
+                var channel = new NotificationChannel(ChannelId, "PentaChannel", NotificationImportance.High);
+                channel.LockscreenVisibility = NotificationVisibility.Public;
+
                 var manager = (NotificationManager)_context.GetSystemService(Context.NotificationService);
                 manager.CreateNotificationChannel(channel);
             }
@@ -77,7 +79,9 @@ namespace Client.Platforms.Android
                 .SetLargeIcon(BitmapFactory.DecodeResource(_context.Resources, largeIconID))//иконка в уведомлении
                 .SetContentIntent(pendingIntent)
                 .SetAutoCancel(true)
-                .SetPriority(NotificationCompat.PriorityHigh) // важное уведомление
+                .SetPriority(NotificationCompat.PriorityMax) // важное уведомление
+                .SetDefaults(NotificationCompat.DefaultAll)//показ поверх всего
+                .SetVisibility(NotificationCompat.VisibilityPublic)//показ на заблокированном экране 
                 .SetCategory(NotificationCompat.CategoryMessage);
 
             return builder.Build();

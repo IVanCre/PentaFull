@@ -5,21 +5,19 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Penta_Server.Controllers
 {
-    [Route("Message")]
+    [Route("PushRegistrator")]
     [ApiController]
-    public class MessageController(
-        IMessageRepository msgRepo,
+    public class PushRegController(
         ITokenManager tokenMngr,
         IDeviceTokenRepository deviceTknRepo,
         ILogWriter logger) : ControllerBase
     {
         private IDeviceTokenRepository _deviceTknRepo = deviceTknRepo;
-        private IMessageRepository _msgRepo = msgRepo;
         private ITokenManager _tokenMngr= tokenMngr;
         private ILogWriter _logger = logger;
 
 
-        [HttpPost("SetDeviceForPush")]
+        [HttpPost("SetDevice")]
         [Authorize]
         public async Task<bool> SetDeviceForPush(string tokenDevice)
         {

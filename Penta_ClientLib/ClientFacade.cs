@@ -67,11 +67,7 @@ namespace Penta_ClientLib
             add => _messReciever.MessageAddedToChat += value;
             remove=> _messReciever.MessageAddedToChat -= value; 
         }
-        public event InvitedToChat RecieveInvite
-        {
-            add=> _messReciever.RecieveInvite += value;
-            remove=> _messReciever.RecieveInvite -= value;
-        }
+
         public event AccountDeleted AccountDeleted
         {
             add => _messReciever.AccountDeleted += value;
@@ -92,8 +88,19 @@ namespace Penta_ClientLib
             if (string.IsNullOrEmpty(password))
                 return Task.FromResult(Tuple.Create(false, new Exception("Password should be not null or empty")));
 
-            return _accManager.Registration(login, password);
+            return _accManager.RegistrationAsync(login, password);
         }
+        public Task<Tuple<bool, Exception>> LoginAsync(string login, string password)
+        {
+            if (string.IsNullOrEmpty(login))
+                return Task.FromResult(Tuple.Create(false, new Exception("Login should be not null or empty")));
+            if (string.IsNullOrEmpty(password))
+                return Task.FromResult(Tuple.Create(false, new Exception("Password should be not null or empty")));
+
+            return _accManager.LoginAsync(login, password);
+        }
+
+
         public Task<bool> ConnectToServerAsync()=>_client.ConnectToMessageHub();
 
         public Task<Tuple<bool, Exception>> DeleteAccountAsync()=>_accManager.DeleteAccount();
@@ -137,13 +144,13 @@ namespace Penta_ClientLib
 
             return _chatManager.CreatePrivateChat(chatName);
         }
-        public Task<Tuple<bool, Exception>> SendResponseToInviteAsync(int chatID,bool accept) => _chatManager.SendResponseToInvite(chatID, accept);
-        public Task<Tuple<bool, Exception>> InviteUserToGroupChatAsync(int chatID, string userContactID)
+       
+        public Task<Tuple<bool, Exception>> AddUserToGroupChatAsync(int chatID, string userContactID)
         {
             if (string.IsNullOrEmpty(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userConnectID should be not null or empty")));
 
-            return _chatManager.SendInviteUserToGroupChat(chatID, userContactID);
+            return _chatManager.SendAddUserToGroupChat(chatID, userContactID);
         }
         public Task<Tuple<bool, Exception>> LeaveGroupChatAsync(int chatID)=>_chatManager.SendLeaveGroupChat(chatID);
         public Task<Tuple<bool, Exception>> DeleteUserFromGroupChatAsync(int chatID, string userContactID)

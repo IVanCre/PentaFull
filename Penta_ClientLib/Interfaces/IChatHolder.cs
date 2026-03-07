@@ -10,7 +10,7 @@ namespace Penta_ClientLib.Interfaces
         Task<List<ChatInfo>> GetAllChats();
         Task<bool> DeleteChat(int chatID);
 
-        Task<bool> AddUserToChat(int userid, int chatID);
+        Task<bool> TryAddUserToChat(int userid, int chatID);
         Task<bool> RemoveUserFromChat(int userid, int chatID);
     }
 }

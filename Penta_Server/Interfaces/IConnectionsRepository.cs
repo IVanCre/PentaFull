@@ -3,6 +3,7 @@
     public interface IConnectionsRepository
     {
         void Add(int userID, string connectionID);
+        int FindUserID(string connectionID);
         string GetConnectionID(int userID);
         void RemoveByUserID(int userID);
     }

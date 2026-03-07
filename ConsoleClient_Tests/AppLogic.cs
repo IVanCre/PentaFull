@@ -37,12 +37,7 @@ namespace ConsoleClient_Tests
             Console.WriteLine($">> Юзер id={userID} удален из чата id={chatID}");
             Console.ForegroundColor = ConsoleColor.White;
         }
-        private static void RecieveInvite(Message msg)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($">>Получено приглашение для вступления в чат: {msg.ChatID}");
-            Console.ForegroundColor = ConsoleColor.White;
-        }
+
         private static void DeletedAcсount()
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -64,7 +59,7 @@ namespace ConsoleClient_Tests
                         Console.WriteLine("Ведите логин и пароль");
                         string login = Console.ReadLine();
                         string pass = Console.ReadLine();
-                        if (!string.IsNullOrEmpty(login) && string.IsNullOrEmpty(pass))
+                        if (!string.IsNullOrEmpty(login) && !string.IsNullOrEmpty(pass))
                         {
                             var result = facade.RegistrationAsync(login, pass).Result;//потому что в консоли рабоатем-это 1 поток
                             enterComplete = result.Item1;
@@ -112,15 +107,6 @@ namespace ConsoleClient_Tests
             foreach (var item in finded)
                 Console.WriteLine($"ChatID={item.ID} ChatName={item.ChatName}");
         }
-        private static void ResponseToInviteChat(IClientFacade facade)
-        {
-            Console.WriteLine("ID чата для вступления:");
-            var chatID= Console.ReadLine();
-            Console.WriteLine("согласны Y|N:");
-            var symbol = Console.ReadLine();
-
-            _=facade.SendResponseToInviteAsync(int.Parse(chatID), symbol=="Y");
-        }
 
 
         public static async void WorkLoop(IServiceProvider services)
@@ -132,7 +118,6 @@ namespace ConsoleClient_Tests
                 facade.CreatedNewChat += ChatCreated;
                 facade.UserAdded += UserAddedToChat;
                 facade.UserRemoved += UserRemovedFromChat;
-                facade.RecieveInvite += RecieveInvite;
                 facade.ChatDeleted += ChatDeleted;
                 facade.MessageAddedToChat += MessageAddedToChat;
                 facade.AccountDeleted += DeletedAcсount;
@@ -169,7 +154,6 @@ namespace ConsoleClient_Tests
                     "9- написать в групповой чат\n" +
                     "10-написть юзеру\n" +
                     "12-получить список Чатов\n" +
-                    "13-ответить на приглашение(chatID, Y-N )\n" +
                     "14-удалить свой аккаунт\n");
 
                 input = Console.ReadLine();
@@ -188,7 +172,7 @@ namespace ConsoleClient_Tests
                             {
                                 var userContactID = Console.ReadLine();
                                 var chatID = Console.ReadLine();
-                                facade.InviteUserToGroupChatAsync(int.Parse(chatID), userContactID);
+                                facade.AddUserToGroupChatAsync(int.Parse(chatID), userContactID);
                             }
                             break;
                         case "6":
@@ -214,7 +198,6 @@ namespace ConsoleClient_Tests
                         case "9": SendMessage(facade, true); break;
                         case "10": SendMessage(facade, false); break;
                         case "12": GetAllChats(facade); break;
-                        case "13": ResponseToInviteChat(facade); break;
                         case "14": facade.DeleteAccountAsync(); break;
                     }
                 }

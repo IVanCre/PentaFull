@@ -12,7 +12,7 @@ using Penta_ClientLib.DataStructs;
 
 namespace Penta_ClientLib.Services
 {
-    public abstract class BaseClient
+    internal abstract class BaseClient
     {
         protected ISettingsProvider _settingsHolder;
         protected int _waitRequestSeconds = 90;        
@@ -108,6 +108,9 @@ namespace Penta_ClientLib.Services
             await _settingsHolder.SetRefreshToken(tokenPack[1]);
         }
     }
+
+
+    // НЕ ПЕРЕХВАТЫВАТЬ ОШИБКИ ТУТ!  ПУСТЬ ВСПЛЫВАЮТ ВВЕРХ ДЛЯ ПОВЫШЕНИЯ ИНФОРМАТИВНОСТИ
     internal class WebClient :BaseClient, IWebClient
     {
         private int _pingIntervalSeconds = 5;
@@ -119,29 +122,45 @@ namespace Penta_ClientLib.Services
         public WebClient(ISettingsProvider settings) : base(settings) { }
 
 
-#region withoutJwt
-        public async Task<int> TryRegisterAsync(string login, string pass)
+        #region withoutJwt
+        public async Task<Tuple<int, Exception>> TryEnterAsync(string login, string pass, bool isRegistration)
         {
             int userID = -1;
+
             using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
-                var fullUrl = $"{_serverUrl}/User/Registration?name={login}&pass={pass}";
+                string fullUrl = string.Empty;
+                if(isRegistration)
+                    fullUrl = $"{_serverUrl}/User/Registration?name={login}&pass={pass}";
+                else
+                    fullUrl = $"{_serverUrl}/User/Login?name={login}&pass={pass}";
 
                 var response = await httpClient.PostAsync(fullUrl, null);
-                if (response.StatusCode == HttpStatusCode.OK)
+                var serialized = await response.Content.ReadAsStringAsync();
+                switch (response.StatusCode)
                 {
-                    var serialized = await response.Content.ReadAsStringAsync();
-                    string[] tokenPack = JsonSerializer.Deserialize<string[]>(serialized);
-                    await SaveTokenPack(tokenPack);
+                    case HttpStatusCode.OK:
+                        {
+                            string[] tokenPack = JsonSerializer.Deserialize<string[]>(serialized);
+                            await SaveTokenPack(tokenPack);
 
-                    userID = GetUserID(await _settingsHolder.GetAccessToken());
-                    await ConnectToMessageHub();
+                            userID = GetUserID(await _settingsHolder.GetAccessToken());
+                            await ConnectToMessageHub();
+
+                            return Tuple.Create<int, Exception>(userID, null);
+                        }
+                    case HttpStatusCode.Conflict:
+                    case HttpStatusCode.BadRequest:
+                        {
+                            var error = JsonSerializer.Deserialize<Exception>(serialized);
+                            return Tuple.Create<int, Exception>(userID, error);
+                        }
                 }
             }
-
-            return userID;
+            return Tuple.Create<int, Exception>(userID, null);
         }
+
         private int GetUserID(string token)
         {
             int userID = -1;
@@ -164,6 +183,7 @@ namespace Penta_ClientLib.Services
         public async Task<string> GetNewestClientFilaName(string currentClientVersion, ClientType type)//просто запрашиваем имя файла самого свежего билда клиента
         {
             string urlWithNewVersion = string.Empty;
+
             using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
@@ -171,13 +191,13 @@ namespace Penta_ClientLib.Services
                 var fullUrl = $"{_serverUrl}/Updates/GetNewestClientFileName?currentClientVersion={currentClientVersion}&type={type}";
 
                 var response = await httpClient.GetAsync(fullUrl);
-                if(response.StatusCode == HttpStatusCode.OK)
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    urlWithNewVersion=await response.Content.ReadAsStringAsync();
+                    urlWithNewVersion = await response.Content.ReadAsStringAsync();
                 }
             }
             return urlWithNewVersion;
-        }        
+        }
         public async Task<HttpContent> LoadClientFileAsync(string fileName, ClientType type)
         {
             using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
@@ -203,12 +223,12 @@ namespace Penta_ClientLib.Services
             {
                 var accessToken = await _settingsHolder.GetAccessToken();
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",accessToken );//по токену сервак 
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);//по токену сервак 
 
-                var fullUrl = $"{_serverUrl}/Message/SetDeviceForPush?tokenDevice={tokenDevice}";
+                var fullUrl = $"{_serverUrl}/PushRegistrator/SetDevice?tokenDevice={tokenDevice}";
 
                 var response = await httpClient.PostAsync(fullUrl, null);
-                if(await TryRefreshToken(response.StatusCode))
+                if (await TryRefreshToken(response.StatusCode))
                 {
                     return true;
                 }
@@ -220,17 +240,18 @@ namespace Penta_ClientLib.Services
                 }
             }
         }
+
         public async Task<bool> TryDeleteAccountAsync()
         {
             using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
             {
                 var accessToken = await _settingsHolder.GetAccessToken();
-                httpClient.Timeout= TimeSpan.FromSeconds(_waitRequestSeconds);
+                httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
                 var fullUrl = $"{_serverUrl}/User/DeleteSelfAccount";
                 httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);//по токену сервак 
 
                 var response = await httpClient.PostAsync(fullUrl, null);
-                if(await TryRefreshToken(response.StatusCode))
+                if (await TryRefreshToken(response.StatusCode))
                 {
                     Console.WriteLine("-Аккаунт удален");
                     return true;
@@ -243,7 +264,6 @@ namespace Penta_ClientLib.Services
                 }
             }
         }
-
 
 
         public async Task<bool> SendMessage(Message message)

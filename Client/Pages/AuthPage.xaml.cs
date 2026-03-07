@@ -39,7 +39,19 @@ namespace Client.Pages
 			else
 				await _notifier.ShowMessage("Внимание", "Введите логин и пароль", "ок");
 		}
-
+        private async void OnLoginButtonClicked(object sender, EventArgs e)
+        {
+            if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
+            {
+                var result = await _clientFacade.LoginAsync(UsernameEntry.Text, PasswordEntry.Text);
+                if (result.Item1)
+                {
+                    await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
+                }
+                else
+                    await _notifier.ShowMessage("Внимание", $"Ошибка входа:{result.Item2.Message}", "ок");
+            }
+        }
 
 
         private void RegistrationDevice()

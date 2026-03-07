@@ -26,35 +26,48 @@ namespace Penta_Server.Services.SignalR
 
         public override async Task OnConnectedAsync()//подключение клиента
         {
-            var userMaskedID = Context.User.Claims.FirstOrDefault(x => x.Type == "userID")?.Value;//Проверяем сущность, котору сами добавили в токене
-            if (!string.IsNullOrEmpty(userMaskedID))
+            try
             {
-                var userID_int = int.Parse(userMaskedID);
-                _logger?.SaveSystemInfo($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
-                _connRepo.Add(userID_int, Context.ConnectionId);
+                var userMaskedID = Context.User.Claims.FirstOrDefault(x => x.Type == "userID")?.Value;//Проверяем сущность, котору сами добавили в токене
+                if (!string.IsNullOrEmpty(userMaskedID))
+                {
+                    var userID_int = int.Parse(userMaskedID);
+                    _logger?.SaveSystemInfo($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
+                    _connRepo.Add(userID_int, Context.ConnectionId);
 
-                await base.OnConnectedAsync();
-                await _clientNotifier?.SendAllNonSended(userID_int, Context.ConnectionId);//сразу отдаем накопившиеся сообщения
+                    await base.OnConnectedAsync();
+                    await _clientNotifier?.SendAllNonSended(userID_int, Context.ConnectionId);//сразу отдаем накопившиеся сообщения
+                }
+                else
+                    _logger?.SaveSystemInfo($"Отказ в подключении юзеру к хабу");
             }
-            else
-                _logger?.SaveSystemInfo($"Отказ в подключении юзеру к хабу");
+            catch (Exception ex)
+            {
+                _logger?.SaveError($"Ошибка при попытке в подключения юзера к хабу: {ex.Message}");
+            }
         }
 
         public override async Task OnDisconnectedAsync(Exception? exep)//отключение клиента
         {
+
             var userID = Context.User.Claims.FirstOrDefault(x => x.Type == "userID")?.Value;
             _logger?.SaveSystemInfo($"Пользователь {userID} отключился ");
 
             _connRepo.RemoveByUserID(int.Parse(userID));
 
             await base.OnDisconnectedAsync(null);
+
+            if(exep!=null)
+                _logger?.SaveError($"Ошибка при отключении юзера от хаба: {exep.Message}");
         }
 
-        public void AcknowledgeReceived(long messageID)
+        public void AcknowledgeReceived(long messageID)//подтверждение получения сообщения от клиента
         {
             try
             {
-                _clientNotifier.MessageSended(messageID);//подтверждение получения сообщения от клиента
+                int userID = _connRepo.FindUserID(Context.ConnectionId);//определяем, кто прислал ответ
+                _clientNotifier.MessageSended(userID,messageID);
+
                 _logger?.SaveSystemInfo($"Клиент подтвердил получение сообщения id={messageID}");
             }
             catch (Exception ex)
@@ -64,14 +77,9 @@ namespace Penta_Server.Services.SignalR
         }
 
 
-        public void SendToServer(Message msg)
+        public void SendToServer(Message msg)//клиент пишет на этот хаб
         {
-            _messageProc.ProcessingMessage(msg);//клиент пишет на хаб
-        }
-
-        public IHubCallerClients GetClientsProvider()
-        {
-            return Clients;
+            _messageProc.ProcessingMessage(msg);
         }
     }
 }

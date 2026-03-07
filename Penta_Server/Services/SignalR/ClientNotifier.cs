@@ -60,6 +60,6 @@ namespace Penta_Server.Services.SignalR
         }
 
 
-        public void MessageSended(long messageID) => _messageRepo.MarkForDelete(messageID);
+        public void MessageSended(int userID, long messageID) => _messageRepo.MarkForDelete(userID,messageID);
     }
 }

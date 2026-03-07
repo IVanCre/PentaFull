@@ -1,7 +1,7 @@
 ﻿using Penta_ClientLib.Interfaces;
 using MessageLib;
 using Penta_ClientLib.DataStructs;
-using Penta_ClientLib.Services;
+
 
 namespace Penta_ClientLib.Services
 {
@@ -42,28 +42,12 @@ namespace Penta_ClientLib.Services
         }
 
 
-        public async Task<Tuple<bool,Exception>> SendResponseToInvite(int chatID, bool acceptInvite)
+        public async Task<Tuple<bool,Exception>> SendAddUserToGroupChat(int chatID, string userConnectIDForAdd)
         {
             try
             {
                 var currUserID = await _settingsHolder.GetUserID();
-                var msg = MessageFactory.InviteUserToGroupChat_UserResponse(currUserID, chatID, acceptInvite);
-                await _messHolder.SaveMessage(msg);
-
-                var sended = await _webClient.SendMessage(msg);
-                return Tuple.Create<bool, Exception>(sended, null);
-            }
-            catch (Exception e)
-            {
-                return Tuple.Create(false, e);
-            }
-        }
-        public async Task<Tuple<bool,Exception>> SendInviteUserToGroupChat(int chatID, string userConnectID)
-        {
-            try
-            {
-                var currUserID = await _settingsHolder.GetUserID();
-                int userID = ContactConverter.ExtractUserID(userConnectID);
+                int userID = ContactConverter.ExtractUserID(userConnectIDForAdd);
                 var msg = MessageFactory.AddUserToGroupChat_Request(currUserID, chatID,userID);
                 await _messHolder.SaveMessage(msg);
 

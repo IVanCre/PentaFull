@@ -45,7 +45,7 @@ namespace MessageLib
         public static Message DeleteGroupChat_Response(Message request, int userRecieverID)
         {
             return new Message(
-                         Message.GenerateIDByTime(),
+                         request.ID,
                          -1,
                          request.ChatID,
                          userRecieverID,
@@ -55,42 +55,43 @@ namespace MessageLib
         }
 
 
-        //1.userSender->userReciever  
-        public static Message AddUserToGroupChat_Request(int senderUserID, int chatID, int userRecieverID)
+        //1.userSender->server
+        public static Message AddUserToGroupChat_Request(int senderUserID, int chatID, int userToAddedID)
         {
             return new Message(
                     Message.GenerateIDByTime(),
-                    senderUserID,
-                    chatID,
-                    userRecieverID,
-                    MessageType.InviteToGroupRequest,
+                    senderUserID,//кто добавляет
+                    chatID,//куда добавляет
+                    userToAddedID,//кого добавляют
+                    MessageType.AddToGroupRequest,
                     null,
                     DateTime.Now);
         }
-        //2.userReciever->server
-        public static Message InviteUserToGroupChat_UserResponse(int senderUserID, int chatID, bool acceptInvite)
-        {
-            return new Message(
-                            Message.GenerateIDByTime(),
-                            senderUserID,
-                            chatID,
-                            -1,
-                            MessageType.InviteToGroupResponce,
-                            MessageUtils.BooleanToBytes(acceptInvite),
-                            DateTime.Now);
-        }
-        //3.server->all users (for each in groupChat)
-        public static Message InviteUserToGroupChat_ServerResponse(Message request,int recieverUserID)
+        //2.1server->all users (for each in groupChat)
+        public static Message AddUserToGroupChat_Response(Message request,int recieverUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                             Message.GenerateIDByTime(),
-                             request.FromID,//этот идентификатор уже принимающая сторона отобразит как connectID
-                             request.ChatID,
-                             recieverUserID,
-                             MessageType.InviteToGroupResponce,
+                             request.ID,
+                             request.FromID,//кто добавляет
+                             request.ChatID,//куда добавляют
+                             recieverUserID,//кого добавляют
+                             MessageType.AddUserToGroupResponse,
                              null,
                              DateTime.Now);
         }
+        //2.2 server->recieverUserID
+        public static Message UserAddedToGroupChat_ServerResponse(int recieverUserID,int chatID, string chatName)
+        {
+            return new Message(//создаем новое сообщения для добавленного юзера
+                 Message.GenerateIDByTime(),
+                 -1,
+                 chatID,//куда добавляют
+                 recieverUserID,//кого добавляют
+                 MessageType.UserAddedToGroupResponse,
+                 MessageUtils.TextToBytes(chatName),//имя чата
+                 DateTime.Now);
+        }
+
 
 
         //1.userSended->server
@@ -109,7 +110,7 @@ namespace MessageLib
         public static Message DeleteUserFromGroupChat_Response(Message request, int recieverUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                 Message.GenerateIDByTime(),
+                 request.ID,
                  -1,
                  request.ChatID,
                  recieverUserID,
@@ -118,7 +119,17 @@ namespace MessageLib
                  DateTime.Now);
         }
 
-
+        public static Message CreateResponseForGroupMember(Message request, int recieverUserID)
+        {
+            return new Message(
+                request.ID,
+                request.FromID,
+                request.ChatID,
+                recieverUserID,
+                request.Type,
+                request.Data,
+                request.UtcTimestamp);
+        }
 
         public static Message UserToUser(int senderUserID,int recieverUserID, MessageType type, byte[] data)
         {

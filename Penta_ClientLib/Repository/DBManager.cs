@@ -195,18 +195,24 @@ namespace Penta_ClientLib.Repository
             return deleted == 1;
         }
 
-        public async Task<bool> AddUserToChat(int userid, int chatID)
+        public async Task<bool> TryAddUserToChat(int userid, int chatID)
         {
             InitConnect();
 
-            var inserted = await _connection.InsertAsync(
-                new UserInChatEntity()
-                {
-                    ContactId = userid,
-                    ChatId = chatID
-                });
+            var findCopy = await _connection.Table<UserInChatEntity>().FirstOrDefaultAsync(x => x.ContactId == userid && x.ChatId == chatID);
+            if (findCopy == null)
+            {
+                var inserted = await _connection.InsertAsync(
+                     new UserInChatEntity()
+                     {
+                         ContactId = userid,
+                         ChatId = chatID
+                     });
 
-            return inserted == 1;
+                return inserted == 1;
+            }
+            else
+                return false;
         }
 
         public async Task<bool> RemoveUserFromChat(int userid, int chatID)

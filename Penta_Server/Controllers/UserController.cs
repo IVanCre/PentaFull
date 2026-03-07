@@ -18,26 +18,52 @@ namespace Penta_Server.Controllers
 
 
         [HttpPost("Registration")]
-        public async Task<string[]> Registration(string name, string pass)
+        public async Task<IActionResult> Registration(string name, string pass)
         {
-            if (string.IsNullOrEmpty(name) || name.Length > 50 || name.Length<1)
-                throw new ArgumentException("Invalid name len");
+            if (string.IsNullOrEmpty(name) || name.Length > 50 || name.Length < 1)
+                return BadRequest(new ArgumentException("Invalid name len"));
 
-            if (string.IsNullOrEmpty(pass) || pass.Length > 50 || pass.Length<1)
-                throw new ArgumentException("Invalid password len");
+            if (string.IsNullOrEmpty(pass) || pass.Length > 50 || pass.Length < 1)
+                return BadRequest(new ArgumentException("Invalid password len"));
+
 
             var userID = await _userRepository.AddNewUserAsync(name, pass);
             if (userID != -1)
             {
                 _logger?.SaveSystemInfo($"Зарегистрирован новый юзер: {name}");
-                return _tokenMngr.CreateTokenPack(userID, name, pass);
+                var result =_tokenMngr.CreateTokenPack(userID, name, pass);
+                return Ok(result); 
             }
             else
             {
                 _logger?.SaveWarning($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть");
-                return null;
+                return Conflict(new ArgumentException());
             }
         }
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login(string name, string pass)
+        {
+            if (string.IsNullOrEmpty(name) || name.Length > 50 || name.Length < 1)
+                return BadRequest(new ArgumentException("Invalid name len"));
+
+            if (string.IsNullOrEmpty(pass) || pass.Length > 50 || pass.Length < 1)
+                return BadRequest(new ArgumentException("Invalid password len"));
+
+
+            var userID = await _userRepository.FindUserAsync(name, pass);
+            if (userID != -1)
+            {
+                _logger?.SaveSystemInfo($"Юзер успешно вошел в аккаунт в ручном режиме");
+                var result = _tokenMngr.CreateTokenPack(userID, name, pass);
+                return Ok(result);
+            }
+            else
+            {
+                _logger?.SaveWarning($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть");
+                return Conflict(new ArgumentException());
+            }
+        }
+
 
         [HttpPost("DeleteSelfAccount")]
         [Authorize]

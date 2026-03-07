@@ -13,6 +13,19 @@ namespace Penta_Server.Services.SignalR
             _connections.TryAdd(userID, connectionID);
         }
 
+        public int FindUserID(string connectionID)
+        {
+            try
+            {
+                var finded = _connections.First(x => x.Value == connectionID);
+                return finded.Key;
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+        }
+
         public string GetConnectionID(int userID)
         {
             string ID=string.Empty;

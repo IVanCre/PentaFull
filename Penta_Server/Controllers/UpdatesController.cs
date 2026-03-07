@@ -20,14 +20,12 @@ namespace Penta_Server.Controllers
         {
             try
             {
-#if DEBUG
                 _logger.SaveSystemInfo($"Запрос новой версии клиента относительно версии: {currentClientVersion}");
-#endif
                 return await _fileObserver.GetNewClientVersionFileNameAsync(currentClientVersion, type);
             }
             catch (Exception ex)
             {
-                _logger.SaveError(ex.Message);
+                _logger.SaveError($"Ошибка обработки запроса новой версии: {ex.Message}");
             }
             return string.Empty;
         }
@@ -35,19 +33,28 @@ namespace Penta_Server.Controllers
         [HttpGet("LoadFile")]
         public async Task<IActionResult> DownloadFile(string fileName, ClientType type)
         {
-            var stream =await _fileObserver.ReadFileAsync(fileName, type);
-            if (stream != null)
+            try
             {
-                string contentType = string.Empty;
-                switch(type)
+                var stream = await _fileObserver.ReadFileAsync(fileName, type);
+                if (stream != null)
                 {
-                    case ClientType.Android: contentType = "application/vnd.android.package-archive";break;
-                    case ClientType.Windows: contentType = "application/octet-stream";break;
+                    string contentType = string.Empty;
+                    switch (type)
+                    {
+                        case ClientType.Android: contentType = "application/vnd.android.package-archive"; break;
+                        case ClientType.Windows: contentType = "application/octet-stream"; break;
+                    }
+                    return File(stream, contentType, fileName);
                 }
-                return File(stream, contentType, fileName);
+                else
+                    return NotFound();
             }
-            else
+            catch (Exception ex) 
+            {
+                _logger.SaveError($"Ошибка при попытке отдать файл клиенту: {ex.Message}");
                 return NotFound();
+            }
+ 
         }
     }
 }
