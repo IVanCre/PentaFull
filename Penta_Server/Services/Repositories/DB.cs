@@ -13,6 +13,8 @@ namespace Penta_Server.Services.Repositories
 
 
         public DbSet<MessageEntity> Messages => Set<MessageEntity>();
+        public DbSet<SharedDataEntity> SharedDatas => Set<SharedDataEntity>();
+
         public DbSet<UserEntity> Users => Set<UserEntity>();
         public DbSet<TokenEntity> Tokens => Set<TokenEntity>();
         public DbSet<GroupEntity> Groups => Set<GroupEntity>();

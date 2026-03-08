@@ -11,6 +11,11 @@ namespace Penta_Server.Interfaces
     {
         public event MesageSaved MessageSaved;//факт сохранения 
 
-        public void Save(Message msg);
+        /// <summary>
+        /// Сохранение сообщения, с указанием для скольких копий оптимизировать хранение фактических данных 
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="dataCopyCount">для скольких копий предназначенны данные(byte[] Data)</param>
+        public void Save(Message msg, int dataCopyCount=1);
     }
 }

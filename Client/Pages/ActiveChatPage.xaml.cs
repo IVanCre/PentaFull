@@ -21,7 +21,7 @@ namespace Client.Pages
                     return TextAlignment.End;// ¬ход€щее сообщение от другого пользовател€ Ч справа
             }
             
-            return TextAlignment.Start;// ѕо умолчанию, если что-то не распознано
+            return TextAlignment.Center;// ѕо умолчанию, если что-то не распознано\новое
         }
 
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

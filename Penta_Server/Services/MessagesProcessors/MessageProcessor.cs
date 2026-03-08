@@ -87,6 +87,7 @@ namespace Penta_Server.Services.MessagesProcessors
                 if (await _groupRepo.AddUserToGroupAsync(msg.ToID, findedChat.ID))//после этого сущность findedChat имеет еще старый список
                 {
                     _messageSaver.Save(MessageFactory.UserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name));//для юзера
+                    
                     foreach (var recieverID in findedChat.UserIDsInGroup())
                     {
                         if(recieverID!= msg.ToID)
@@ -106,8 +107,9 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 if (await _groupRepo.RemoveUserFromGroupAsync(msg.ToID, findedGroup.ID))
                 {
-                    foreach (var recieverID in findedGroup.UserIDsInGroup())
-                        _messageSaver.Save(MessageFactory.DeleteUserFromGroupChat_Response(msg, recieverID));
+                    var userInGroup = findedGroup.UserIDsInGroup();
+                    foreach (var recieverID in userInGroup)
+                        _messageSaver.Save(MessageFactory.DeleteUserFromGroupChat_Response(msg, recieverID), userInGroup.Length);
                 }
             }
         }
@@ -129,10 +131,11 @@ namespace Penta_Server.Services.MessagesProcessors
             var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
             if (findedGroup != null)
             {
-                foreach (var recieverID in findedGroup.UserIDsInGroup())
+                var userInGroup = findedGroup.UserIDsInGroup();
+                foreach (var recieverID in userInGroup)
                 {
                     if(recieverID!=msg.FromID)
-                        _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID));
+                        _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID),userInGroup.Length-1);
                 }
             }
         }
