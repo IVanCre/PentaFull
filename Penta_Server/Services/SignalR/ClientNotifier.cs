@@ -49,7 +49,7 @@ namespace Penta_Server.Services.SignalR
                 var client = _hubContext.Clients.Client(connectionID);
                 if (client != null)
                 {
-                    _logger?.SaveSystemInfo($"Пересылаем клиенту {connectionID} сообщение");
+                    _logger?.SaveForDEBUG($"Пересылаем клиенту {connectionID} сообщение");
                     await client.SendAsync("RecieveMessage", msg);
                 }
             }
@@ -60,6 +60,6 @@ namespace Penta_Server.Services.SignalR
         }
 
 
-        public void MessageSended(long messageID) => _messageRepo.MarkForDelete(messageID);
+        public void MessageSended( long messageID) => _messageRepo.DeleteMessage(messageID);
     }
 }

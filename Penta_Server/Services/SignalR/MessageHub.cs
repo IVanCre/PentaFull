@@ -30,48 +30,47 @@ namespace Penta_Server.Services.SignalR
             if (!string.IsNullOrEmpty(userMaskedID))
             {
                 var userID_int = int.Parse(userMaskedID);
-                _logger?.SaveSystemInfo($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
+                _logger?.SaveForDEBUG($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
                 _connRepo.Add(userID_int, Context.ConnectionId);
 
                 await base.OnConnectedAsync();
                 await _clientNotifier?.SendAllNonSended(userID_int, Context.ConnectionId);//сразу отдаем накопившиеся сообщения
             }
             else
-                _logger?.SaveSystemInfo($"Отказ в подключении юзеру к хабу");
+                _logger?.SaveForDEBUG($"Отказ в подключении юзеру к хабу");
         }
 
         public override async Task OnDisconnectedAsync(Exception? exep)//отключение клиента
         {
+
             var userID = Context.User.Claims.FirstOrDefault(x => x.Type == "userID")?.Value;
-            _logger?.SaveSystemInfo($"Пользователь {userID} отключился ");
+            _logger?.SaveForDEBUG($"Пользователь {userID} отключился ");
 
             _connRepo.RemoveByUserID(int.Parse(userID));
 
             await base.OnDisconnectedAsync(null);
+
+            if(exep!=null)
+                _logger?.SaveError($"Ошибка при отключении юзера от хаба: {exep.Message}");
         }
 
-        public void AcknowledgeReceived(long messageID)
+        public void AcknowledgeReceived(long messageID)//подтверждение получения сообщения от клиента
         {
             try
             {
-                _clientNotifier.MessageSended(messageID);//подтверждение получения сообщения от клиента
-                _logger?.SaveSystemInfo($"Клиент подтвердил получение сообщения id={messageID}");
+                _clientNotifier.MessageSended(messageID);
+                _logger?.SaveForDEBUG($"Клиент подтвердил получение сообщения id={messageID}");
             }
             catch (Exception ex)
             {
-                _logger?.SaveSystemInfo($"Ошибка подтверждения получения сообщения: {ex.Message}");
+                _logger?.SaveForDEBUG($"Ошибка подтверждения получения сообщения: {ex.Message}");
             }
         }
 
 
-        public void SendToServer(Message msg)
+        public void SendToServer(Message msg)//клиент пишет на этот хаб
         {
-            _messageProc.ProcessingMessage(msg);//клиент пишет на хаб
-        }
-
-        public IHubCallerClients GetClientsProvider()
-        {
-            return Clients;
+            _messageProc.ProcessingMessage(msg);
         }
     }
 }

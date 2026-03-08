@@ -8,6 +8,7 @@ using Penta_Server.Interfaces;
 using Penta_Server.Services.Repositories;
 using Penta_Server.Services.Repositories.Models;
 using Penta_Server.StaticUtilits;
+using Microsoft.EntityFrameworkCore;
 
 namespace Penta_Server.Services
 {
@@ -22,16 +23,19 @@ namespace Penta_Server.Services
         public string[] CreateTokenPack(int maskedID,string username, string pass)
         {
             string[] tokenPack = GenerateTokenPack(maskedID, username, pass);
-            using (DB db= new DB(config["WorkDB:ConnString"]))
+            using (DB db= new DB(_config["WorkDB:ConnString"]))
             {
                 string maskedPass = PasswordManager.Encrypt(pass, username);
                 var finded =db.Users.FirstOrDefault(x => x.Name == username && x.MaskedPassword == maskedPass);
+                db.Tokens.Where(x => x.User.ID ==finded.ID).ExecuteDelete();//удаляем старый пак
+
                 db.Tokens.Add(
                     new TokenEntity() {
                         User= finded,
                         AccessToken= tokenPack[0],
                         RefreshToken = tokenPack[1]
                     });
+
                 db.SaveChanges();
             }
 
@@ -59,7 +63,7 @@ namespace Penta_Server.Services
                 expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(Convert.ToInt32(_config["Jwt:LifeTimeMinutes"]))),
                 signingCredentials: new SigningCredentials(
                     new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(config["Jwt:Key"])),
+                        Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
                         SecurityAlgorithms.HmacSha256));
 
             var refreshJwt = new JwtSecurityToken(
@@ -68,7 +72,7 @@ namespace Penta_Server.Services
                 expires: DateTime.UtcNow.Add(TimeSpan.FromDays(Convert.ToInt32(365))),//ну типа если ты год не заходишь -ну сорямба((
                 signingCredentials: new SigningCredentials(
                     new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(config["Jwt:Key"])),
+                        Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
                         SecurityAlgorithms.HmacSha256));
 
             return new string[]{
@@ -82,7 +86,7 @@ namespace Penta_Server.Services
         public string[] RefreshJwtToken(string refreshToken)
         {
             string[] tokenPack = new string[2];
-            using (DB db = new DB(config["WorkDB:ConnString"]))
+            using (DB db = new DB(_config["WorkDB:ConnString"]))
             {
                 var finded = db.Tokens.FirstOrDefault(x => x.RefreshToken == refreshToken);
                 if(finded!=null)
@@ -101,7 +105,7 @@ namespace Penta_Server.Services
 
         public int FindUserByToken(string accessToken)
         {
-            using (DB db = new DB(config["WorkDB:ConnString"]))
+            using (DB db = new DB(_config["WorkDB:ConnString"]))
             {
                 var finded =db.Tokens.FirstOrDefault(x => x.AccessToken == accessToken);
                 if (finded != null)
@@ -112,7 +116,7 @@ namespace Penta_Server.Services
                 }
             }
 
-            _logger?.SaveSystemInfo("Юзер, указанный в токене, не обнаружен в БД");
+            _logger?.SaveForDEBUG("Юзер, указанный в токене, не обнаружен в БД");
             return -1;
         }
 

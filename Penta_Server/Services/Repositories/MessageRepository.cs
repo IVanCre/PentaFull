@@ -11,15 +11,42 @@ namespace Penta_Server.Services.Repositories
        private string connStr = config["WorkDB:ConnString"];
 
 
-        public async void MarkForDelete(long messageID)
+        public void DeleteMessage(long messageID)
         {
             using (DB db = new DB(connStr))
             {
-                await db.Database.ExecuteSqlRawAsync($"UPDATE Messages SET IsSended=1 where ID={messageID}");
+                var finded = db.Messages.FirstOrDefault(x => x.ID == messageID);
+                if(finded!=null)
+                {
+                    db.Messages.Remove(finded);
+                    var data =db.SharedDatas.FirstOrDefault(x => x.ID == finded.SharedDataID);
+                    if(data!=null)
+                    {
+                        data.CopyCount--;
+                        if(data.CopyCount<=0)
+                            db.SharedDatas.Remove(data);//все необходимые копии использованы, можно удалять
+                    }
+                    db.SaveChanges();
+                }
             }
         }
 
-        public void Add(Message msg)
+        public async Task<long> SaveDataLikeShared(byte[] data, int copyCount)
+        {
+            using (DB db = new DB(connStr))
+            {
+                var dataEntity = new SharedDataEntity()
+                {
+                    Data = data,
+                    CopyCount = copyCount,
+                };
+                db.SharedDatas.Add(dataEntity);
+
+                db.SaveChanges();
+                return dataEntity.ID;
+            }
+        }
+        public void SaveWithData(Message msg,long sharedDataID)
         {
             using (DB db= new DB(connStr))
             {
@@ -33,7 +60,7 @@ namespace Penta_Server.Services.Repositories
                         GroupID = msg.ChatID,
                         ToUserID = msg.ToID,
                         Type = msg.Type,
-                        Data = msg.Data,
+                        SharedDataID = sharedDataID,
                         UtcTimestamp = msg.UtcTimestamp,
                     };
                     db.Messages.Add(createdEntity);
@@ -43,6 +70,9 @@ namespace Penta_Server.Services.Repositories
                 }
             }
         }
+        public void SaveWithoutData(Message msg) => SaveWithData(msg, -1);
+
+
 
         public async Task<List<Message>> GetNonSendedForUserAsync(int userID)
         {
@@ -54,15 +84,22 @@ namespace Penta_Server.Services.Repositories
                     if (db.Users.FirstOrDefault(x => x.ID == userID) != null)//получатель должен быть зарегистрированнным
                     {
                         var finded = db.Messages.Where(x => x.ToUserID==userID && !x.IsSended).ToList();
+                        byte[] data = null;
+
                         foreach (var f in finded)
                         {
+                            if (f.SharedDataID > -1) //значит какие-то данные есть, надо искать
+                                data = db.SharedDatas.FirstOrDefault(x => x.ID == f.SharedDataID).Data;
+                            else
+                                data = null;
+
                             result.Add(new Message(
                                 f.ID,
                                 f.FromUserID,
                                 f.GroupID,
                                 f.ToUserID,
                                 f.Type,
-                                f.Data,
+                                data,
                                 f.UtcTimestamp));
                         }
                     }
@@ -76,10 +113,10 @@ namespace Penta_Server.Services.Repositories
             using (DB db = new DB(connStr))
             {
                 var finded = await db.Messages.Where(x => x.ToUserID == userID && !x.IsSended).ToListAsync();
-                db.SaveChanges();
-
                 return finded != null && finded.Count > 0;
             }
         }
+
+
     }
 }

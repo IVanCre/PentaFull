@@ -26,7 +26,7 @@ namespace Penta_Server.Services.MessagesProcessors
             ILogWriter logger)
         {
             _messageSaver = messSaver;
-            _messageSaver.MessageSaved += ProcessSavedMessage;
+            _messageSaver.MessageSaved += ProcessSavedMessage;//т.е. сообщение сохраняется, а потом мы отправляем ответ-результат
             _groupRepo = groupRepo;
             _clientNotifier = clientNotifier;
             _userRepo = userRepo;
@@ -38,144 +38,112 @@ namespace Penta_Server.Services.MessagesProcessors
         {
             switch (msg.Type)
             {
-                //user->server
-                case MessageType.InviteToGroupResponce:      InviteToGroupChatResponce(msg); break;
+                //системные-одиночный ответ
+                case MessageType.CreateGroupRequest: CreateGroupChat(msg); break;
+                case MessageType.DeleteSelfAccountRequest: DeleteAccount(msg); break;
+
+                //системные-групповой ответ
+                case MessageType.AddToGroupRequest: AddToGroupChatRequest(msg); break;
                 case MessageType.RemoveUserFromGroupRequest: RemoveUserFromGroupChatRequest(msg); break;
-                case MessageType.CreateGroupRequest:         CreateGroupChat(msg); break;
-                case MessageType.DeleteGroupRequest:         DeleteGroupChat(msg); break;
-                case MessageType.DeleteSelfAccountRequest:   DeleteAccount(msg);break;
+                case MessageType.DeleteGroupRequest: DeleteGroupChatRequest(msg); break;
 
-                //user->user
-                case MessageType.InviteToGroupRequest: TryResendInvite(msg);break;
-
+                //пользовательские
                 case MessageType.Text:
                 case MessageType.Picture:
-                case MessageType.Voice: ResendToUsers(msg); break;
+                case MessageType.Voice:
+                    {
+                        if (msg.ToID == -1 && msg.ChatID != -1)
+                            SendToGroup(msg);//сообщение для группового чата
+                        else
+                            _messageSaver.Save(msg);//сообщение для конкретного юзера
+                    }; break;
             }
         }
 
         private async void CreateGroupChat(Message msg)
         {
-            _logger?.SaveSystemInfo("Получен запрос на создание чата");
+            _logger?.SaveForDEBUG("Получен запрос на создание чата");
             var groupID = await _groupRepo.CreatGroupAsync(msg.FromID,msg.GetDataLikeString());
-
-            var createdMsg = MessageFactory.CreateGroupChat_Response(groupID, msg);
-            _messageSaver.Save(createdMsg);//сохраняем в БД(вдруг хаба нет или связь плохая)
+            if(groupID!=-1)
+                _messageSaver.Save(MessageFactory.CreateGroupChat_Response(groupID, msg));//сохраняем в БД(вдруг хаба нет или связь плохая)
         }
-
-        private async void InviteToGroupChatResponce(Message msg)
-        {
-            _logger?.SaveSystemInfo("Юзер ответил на приглашение в группу");
-            if (msg.GetDataLikeBoolean())//юзер согласен вступить в группу
-            {
-                var finded = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-                if (finded != null)//указанная группа есть
-                {
-                    if (await _groupRepo.AddUserToGroupAsync(msg.FromID, finded.ID))
-                    {
-                        var usersID = finded.UserIDsInGroup();
-                        foreach (var userID in usersID)//для каждого юзера делаем отдельную копию сообщения
-                        {
-                            var createdMsg = MessageFactory.InviteUserToGroupChat_ServerResponse(msg, userID);
-                            _messageSaver.Save(createdMsg);
-                        }
-                    }
-                }
-            }
-        }
-
-        private async void RemoveUserFromGroupChatRequest(Message msg)
-        {
-            _logger?.SaveSystemInfo("Запрос удаления юзера из группы");
-            var finded = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-
-            if (finded != null && (
-                finded.AdminGroupID == msg.FromID ||// запрос идет от админа группы
-                msg.FromID == msg.ToID))//юзер сам хочет уйти
-            {
-                if (await _groupRepo.RemoveUserFromGroupAsync(msg.ToID, finded.ID))
-                {
-                    var usersID = finded.UserIDsInGroup();
-                    foreach (var userID in usersID)//для каждого юзера делаем отдельную копию сообщения
-                    {
-                        var createdMsg = MessageFactory.DeleteUserFromGroupChat_Response(msg, userID);
-                        _messageSaver.Save(createdMsg);
-                    }
-                }
-            }
-        }
-
-        private async void DeleteGroupChat(Message msg)
-        {
-            _logger?.SaveSystemInfo($"Получен запрос на удаление чата id={msg.ChatID}");
-            var finded = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-            if (finded != null)
-            {
-                var usersID = finded.UserIDsInGroup();
-                if (await _groupRepo.DeleteGroup(msg.FromID, msg.ChatID))
-                {
-                    foreach (var userID in usersID)//для каждого юзера делаем отдельную копию сообщения
-                    {
-                        var createdMsg = MessageFactory.DeleteGroupChat_Response(msg, userID);
-                        _messageSaver.Save(createdMsg);
-                    }
-                }
-            }
-        }
-
-        private async void TryResendInvite(Message msg)
-        {
-            _logger?.SaveSystemInfo($"Юзер ответил на приглашение в чат id={msg.ChatID}");
-            var group = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-            if(group!=null)
-            {
-                if(group.AdminGroupID== msg.FromID)//только создатель группы может приглашать в нее
-                {
-                    _messageSaver.Save(msg);
-                }
-            }
-        }
-
-        private async void ResendToUsers(Message msg)
-        {
-            if (msg.ToID == -1 && msg.ChatID != -1)//сообщение для группового чата
-            {
-                var group = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-                if (group != null)
-                {
-                    foreach (int userID in group.UserIDsInGroup())//если данные в сообщении большие, то для каждого юзера будет сохранена в БД копия сообщения(что не совсем эффективно)
-                    {
-                        var createdMsg = new Message(
-                                Message.GenerateIDByTime(),
-                                msg.FromID,
-                                msg.ChatID,
-                                userID,
-                                msg.Type,
-                                msg.Data,
-                                msg.UtcTimestamp);
-                        _messageSaver.Save(createdMsg);
-                    }
-                }
-            }
-            else//сообщение для конкретного юзера
-            {
-                _messageSaver.Save(msg);
-            }
-        }
-
         private async void DeleteAccount(Message msg)
         {
-            _logger?.SaveSystemInfo($"Получен запрос на удаление аккаунта id={msg.FromID}");
+            _logger?.SaveForDEBUG($"Получен запрос на удаление аккаунта id={msg.FromID}");
             var result = await _userRepo.DeleteUserByIDAsync(msg.FromID);
             if (result)
-            {
-                var createdMsg = MessageFactory.DeleteAccountResponce(msg);
-                _messageSaver.Save(createdMsg);
-            }
+                _messageSaver.Save(MessageFactory.DeleteAccountResponce(msg));
         }
 
 
-        //в этом методе берется последнее сохраненное сообщение
+        //в данной группе методов подразумевается массовый ответ, как следствие -оптимизированный способ хранения исходного запроса
+ #region Groups 
+        private async void AddToGroupChatRequest(Message msg)
+        {
+            _logger?.SaveForDEBUG("Запрос добавление юзера в группу");
+            var findedChat = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
+            if (findedChat != null)//указанная группа есть
+            {
+                if (await _groupRepo.AddUserToGroupAsync(msg.ToID, findedChat.ID))//после этого сущность findedChat имеет еще старый список
+                {
+                    _messageSaver.Save(MessageFactory.UserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name));//для юзера
+                    
+                    foreach (var recieverID in findedChat.UserIDsInGroup())
+                    {
+                        if(recieverID!= msg.ToID)
+                            _messageSaver.Save(MessageFactory.AddUserToGroupChat_Response(msg, recieverID));
+                    }
+                }
+            }
+        }
+        private async void RemoveUserFromGroupChatRequest(Message msg)
+        {
+            _logger?.SaveForDEBUG("Запрос удаления юзера из группы");
+            var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
+
+            if (findedGroup != null && (
+                findedGroup.AdminGroupID == msg.FromID ||// запрос идет от админа группы
+                msg.FromID == msg.ToID))//или юзер сам хочет уйти
+            {
+                if (await _groupRepo.RemoveUserFromGroupAsync(msg.ToID, findedGroup.ID))
+                {
+                    var userInGroup = findedGroup.UserIDsInGroup();
+                    foreach (var recieverID in userInGroup)
+                        _messageSaver.Save(MessageFactory.DeleteUserFromGroupChat_Response(msg, recieverID), userInGroup.Length);
+                }
+            }
+        }
+        private async void DeleteGroupChatRequest(Message msg)
+        {
+            _logger?.SaveForDEBUG($"Получен запрос на удаление чата id={msg.ChatID}");
+            var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
+            if (findedGroup != null)
+            {
+                if (await _groupRepo.DeleteGroup(msg.FromID, msg.ChatID))
+                {
+                    foreach (var recieverID in findedGroup.UserIDsInGroup())
+                        _messageSaver.Save(MessageFactory.DeleteGroupChat_Response(msg, recieverID));
+                }
+            }
+        }
+        private async void SendToGroup(Message msg)
+        {
+            var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
+            if (findedGroup != null)
+            {
+                var userInGroup = findedGroup.UserIDsInGroup();
+                foreach (var recieverID in userInGroup)
+                {
+                    if(recieverID!=msg.FromID)
+                        _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID),userInGroup.Length-1);
+                }
+            }
+        }
+        #endregion
+
+
+
+        //в этом методе берется последнее сохраненное сообщение из очереди сохраненных
         private void ProcessSavedMessage(Message savedMsg)
         {
             _ = _clientNotifier.SendToUser(savedMsg);

@@ -39,7 +39,7 @@ namespace Penta_Server.Services
             var findedDevices = await _deviceTknHolder.GetTokenDeviceByID(userID);
             if (findedDevices != null && findedDevices.Count > 0)
             {
-                _logger?.SaveSystemInfo($"Пересылаем клиенту id={userID} пуш-уведомление ");
+                _logger?.SaveForDEBUG($"Пересылаем клиенту id={userID} пуш-уведомление ");
                 foreach (var deviceToken in findedDevices)//веерная рассылка на все известные устройства
                 {
                     var message = new Message()

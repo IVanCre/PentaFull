@@ -14,7 +14,6 @@ namespace Penta_ClientLib.Services
         public event ChatUserListChanged UserAdded;
         public event ChatUserListChanged UserRemoved;
         public event NewMessageInChat MessageAddedToChat;
-        public event InvitedToChat RecieveInvite;
         public event AccountDeleted AccountDeleted;
 
 
@@ -35,11 +34,11 @@ namespace Penta_ClientLib.Services
             switch (msg.Type)
             {
                 //сохранение системных сообщений не требуется
-                case MessageType.InviteToGroupResponce:         await ProcessInviteUserToGroupResponce(msg); break;
+                case MessageType.AddUserToGroupResponse:        await ProcessAddUserToGroupResponce(msg); break;
+                case MessageType.UserAddedToGroupResponse:      await ProcessAddedToGroupChat(msg);break;
                 case MessageType.RemoveUserFromGroupResponce:   await ProcessDeleteUserFromGroupResponce(msg); break;
                 case MessageType.CreateGroupResponce:           await ProcessCreateGroupChatResponce(msg);break;
                 case MessageType.DeleteGroupResponce:           await ProcessDeleteGroupResponce(msg);break;
-                case MessageType.InviteToGroupRequest:          RecieveInvite?.Invoke(msg); break;
                 case MessageType.DeleteSelfAccountResponce:     AccountDeleted?.Invoke(); ; break;
 
                 //указанные сообщения сохранятся
@@ -48,6 +47,9 @@ namespace Penta_ClientLib.Services
                 case MessageType.Voice:                         await ProcessMessageFromUser(msg);break;
             }
         }
+
+
+        private Task ProcessAddedToGroupChat(Message msg) => ProcessCreateGroupChatResponce(msg);//создаем у себя чат, в котрорый нас добавили
         private async Task ProcessCreateGroupChatResponce(Message msg)//ответ на запрос
         {
             if (msg.ChatID!=-1)//значит сервак успешно создал
@@ -57,10 +59,10 @@ namespace Penta_ClientLib.Services
                     CreatedNewChat?.Invoke(msg.ChatID,chatName);
             }
         }
-        private async Task ProcessInviteUserToGroupResponce(Message msg)
+        private async Task ProcessAddUserToGroupResponce(Message msg)
         {
-            if (await _chatHolder.AddUserToChat(msg.FromID,msg.ChatID ))//запоминаем юзера, который добавился в чат
-                UserAdded?.Invoke(msg.ChatID, msg.FromID);//информируем наверх, что кто-то присоединился к чату,в котором есть мы
+            if (await _chatHolder.TryAddUserToChat(msg.ToID,msg.ChatID ))//запоминаем юзера, который добавился в чат
+                UserAdded?.Invoke(msg.ChatID, msg.ToID);//информируем наверх, что кто-то присоединился к чату,в котором есть мы
         }
 
         private async Task ProcessDeleteUserFromGroupResponce(Message msg)
@@ -78,8 +80,7 @@ namespace Penta_ClientLib.Services
             {
                 ChatDeleted?.Invoke(msg.ChatID,"");
             }
-        }        
-
+        }
 
 
         private async Task ProcessMessageFromUser(Message msg)
@@ -98,7 +99,8 @@ namespace Penta_ClientLib.Services
                             msg.ToID,
                             msg.Type,
                             msg.Data,
-                            msg.UtcTimestamp)))
+                            msg.UtcTimestamp),
+                        true))
                         MessageAddedToChat?.Invoke(chatID, msg);
                 }
                 else//нет чата с указанным connectID
@@ -116,7 +118,8 @@ namespace Penta_ClientLib.Services
                                 msg.ToID,
                                 msg.Type,
                                 msg.Data,
-                                msg.UtcTimestamp)))
+                                msg.UtcTimestamp),
+                            true))
                             MessageAddedToChat?.Invoke(chatID, msg);
                     }
                 }
@@ -124,11 +127,11 @@ namespace Penta_ClientLib.Services
             else//групповое сообщение
             {
                 //тут уже есть чат(т.к. сервак делает рассылку только тем, кто в группе состоит)
-                var added = await _chatHolder.AddUserToChat(msg.FromID, msg.ChatID);// прикрепляем нового юзера к чату(чтобы видеть его у себя)
+                var added = await _chatHolder.TryAddUserToChat(msg.FromID, msg.ChatID);// прикрепляем нового юзера к чату(чтобы видеть его у себя)
                 if (added)
                     UserAdded?.Invoke(msg.ChatID, msg.FromID);
 
-                if (await _messHolder.SaveMessage(msg))
+                if (await _messHolder.SaveMessage(msg,true))
                     MessageAddedToChat?.Invoke(msg.ChatID, msg);
             }
         }

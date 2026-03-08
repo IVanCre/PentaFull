@@ -6,12 +6,8 @@ namespace Penta_ClientLib.Interfaces
     internal interface IChatManager
     {
         Task<Tuple<bool, Exception>> SendCreateGroupChat(string chatName);//явная только отправка. Ответы от сервера обрабатываются отдельно(по событиям)
-
         Task<Tuple<bool, Exception>> SendDeleteGroupChat(int chatID);
-
-        Task<Tuple<bool, Exception>> SendResponseToInvite(int chatID, bool acceptInvite);
-        Task<Tuple<bool, Exception>> SendInviteUserToGroupChat(int chatID, string userConnectID);
-
+        Task<Tuple<bool, Exception>> SendAddUserToGroupChat(int chatID, string userConnectID);
         Task<Tuple<bool, Exception>> SendLeaveGroupChat(int chatID);
         Task<Tuple<bool, Exception>> SendDeleteUserFromGroupChat(int chatID, string userConnectID);
 

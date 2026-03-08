@@ -50,11 +50,6 @@ namespace Penta_ClientLib.Interfaces
         event NewMessageInChat MessageAddedToChat;
 
         /// <summary>
-        /// Вызывается, когда с сервера приходит приглашение(от админа группы) на вступление в групповой чат
-        /// </summary>
-        event InvitedToChat RecieveInvite;
-
-        /// <summary>
         /// Вызывается, когда сервер присылает результат удаления аккаунта(удалет только аккаунт отправителя)
         /// </summary>
         event AccountDeleted AccountDeleted;
@@ -73,6 +68,7 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="password"></param>
         /// <returns></returns>
         Task<Tuple<bool,Exception>> RegistrationAsync(string login, string password);
+        Task<Tuple<bool, Exception>> LoginAsync(string login, string password);
 
         /// <summary>
         /// Подключение к серверу
@@ -113,15 +109,9 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="chatID"></param>
         /// <param name="userContactID"></param>
         /// <returns></returns>
-        Task<Tuple<bool, Exception>> InviteUserToGroupChatAsync(int chatID, string userContactID);
+        Task<Tuple<bool, Exception>> AddUserToGroupChatAsync(int chatID, string userContactID);
 
-        /// <summary>
-        /// Отправка ответа на приглашение в групповой чат(через сервер)
-        /// </summary>
-        /// <param name="chatID"></param>
-        /// <param name="acceptInvite"></param>
-        /// <returns></returns>
-        Task<Tuple<bool, Exception>> SendResponseToInviteAsync(int chatID, bool acceptInvite);
+
 
         /// <summary>
         /// Юзер, который сейчас работает в Клиенте, шлет запрос на выход из группового чата

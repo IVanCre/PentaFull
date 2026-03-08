@@ -7,7 +7,6 @@
         event ChatUserListChanged UserAdded;        
         event ChatUserListChanged UserRemoved;        
         event NewMessageInChat MessageAddedToChat;        
-        event InvitedToChat RecieveInvite;
         event AccountDeleted AccountDeleted;
     }
 }

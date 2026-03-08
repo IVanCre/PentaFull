@@ -195,18 +195,24 @@ namespace Penta_ClientLib.Repository
             return deleted == 1;
         }
 
-        public async Task<bool> AddUserToChat(int userid, int chatID)
+        public async Task<bool> TryAddUserToChat(int userid, int chatID)
         {
             InitConnect();
 
-            var inserted = await _connection.InsertAsync(
-                new UserInChatEntity()
-                {
-                    ContactId = userid,
-                    ChatId = chatID
-                });
+            var findCopy = await _connection.Table<UserInChatEntity>().FirstOrDefaultAsync(x => x.ContactId == userid && x.ChatId == chatID);
+            if (findCopy == null)
+            {
+                var inserted = await _connection.InsertAsync(
+                     new UserInChatEntity()
+                     {
+                         ContactId = userid,
+                         ChatId = chatID
+                     });
 
-            return inserted == 1;
+                return inserted == 1;
+            }
+            else
+                return false;
         }
 
         public async Task<bool> RemoveUserFromChat(int userid, int chatID)
@@ -231,7 +237,7 @@ namespace Penta_ClientLib.Repository
 
 
         #region Messages
-        public async Task<bool> SaveMessage(Message msg)
+        public async Task<bool> SaveMessage(Message msg, bool isMessageFromServer)
         {
             var result = await _connection.InsertAsync(
                  new MessageItemEntity()
@@ -243,7 +249,7 @@ namespace Penta_ClientLib.Repository
                      Type = msg.Type,
                      Data = msg.Data,
                      UtcTimestamp = DateTime.Now,
-                     IsSended = false
+                     IsSended = isMessageFromServer//если оно с сервера -значит оно успешно доставлено и маркер выключаем
                  });
 
             return result == 1;

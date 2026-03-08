@@ -1,12 +1,11 @@
 ﻿using Penta_Server.Interfaces;
 using Penta_Server.Services.Repositories;
-using Microsoft.EntityFrameworkCore;
 using SysTimer =System.Timers.Timer;
 
 namespace Penta_Server.Services.MessagesProcessors
 {
     /// <summary>
-    /// Циклично чистит БД от доставленных(юзерам) сообщений
+    /// Циклично чистит БД 
     /// </summary>
     public class MessagesDBCleaner
     {
@@ -33,9 +32,8 @@ namespace Penta_Server.Services.MessagesProcessors
         {
             using (DB db= new DB(connStr))
             {
-                int deletetd= db.Database.ExecuteSqlRaw("DELETE FROM Messages WHERE IsSended=1");
-                if (deletetd > 0)
-                    _logger?.SaveSystemInfo("Помеченные сообщения удалены");
+                int deleted = 0;//тут можно заюзать нормальную логику
+               _logger?.SaveForDEBUG($"Вызвана очистка БД. Удалено строк: {deleted}");
             }
         }
 

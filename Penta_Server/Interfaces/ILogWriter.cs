@@ -8,6 +8,6 @@
         public void SaveError(string text);
         public void SaveWarning(string text);
         public void SaveInfo(string text);
-        public void SaveSystemInfo(string text);
+        public void SaveForDEBUG(string text);
     }
 }

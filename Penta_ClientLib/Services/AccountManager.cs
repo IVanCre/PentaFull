@@ -27,20 +27,40 @@ namespace Penta_ClientLib.Services
             }
         }
 
-        public async Task<Tuple<bool, Exception>> Registration(string login, string password)
+        public async Task<Tuple<bool, Exception>> RegistrationAsync(string login, string password)
         {
             try
             {
-                int userID = await _webClient.TryRegisterAsync(login, password);
-                if (userID > -1)
-                {
+                var result = await _webClient.TryEnterAsync(login, password,true);
+                if(result.Item2==null)
+                { 
                     await _settings.SetUserLogin(login);
                     await _settings.SetUserPassword(password);
-                    await _settings.SetUserID(userID);
+                    await _settings.SetUserID(result.Item1);
                     return Tuple.Create<bool,Exception>(true, null);
                 }
                 else
-                    return Tuple.Create<bool, Exception>(false, null);
+                    return Tuple.Create<bool, Exception>(false, result.Item2);//возвращаем серверную ошибку-ответ
+            }
+            catch (Exception e)
+            {
+                return Tuple.Create(false, e);
+            }
+        }
+        public async Task<Tuple<bool, Exception>> LoginAsync(string login, string password)
+        {
+            try
+            {
+                var result = await _webClient.TryEnterAsync(login, password,false);
+                if (result.Item2 == null)
+                {
+                    await _settings.SetUserLogin(login);
+                    await _settings.SetUserPassword(password);
+                    await _settings.SetUserID(result.Item1);
+                    return Tuple.Create<bool, Exception>(true, null);
+                }
+                else
+                    return Tuple.Create<bool, Exception>(false, result.Item2);//возвращаем серверную ошибку-ответ
             }
             catch (Exception e)
             {

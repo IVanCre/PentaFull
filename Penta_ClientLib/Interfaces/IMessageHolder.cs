@@ -5,7 +5,13 @@ namespace Penta_ClientLib.Interfaces
 {
     internal interface IMessageHolder
     {
-        Task<bool> SaveMessage(Message msg);
+        /// <summary>
+        /// Сохранение сообщения перед последющей обработкой
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="isMessageFromServer">сообщение принято от сервера </param>
+        /// <returns></returns>
+        Task<bool> SaveMessage(Message msg, bool isMessageFromServer);
         Task<List<Message>> GetMessagesByChat(int chatID, int maxLastMessageCount);
 
 

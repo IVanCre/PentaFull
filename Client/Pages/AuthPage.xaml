@@ -10,6 +10,7 @@
         VerticalOptions="StartAndExpand" 
         BackgroundColor ="{StaticResource OffBlack}">
         <Entry x:Name="UsernameEntry"
+               MaxLength="50"
                TextColor="{StaticResource White}"
                PlaceholderColor="{StaticResource PrimaryDark}"
                HorizontalTextAlignment="Center"
@@ -17,6 +18,7 @@
                Keyboard="Default" />
 
         <Entry x:Name="PasswordEntry"
+               MaxLength="50"
                TextColor="{StaticResource White}"
                HorizontalTextAlignment="Center"
                PlaceholderColor="{StaticResource PrimaryDark}"
@@ -25,9 +27,18 @@
                Keyboard="Default" />
 
         <Button x:Name="RegButton"
+                Margin="20"
                 Text="Зарегистрироваться"
                 TextColor="{StaticResource White}"
                 Clicked="OnRegButtonClicked" />
+
+        <Button x:Name="LoginButton"
+                Margin="20"
+                Text="Вход"
+                TextColor="{StaticResource White}"
+                Clicked="OnLoginButtonClicked" />
+
+
 
 
     </StackLayout>
