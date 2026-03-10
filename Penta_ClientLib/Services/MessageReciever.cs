@@ -9,10 +9,11 @@ namespace Penta_ClientLib.Services
         private IWebClient _messListener;
         private IMessageHolder _messHolder;
 
+
         public event ChatChanged CreatedNewChat;
         public event ChatChanged ChatDeleted;
-        public event ChatUserListChanged UserAdded;
-        public event ChatUserListChanged UserRemoved;
+        public event ChatUserListChanged UserAdded;//пока не используем
+        public event ChatUserListChanged UserRemoved;//пока не используем
         public event NewMessageInChat MessageAddedToChat;
         public event AccountDeleted AccountDeleted;
 
@@ -34,11 +35,11 @@ namespace Penta_ClientLib.Services
             switch (msg.Type)
             {
                 //сохранение системных сообщений не требуется
-                case MessageType.AddUserToGroupResponse:        await ProcessAddUserToGroupResponce(msg); break;
-                case MessageType.UserAddedToGroupResponse:      await ProcessAddedToGroupChat(msg);break;
-                case MessageType.RemoveUserFromGroupResponce:   await ProcessDeleteUserFromGroupResponce(msg); break;
-                case MessageType.CreateGroupResponce:           await ProcessCreateGroupChatResponce(msg);break;
-                case MessageType.DeleteGroupResponce:           await ProcessDeleteGroupResponce(msg);break;
+                case MessageType.AddUserToGroupResponse:        AddUserToGroupResponce(msg); break;
+                case MessageType.UserAddedToGroupResponse:      await UserAddedToGroupChat(msg);break;
+                case MessageType.RemoveUserFromGroupResponce:   DeleteUserFromGroupResponce(msg); break;
+                case MessageType.CreateGroupResponce:           await CreateGroupChatResponce(msg);break;
+                case MessageType.DeleteGroupResponce:           await DeleteGroupResponce(msg);break;
                 case MessageType.DeleteSelfAccountResponce:     AccountDeleted?.Invoke(); ; break;
 
                 //указанные сообщения сохранятся
@@ -49,37 +50,44 @@ namespace Penta_ClientLib.Services
         }
 
 
-        private Task ProcessAddedToGroupChat(Message msg) => ProcessCreateGroupChatResponce(msg);//создаем у себя чат, в котрорый нас добавили
-        private async Task ProcessCreateGroupChatResponce(Message msg)//ответ на запрос
+        private async Task UserAddedToGroupChat(Message msg)
+        {
+            if (msg.ChatID != -1)//значит сервак успешно создал
+            {
+                var chatName = msg.GetDataLikeString();
+                if (await _chatHolder.CreateGroupChat(msg.ChatID, chatName, false))
+                    CreatedNewChat?.Invoke(msg.ChatID, chatName);
+
+                AddUserToGroupResponce(msg);
+            }
+        }
+
+        private async Task CreateGroupChatResponce(Message msg)//ответ на наш запрос(значит мы являемся админом)
         {
             if (msg.ChatID!=-1)//значит сервак успешно создал
             {
                 var chatName = msg.GetDataLikeString();
-                if(await _chatHolder.AddGroupChat(msg.ChatID,chatName ))
+                if(await _chatHolder.CreateGroupChat(msg.ChatID,chatName, true ))
                     CreatedNewChat?.Invoke(msg.ChatID,chatName);
+
+                AddUserToGroupResponce(msg);
             }
-        }
-        private async Task ProcessAddUserToGroupResponce(Message msg)
-        {
-            if (await _chatHolder.TryAddUserToChat(msg.ToID,msg.ChatID ))//запоминаем юзера, который добавился в чат
-                UserAdded?.Invoke(msg.ChatID, msg.ToID);//информируем наверх, что кто-то присоединился к чату,в котором есть мы
         }
 
-        private async Task ProcessDeleteUserFromGroupResponce(Message msg)
+        private void AddUserToGroupResponce(Message msg)
+        {
+            UserAdded?.Invoke(msg.ChatID, msg.ToID);
+        }
+        private void DeleteUserFromGroupResponce(Message msg)
         {
             var userIDToDelete = msg.GetDataLikeInt();
-            if (await _chatHolder.RemoveUserFromChat(userIDToDelete, msg.ChatID))
-            {
-                UserRemoved?.Invoke(msg.ChatID, userIDToDelete);
-            }
+            UserRemoved?.Invoke(msg.ChatID, userIDToDelete);
         }        
         
-        private async Task ProcessDeleteGroupResponce(Message msg)
+        private async Task DeleteGroupResponce(Message msg)
         {
             if (await _chatHolder.DeleteChat(msg.ChatID))
-            {
                 ChatDeleted?.Invoke(msg.ChatID,"");
-            }
         }
 
 

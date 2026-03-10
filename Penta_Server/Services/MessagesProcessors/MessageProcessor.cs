@@ -86,19 +86,16 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 if (await _groupRepo.AddUserToGroupAsync(msg.ToID, findedChat.ID))//после этого сущность findedChat имеет еще старый список
                 {
-                    _messageSaver.Save(MessageFactory.UserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name));//для юзера
+                    _messageSaver.Save(MessageFactory.UserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name));//для добавляемого юзера
                     
                     foreach (var recieverID in findedChat.UserIDsInGroup())
-                    {
-                        if(recieverID!= msg.ToID)
-                            _messageSaver.Save(MessageFactory.AddUserToGroupChat_Response(msg, recieverID));
-                    }
+                        _messageSaver.Save(MessageFactory.AddUserToGroupChat_Response(msg, recieverID));
                 }
             }
         }
         private async void RemoveUserFromGroupChatRequest(Message msg)
         {
-            _logger?.SaveForDEBUG("Запрос удаления юзера из группы");
+            _logger?.SaveForDEBUG($"Запрос удаления юзера id={msg.ToID} из группы id={msg.ChatID}");
             var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
 
             if (findedGroup != null && (

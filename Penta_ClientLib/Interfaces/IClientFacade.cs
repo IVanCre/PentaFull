@@ -213,6 +213,13 @@ namespace Penta_ClientLib.Interfaces
         Task<List<ContactInfo>> GetAllContactsAsync();
 
         /// <summary>
+        /// Являемся ли мы админом-создателем указанного группового чата
+        /// </summary>
+        /// <param name="chatID"></param>
+        /// <returns></returns>
+        Task<bool> AmCreatedGroupChat(int chatID);
+
+        /// <summary>
         /// вызывает закрытие всех ресурсов клиента.
         /// Вызывать перед завершением приложения
         /// </summary>

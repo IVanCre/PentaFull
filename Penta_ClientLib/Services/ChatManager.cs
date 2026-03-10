@@ -154,5 +154,8 @@ namespace Penta_ClientLib.Services
         public Task<List<ChatInfo>> GetAllChatsInfo() => _chatHolder.GetAllChats();
         public Task<int> CreatePrivateChat(string chatName) => _chatHolder.CreatePrivateChat(chatName);
         public Task<bool> DeletePrivateChat(int chatID) => _chatHolder.DeleteChat(chatID);
+
+        public Task<bool> AmCreatedThisGroupChat(int chatID)=>_chatHolder.AmCreatedThisGroupChat(chatID);
+
     }
 }

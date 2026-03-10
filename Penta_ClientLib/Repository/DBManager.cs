@@ -3,6 +3,7 @@ using Penta_ClientLib.DataStructs;
 using Penta_ClientLib.Interfaces;
 using Penta_ClientLib.Services;
 using SQLite;
+using System.Diagnostics.Contracts;
 
 
 namespace Penta_ClientLib.Repository
@@ -27,6 +28,7 @@ namespace Penta_ClientLib.Repository
             _connection.CreateTableAsync<ChatEntity>();
             _connection.CreateTableAsync<UserInChatEntity>();
             _connection.CreateTableAsync<MessageItemEntity>();
+            _connection.CreateTableAsync<AmGroupAdminEntity>();
         }
         private void InitConnect()
         {
@@ -134,23 +136,45 @@ namespace Penta_ClientLib.Repository
 
 
         #region Chats        
-        private async Task<bool> AddChat(int chatID, string chatName)
+        private async Task<bool> CreateChat(int chatID, string chatName)
+        {
+            InitConnect();
+            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
+            if (finded == null)
+            {
+                var added = await _connection.InsertAsync(
+                    new ChatEntity()
+                    {
+                        ID = chatID,
+                        Name = chatName
+                    });
+
+                return added == 1;
+            }
+            else//значит чат уже есть
+                return true;
+        }        
+        public async Task<bool> CreateGroupChat(int chatID, string chatName, bool requestFromAdminGroup)
+        {
+            bool result = await CreateChat(chatID, chatName);
+            if(result)
+            {
+                await _connection.InsertAsync(
+                    new AmGroupAdminEntity()
+                    {
+                        ChatID = chatID,
+                    });
+            }
+            return result;
+        }
+        public async Task<bool> AmCreatedThisGroupChat(int chatID)
         {
             InitConnect();
 
-            var added = await _connection.InsertAsync(
-                new ChatEntity()
-                {
-                    ID = chatID,
-                    Name = chatName
-                });
-
-            return added == 1;
-        }        
-        public Task<bool> AddGroupChat(int chatID, string chatName)
-        {
-            return AddChat(chatID, chatName);
+            var finded = await _connection.Table<AmGroupAdminEntity>().FirstOrDefaultAsync(x => x.ChatID == chatID);
+            return finded != null;//значит указанный чат есть в таблице, значит его создание инциировали мы(мы -хозяинГруппы)
         }
+
         public async Task<int> CreatePrivateChat(string chatName)
         {
             int id = 0;
@@ -160,7 +184,7 @@ namespace Penta_ClientLib.Repository
             if (finded == null)
             {
                 id = GenerateLocalIDByTime();
-                if (!await AddChat(id, chatName))
+                if (!await CreateChat(id, chatName))
                     id = 0;
             }
             else
@@ -192,6 +216,11 @@ namespace Penta_ClientLib.Repository
                 .Where(c => c.ID == chatID)
                 .DeleteAsync();
 
+            if(deleted==1)
+                await _connection.Table<AmGroupAdminEntity>()
+                    .Where(c => c.ChatID == chatID)
+                    .DeleteAsync();
+
             return deleted == 1;
         }
 
@@ -199,20 +228,20 @@ namespace Penta_ClientLib.Repository
         {
             InitConnect();
 
-            var findCopy = await _connection.Table<UserInChatEntity>().FirstOrDefaultAsync(x => x.ContactId == userid && x.ChatId == chatID);
-            if (findCopy == null)
+            var findUserCopy = await _connection.Table<UserInChatEntity>().FirstOrDefaultAsync(x => x.UserId == userid && x.ChatId == chatID);
+            if (findUserCopy == null)
             {
                 var inserted = await _connection.InsertAsync(
                      new UserInChatEntity()
                      {
-                         ContactId = userid,
+                         UserId = userid,
                          ChatId = chatID
                      });
 
                 return inserted == 1;
             }
             else
-                return false;
+                return true;//юзер уже есть
         }
 
         public async Task<bool> RemoveUserFromChat(int userid, int chatID)
@@ -220,8 +249,9 @@ namespace Penta_ClientLib.Repository
             InitConnect();
 
             var deleted = await _connection.Table<UserInChatEntity>()
-                .Where(c => c.ContactId == userid && c.ChatId==chatID)
+                .Where(c => c.UserId == userid && c.ChatId==chatID)
                 .DeleteAsync();
+
             return deleted == 1;
         }
         public async Task<List<ChatInfo>> GetAllChats()

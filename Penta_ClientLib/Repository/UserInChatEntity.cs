@@ -9,7 +9,7 @@ namespace Penta_ClientLib.Repository
         public int ID { get; set; }
 
         [Indexed(Name = "UserID", Unique = true)]
-        public int ContactId { get; set; }
+        public int UserId { get; set; }
 
         public int ChatId { get; set; }
     }

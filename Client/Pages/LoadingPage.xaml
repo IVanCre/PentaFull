@@ -9,8 +9,7 @@
     <Grid>
         <VerticalStackLayout 
             VerticalOptions="Center" 
-            HorizontalOptions="Center"
-            Spacing="20">
+            HorizontalOptions="Center">
 
             <Image
                 Source="splash.png" 

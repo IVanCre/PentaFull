@@ -4,33 +4,11 @@ using Penta_ClientLib.Interfaces;
 using System.Collections.ObjectModel;
 using MessageLib;
 using Client.Interfaces;
-using System.Globalization;
 using Penta_ClientLib.Services;
+
 
 namespace Client.Pages
 {
-	public class LabelAlignConverter : IValueConverter//выравнивает сообщение по левому\правому краю в зависимости от отправителя
-	{
-		public object Convert(object value, Type t, object p, CultureInfo c)
-		{
-            if (value is string a)
-            {
-                if (string.IsNullOrEmpty(a))
-                    return TextAlignment.Start;// Нет отправителя, значит сообщение от пользователя — слева
-                else 
-                    return TextAlignment.End;// Входящее сообщение от другого пользователя — справа
-            }
-            
-            return TextAlignment.Center;// По умолчанию, если что-то не распознано\новое
-        }
-
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-		{
-			throw new NotImplementedException();
-		}
-	}
-
-
 
 	public partial class ActiveChatPage : ContentPage
 	{
@@ -49,53 +27,62 @@ namespace Client.Pages
 		{
 			InitializeComponent();
 
-			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
-			_notifier = App.Services.GetRequiredService<IUINotificator>();
-			_settingsHolder =App.Services.GetRequiredService<ISettingsProvider>();
-            
-            _clientFacade.MessageAddedToChat += TryAddIncomingMessageToChat;
-			_clientFacade.UserAdded += NotifyToUserAdded;
 			MessageList = new();
 			ChatName = name;
 			_currentChatID = chatID;
+			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
+			_notifier = App.Services.GetRequiredService<IUINotificator>();
+			_settingsHolder =App.Services.GetRequiredService<ISettingsProvider>();
 
+            _clientFacade.MessageAddedToChat += TryAddIncomingMessageToChat;
+			_clientFacade.UserAdded += UserAdded;
+			_clientFacade.UserRemoved += UserRemoved;
+			_clientFacade.ChatDeleted += ChatDeleted;
+			TryInicializeAddToGroupButton();
 			LoadLastMessages();
 			BindingContext = this;
 		}
-		private async void LoadLastMessages()
+		private async void TryInicializeAddToGroupButton()//если ты админ группы - у тебя есть кнопки добавить\удалить юзера из группы
 		{
-			var finded = await _clientFacade.GetMessagesByChatAsync(_currentChatID, messageLoadedNum);
-			_currentUserID =await _settingsHolder.GetUserID();
-			string from=string.Empty;
-			foreach (var mess in finded)
+			if (_recieverUserID == -1)//это групповой чат
 			{
-				if (mess.FromID != _currentUserID)//чтобы распознавать где входящие сообщения
-					from = mess.FromID.ToString();
-				else
-					from= string.Empty;
-
-
-                switch (mess.Type)
+				bool userIsGroupAdmin = await _clientFacade.AmCreatedGroupChat(_currentChatID);
+				if (userIsGroupAdmin)
 				{
-					case MessageType.Text: MessageList.Add(new MessageInfo() {From=from, Text = mess.GetDataLikeString() }); break;
-
-					case MessageType.Picture: MessageList.Add(new MessageInfo() { From =from, Text = "Unsupported Message Type" }); break;//на будущее задел
-					case MessageType.Voice: MessageList.Add(new MessageInfo() { From =from, Text = "Unsupported Message Type" }); break;
+					var item = new ToolbarItem();
+					item.Text = "Members";
+					item.Clicked += (o, e) =>
+					{
+						MembersManager.Show(_currentChatID);//вызываем наше всплывающее окно
+                    };
+					this.ToolbarItems.Add(item);
 				}
 			}
 		}
 
-		private void NotifyToUserAdded(int chatID, int addedUserID)
+        private async void LoadLastMessages()
 		{
-			if (chatID == _currentChatID)
+			var finded = await _clientFacade.GetMessagesByChatAsync(_currentChatID, messageLoadedNum);
+			_currentUserID =await _settingsHolder.GetUserID();
+			TextAlignment alignType;
+			foreach (var mess in finded)
 			{
-                MessageList.Add(
-					new MessageInfo()
-					{
-						Text = "Добавлен новый участник"
-					});
-            }
+				if (mess.FromID == _currentUserID)
+					alignType = TextAlignment.Start;//собственные сообщения слева
+				else
+					alignType = TextAlignment.End;//все остальное -справа
+
+
+                switch (mess.Type)
+				{
+					case MessageType.Text: MessageList.Add(new MessageInfo() {Type=alignType, Text = mess.GetDataLikeString() }); break;
+
+					case MessageType.Picture: MessageList.Add(new MessageInfo() { Type =alignType, Text = "Unsupported Message Type" }); break;//на будущее задел
+					case MessageType.Voice: MessageList.Add(new MessageInfo() { Type =alignType, Text = "Unsupported Message Type" }); break;
+				}
+			}
 		}
+
         private void TryAddIncomingMessageToChat(int chatID, Message msg)
 		{
 			if (chatID == _currentChatID)//групповой чат
@@ -103,7 +90,7 @@ namespace Client.Pages
 				MessageList.Add(
 					new MessageInfo()
 					{
-						From = msg.FromID.ToString(),
+                        Type = TextAlignment.End,
 						Text = msg.GetDataLikeString()
 					});
 			}
@@ -113,17 +100,15 @@ namespace Client.Pages
 					MessageList.Add(
 						new MessageInfo()
 						{
-							From = msg.FromID.ToString(),
+                            Type = TextAlignment.End,
 							Text = msg.GetDataLikeString()
 						});
 			}
 		}
-
-
 		private async void OnSendMessage(object sender, EventArgs e)        //Пока работаем только с текстом!
 		{
 			var input = MessageText.Text;
-			MessageList.Add(new MessageInfo() { Text = input });
+			MessageList.Add(new MessageInfo() {Type=TextAlignment.Start, Text = input });
 			MessageText.Text = "";
 
 			Tuple<bool, Exception> result = default;
@@ -140,5 +125,37 @@ namespace Client.Pages
 			if (!result.Item1)
 				await _notifier.ShowMessage("Ошибка", $"Сообщение НЕ ОТПРАВЛЕНО:{result.Item2?.Message}", "ок");
 		}
-	}
+
+
+        #region несохраняемые уведомления
+        private void UserAdded(int chatID, int userID)
+		{
+			string text=string.Empty;
+			if (userID == _currentUserID)
+				text = "ВЫ ДОБАВЛЕНЫ В ЧАТ";
+			else
+				text = $"В ЧАТ ДОБАВЛЕН: {ContactConverter.ConvertUserIDToContactID(userID)}";
+
+            MessageList.Add(new MessageInfo() { Type = TextAlignment.Center, Text = text });
+        }
+		private void UserRemoved(int chatID, int userID)
+		{
+            string text = string.Empty;
+            if (userID == _currentUserID)
+                text = "ВЫ УДАЛЕНЫ ИЗ ЧАТА";
+            else
+                text = $"ИЗ ЧАТА УДАЛЕН: {ContactConverter.ConvertUserIDToContactID(userID)}";
+
+            MessageList.Add(new MessageInfo() { Type = TextAlignment.Center, Text = text });
+        }
+		private void ChatDeleted(int chatID, string chatName)
+        {
+			if (_currentChatID == chatID)
+			{
+				string text = "ЧАТ УДАЛЕН ХОЗЯИНОМ";
+				MessageList.Add(new MessageInfo() { Type = TextAlignment.Center, Text = text });
+			}
+        }
+        #endregion
+    }
 }

@@ -3,6 +3,7 @@
 using System.Text;
 
 
+
 namespace Penta_ClientLib.Services
 {
     public static class ContactConverter
@@ -19,11 +20,11 @@ namespace Penta_ClientLib.Services
 
                 var masked = long.Parse(str.ToString());
                 return Convert.ToInt32(_mask - masked);
+
             }
-            catch(Exception e)
-            {
-                return -1;
-            }
+            catch (Exception e) { }//если мы тут -все плохо
+
+            return -1;
         }
         public static string ConvertUserIDToContactID(int userID)
         {
@@ -36,6 +37,24 @@ namespace Penta_ClientLib.Services
             str.Insert(12, '-');// формат типа телефона 8-330-507-83-96 ))))))
 
             return str.ToString();
+        }
+
+        public static bool ContactIdValid(string input)
+        {
+            if (!string.IsNullOrEmpty(input))
+            {
+                if (input.Length == 15 &&
+                     input[0] == '8' &&
+                     input[1] == '-' &&
+                     input[5] == '-' &&
+                     input[9] == '-' &&
+                     input[12] == '-')
+                {
+
+                }
+            }
+
+            return false;
         }
     }
 }

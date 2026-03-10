@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Client.Pages.MembersManager"
+             x:Name="this"
+             IsVisible="False">
+    
+    <Border VerticalOptions="Center" 
+            HorizontalOptions="Center"
+            BackgroundColor="White"
+            WidthRequest="300"
+            Padding="20"
+            Stroke="#2196F3"
+            StrokeThickness="2">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="15" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="15">
+            <Label x:Name="TitleLabel" Text="Участники" FontAttributes="Bold" FontSize="18"/>
+
+            <Entry x:Name="ContactIDEntry" Placeholder="Введите контакт..." />
+
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
+                <Button Text="Добавить" Clicked="OnAddMember" />
+                <Button Text="Удалить" Clicked="OnDeleteMember" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

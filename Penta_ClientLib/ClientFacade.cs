@@ -116,7 +116,7 @@ namespace Penta_ClientLib
 
         public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,string userContactID, MessageType type, byte[] data)
         {
-            if(string.IsNullOrEmpty(userContactID))
+            if(ContactConverter.ContactIdValid(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
 
             int recieverUserID = ContactConverter.ExtractUserID(userContactID);
@@ -145,17 +145,18 @@ namespace Penta_ClientLib
             return _chatManager.CreatePrivateChat(chatName);
         }
        
+
         public Task<Tuple<bool, Exception>> AddUserToGroupChatAsync(int chatID, string userContactID)
         {
-            if (string.IsNullOrEmpty(userContactID))
-                return Task.FromResult(Tuple.Create(false, new Exception("userConnectID should be not null or empty")));
+            if (ContactConverter.ContactIdValid(userContactID))
+                return Task.FromResult(Tuple.Create(false, new Exception("userConnectID invalid struct")));
 
             return _chatManager.SendAddUserToGroupChat(chatID, userContactID);
         }
         public Task<Tuple<bool, Exception>> LeaveGroupChatAsync(int chatID)=>_chatManager.SendLeaveGroupChat(chatID);
         public Task<Tuple<bool, Exception>> DeleteUserFromGroupChatAsync(int chatID, string userContactID)
         {
-            if (string.IsNullOrEmpty(userContactID))
+            if (ContactConverter.ContactIdValid(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userConnectID should be not null or empty")));
 
             return _chatManager.SendDeleteUserFromGroupChat(chatID, userContactID);
@@ -163,6 +164,8 @@ namespace Penta_ClientLib
         public Task<Tuple<bool, Exception>> DeleteGroupChatAsync(int chatID)=>_chatManager.SendDeleteGroupChat(chatID);
         public Task<bool> DeletePrivateChatAsync(int chatID) => _chatManager.DeletePrivateChat(chatID);
         public Task<List<ChatInfo>> GetAllChatsInfoAsync() => _chatManager.GetAllChatsInfo();
+        public Task<bool> AmCreatedGroupChat(int chatID)=>_chatManager.AmCreatedThisGroupChat(chatID);
+
 
         public async Task<int> GetRecieverIDFromChatAsync(string chatName)
         {
@@ -176,11 +179,15 @@ namespace Penta_ClientLib
         }
         public async Task<bool> AddNewContactAsync(string userName, string contactID)
         {
-            var added = await _contactHolder.AddContact(userName, contactID);
-            if (added)
-                ContactChanged?.Invoke(contactID, userName);
+            if (ContactConverter.ContactIdValid(contactID))
+            {
+                var added = await _contactHolder.AddContact(userName, contactID);
+                if (added)
+                    ContactChanged?.Invoke(contactID, userName);
 
-            return added;
+                return added;
+            }
+            return false;
         }
         public async Task<bool> DeleteContactAsync(string userName)
         {
@@ -214,5 +221,7 @@ namespace Penta_ClientLib
         {
             _client?.Dispose();
         }
+
+
     }
 }

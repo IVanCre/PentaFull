@@ -4,7 +4,7 @@ using Penta_ClientLib.DataStructs;
 using Penta_ClientLib.Interfaces;
 using System.Collections.ObjectModel;
 using Client.UIElements;
-using Microsoft.Maui.Controls.Compatibility.Platform.Android;
+
 
 namespace Client.Pages
 {

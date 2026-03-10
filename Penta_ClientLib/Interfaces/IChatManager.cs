@@ -12,7 +12,7 @@ namespace Penta_ClientLib.Interfaces
         Task<Tuple<bool, Exception>> SendDeleteUserFromGroupChat(int chatID, string userConnectID);
 
         Task<Tuple<bool, Exception>> AddMessageToChat(int chatID, int recieverID, MessageType type, byte[] data);
-
+        Task<bool> AmCreatedThisGroupChat(int chatID);
 
         Task<bool> DeletePrivateChat(int chatID);
         Task<int> CreatePrivateChat(string chatName);
