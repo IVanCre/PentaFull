@@ -37,7 +37,7 @@ namespace Penta_Server.Controllers
             else
             {
                 _logger?.SaveWarning($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть");
-                return Conflict(new ArgumentException());
+                return Conflict(new ArgumentException($"Отказ в регистрации - такой юзер({name}_{pass}) уже есть"));
             }
         }
         [HttpPost("Login")]
@@ -71,7 +71,8 @@ namespace Penta_Server.Controllers
         {
             string token = Request.Headers["Authorization"];
             token=token.Replace("Bearer ", "");
-            var result =await _userRepository.DeleteUserByTokenAsync(token);
+            var tokenHash = _tokenMngr.GetTokenHash(token);
+            var result =await _userRepository.DeleteUserByTokenAsync(tokenHash);
             if(result)
                 _logger?.SaveForDEBUG("Юзер удалил свой аккаунт");
         }

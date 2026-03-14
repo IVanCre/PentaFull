@@ -18,5 +18,6 @@ namespace Penta_ClientLib.Interfaces
         Task<int> CreatePrivateChat(string chatName);
 
         Task<List<ChatInfo>> GetAllChatsInfo();
+        Task<ChatInfo> GetChatByID(int chatID);
     }
 }

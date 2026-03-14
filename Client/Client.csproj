@@ -59,8 +59,13 @@
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" BaseSize="100,100" />
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<MauiImage Include="Resources\Images\contact.png" />
+		<MauiImage Include="Resources\Images\group_chat.png" />
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\hands.svg" BaseSize="128,128" />
+		<MauiImage Include="Resources\Images\message.png" />
+		<MauiImage Include="Resources\Images\new_mesages.png" />
+		<MauiImage Include="Resources\Images\private_chat.png" />
 
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
@@ -73,7 +78,10 @@
 	<ItemGroup>
 	  <None Remove="Platforms\Android\google-services.json" />
 	  <None Remove="Platforms\Android\Resources\provider_paths.xml" />
+	  <None Remove="Resources\Images\contact.png" />
 	  <None Remove="Resources\Images\hands.svg" />
+	  <None Remove="Resources\Images\message.png" />
+	  <None Remove="Resources\Images\new_mesages.png" />
 	</ItemGroup>
 
 	

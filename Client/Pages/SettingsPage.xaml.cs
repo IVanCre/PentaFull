@@ -3,12 +3,13 @@ using Penta_ClientLib.Interfaces;
 using System.Reflection;
 using Penta_ClientLib.DataStructs;
 
+
 namespace Client.Pages;
 
 public partial class SettingsPage : ContentPage
 {
-	private IClientFacade _facade;
-	private IUpdateManager _updater;
+	private IClientFacade _clientFacade;
+	private IUpdateManager _appUpdater;
 	public string AppVersion { get; private set; } = "Unknown";
 	public string ServerAvailable { get; private set; } = "Unknown";
 	public string NewVersion { get; private set; } = "Unknown";
@@ -19,11 +20,11 @@ public partial class SettingsPage : ContentPage
 	{
 		InitializeComponent();
 
-		_facade = App.Services.GetService<IClientFacade>();
-		_updater = App.Services.GetService<IUpdateManager>();
+		_clientFacade = App.Services.GetService<IClientFacade>();
+		_appUpdater = App.Services.GetService<IUpdateManager>();
         AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-		_facade.ConnectionToServerChanged += ConnectChanged;
-
+		_clientFacade.ConnectionToServerChanged += ConnectChanged;
+		ConnectChanged(_clientFacade.IsConnected());//сразу ставим текущее состояние
 		BindingContext = this;
 	}
 
@@ -38,6 +39,7 @@ public partial class SettingsPage : ContentPage
 	}
 	private async void DownloadClick(object sender, EventArgs e)
 	{
-		await _updater.TryUpdateClientAsync(ClientType.Android);
+        await _appUpdater.TryUpdateClientAsync(ClientType.Android);
 	}
+
 }

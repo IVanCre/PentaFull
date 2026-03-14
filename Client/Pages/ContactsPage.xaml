@@ -5,41 +5,51 @@
              xmlns:local="clr-namespace:Client.UIElements"
              Title="Контакты">
 
-    <VerticalStackLayout>
-        <Grid RowDefinitions="*,Auto" VerticalOptions="StartAndExpand">
-            <Label Grid.Row="0"
+    <Grid RowDefinitions="Auto, *, Auto">
+        
+        <Label Grid.Row="0"
                HorizontalOptions="CenterAndExpand"
                VerticalOptions="End"
                BackgroundColor="{StaticResource Gray100}"
                TextColor="{StaticResource Black}"
                x:Name="MyContactIDLabel"
-               Margin="10"/>
+               Margin="20"/>
 
-            <CollectionView Grid.Row="1" ItemsSource="{Binding ContactsList}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <local:LongButton Text="{Binding UserName}"
+        <CollectionView 
+            Grid.Row="1" 
+            ItemsSource="{Binding ContactsList}" 
+            VerticalScrollBarVisibility="Always">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid  ColumnDefinitions="Auto, *" RowDefinitions="Auto" Margin="5">
+                        <Image  
+                            Grid.Column="0" 
+                            Source="contact.png" 
+                            HorizontalOptions="Start"/>
+
+                        <local:LongButton 
+                            Grid.Column="1"
+                            Text="{Binding UserName}"
                             TextColor="{StaticResource Black}"
                             LongPressClicked="OnLongClick"
-                            ShortPressClicked="OnShortClick"
                             HorizontalOptions="Fill"
-                            VerticalOptions= "CenterAndExpand"
-                            BackgroundColor="{StaticResource Gray100}"
+                            VerticalOptions= "Fill"
+                            BackgroundColor="{StaticResource White}"
                             BorderColor="{StaticResource PrimaryDark}"
-                            BorderWidth="3"
-                            Margin="10"/>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Grid>
-
+                            Margin="3"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        
         <Button 
-                Text="AddNewContact" 
-                BackgroundColor="{StaticResource Secondary}"
-                TextColor="{StaticResource Black}"
-                HorizontalOptions="Center"
-                VerticalOptions="End"
-                Margin="10"
-                Clicked="OnContactCreateClick" />
-    </VerticalStackLayout>
+            Grid.Row="2"
+            Text="AddNewContact" 
+            BackgroundColor="{StaticResource Secondary}"
+            TextColor="{StaticResource Black}"
+            HorizontalOptions="Center"
+            VerticalOptions="End"
+            Margin="10"
+            Clicked="OnContactCreateClick" />
+    </Grid>
 </ContentPage>

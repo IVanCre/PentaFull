@@ -50,13 +50,13 @@ namespace Penta_Server.Services.Repositories
         }
 
 
-        public async Task<bool> DeleteUserByTokenAsync(string token)
+        public async Task<bool> DeleteUserByTokenAsync(string tokenHash)
         {
             using (DB db= new DB(_connStr))
             {
                 var user =db.Tokens
                     .Include(x=>x.User)
-                    .FirstOrDefault(x=>x.AccessToken==token)?.User;
+                    .FirstOrDefault(x=>x.AccessHash==tokenHash)?.User;
 
                 if (user != null)
                 {

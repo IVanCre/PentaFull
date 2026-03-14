@@ -24,6 +24,7 @@
             <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
                 <Button Text="Добавить" Clicked="OnAddMember" />
                 <Button Text="Удалить" Clicked="OnDeleteMember" />
+                <Button Text="Х" Clicked="OnClose"/>
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </Border>

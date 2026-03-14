@@ -29,10 +29,14 @@ namespace Client.Pages
             if (string.IsNullOrEmpty(MyContactIDLabel.Text))
                 MyContactIDLabel.Text ="Your ContactID: "+ await _clientFacade.GetMyContactID();
 
-            ContactsList?.Clear();//сносим старое
             var result =await _clientFacade.GetAllContactsAsync();//т.к. чаты могут быть созданы в длругом месте тоже
-            foreach (var contact in result)
-                ContactsList.Add(contact);
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {            
+                ContactsList?.Clear();//сносим старое
+                foreach (var contact in result)
+                    ContactsList.Add(contact);
+            });
         }
 
         private async void OnShortClick(object sender, EventArgs e)
@@ -46,7 +50,7 @@ namespace Client.Pages
             if(findedChat!=null)
                 chatID=findedChat.ID;
             else
-                chatID = await _clientFacade.CreatePrivateChatAsync(contact.UserName);//создаем новый чат
+                chatID = await _clientFacade.CreatePrivateChatAsync(contact.UserName);//создаем новый чат(на самом деле это не чат)
 
             if (chatID != 0)//успешно создан
             {
@@ -61,7 +65,7 @@ namespace Client.Pages
 
             if (await _actionMenuSelector.ShowConfirmDialog("", "”далить контакт?", "ƒа", "Ќет"))
             {
-                ContactsList.Remove(contact);
+                MainThread.BeginInvokeOnMainThread(() => ContactsList.Remove(contact));
                 await _clientFacade.DeleteContactAsync(contact.UserName);
             }
         }

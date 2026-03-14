@@ -17,10 +17,7 @@ namespace Client.Platforms.Android
         {
             try
             {
-                // 1. Получаем токен асинхронно через метод расширения .AsAsync()
-                // Это превращает Task (Java) в Task<Java.Lang.Object> (C#)
                 var result = await FirebaseMessaging.Instance.GetToken();
-
                 if (result != null)
                 {
                     var token = result.ToString();

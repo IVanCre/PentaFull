@@ -10,6 +10,7 @@ namespace Penta_ClientLib.Repository
 
         [Indexed(Name = "Name")]
         public string Name { get; set; }
+        public bool IsGroupChat { get; set; }
 
     }
 }

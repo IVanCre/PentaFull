@@ -35,5 +35,11 @@ namespace Client.Pages
             ContactIDEntry.Text = "";
             IsVisible = false;
         }
-	}
+
+        private void OnClose(object sender, EventArgs e)
+        {
+            ContactIDEntry.Text = "";
+            IsVisible = false;
+        }
+    }
 }

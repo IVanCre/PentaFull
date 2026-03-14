@@ -77,6 +77,12 @@ namespace Penta_ClientLib.Interfaces
         Task<bool> ConnectToServerAsync();
 
         /// <summary>
+        /// Текущее состояние связи с сервером
+        /// </summary>
+        /// <returns></returns>
+        bool IsConnected();
+
+        /// <summary>
         /// Доступ к настройкам Клиента
         /// </summary>
         /// <returns></returns>
@@ -151,6 +157,13 @@ namespace Penta_ClientLib.Interfaces
         Task<List<ChatInfo>> GetAllChatsInfoAsync();
 
         /// <summary>
+        /// Отдает найденый чат по его ID
+        /// </summary>
+        /// <param name="chatID"></param>
+        /// <returns></returns>
+        Task<ChatInfo> GetChatByID(int chatID);
+
+        /// <summary>
         /// Отправка сообщения в групповой чат
         /// </summary>
         /// <param name="mesage">само сообщение</param>
@@ -207,7 +220,7 @@ namespace Penta_ClientLib.Interfaces
         Task<bool> DeleteContactAsync(string userName);
 
         /// <summary>
-        /// Получение списка всех контактов
+        /// Получение списка всех контактов(отсортированны по имени)
         /// </summary>
         /// <returns></returns>
         Task<List<ContactInfo>> GetAllContactsAsync();

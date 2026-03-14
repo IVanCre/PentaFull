@@ -115,7 +115,7 @@ namespace Penta_ClientLib.Repository
         public async Task<List<ContactInfo>> GetAllContacts()
         {
             List<ContactInfo> list = new();
-            var finded = await _connection.Table<ContactEntity>().ToListAsync();
+            var finded = await _connection.Table<ContactEntity>().OrderBy(x=>x.UserName).ToListAsync();
             foreach (var contact in finded)
                 list.Add(new ContactInfo( contact.UserName,ContactConverter.ConvertUserIDToContactID(contact.ID)));
 
@@ -136,7 +136,7 @@ namespace Penta_ClientLib.Repository
 
 
         #region Chats        
-        private async Task<bool> CreateChat(int chatID, string chatName)
+        private async Task<bool> CreateChat(int chatID, string chatName, bool isGroupChat)
         {
             InitConnect();
             var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
@@ -146,7 +146,8 @@ namespace Penta_ClientLib.Repository
                     new ChatEntity()
                     {
                         ID = chatID,
-                        Name = chatName
+                        Name = chatName,
+                        IsGroupChat= isGroupChat
                     });
 
                 return added == 1;
@@ -156,7 +157,7 @@ namespace Penta_ClientLib.Repository
         }        
         public async Task<bool> CreateGroupChat(int chatID, string chatName, bool requestFromAdminGroup)
         {
-            bool result = await CreateChat(chatID, chatName);
+            bool result = await CreateChat(chatID, chatName, true);
             if(result)
             {
                 await _connection.InsertAsync(
@@ -184,7 +185,7 @@ namespace Penta_ClientLib.Repository
             if (finded == null)
             {
                 id = GenerateLocalIDByTime();
-                if (!await CreateChat(id, chatName))
+                if (!await CreateChat(id, chatName,false))
                     id = 0;
             }
             else
@@ -193,7 +194,7 @@ namespace Penta_ClientLib.Repository
             return id;
         }
 
-        public async Task<int> GetChatID(string chatName)
+        public async Task<int> GetChatIDByName(string chatName)
         {
             InitConnect();
 
@@ -259,9 +260,19 @@ namespace Penta_ClientLib.Repository
             List<ChatInfo> finded = new();
             var list = await _connection.Table<ChatEntity>().ToListAsync();
             foreach (var item in list)
-                finded.Add(new ChatInfo(item.ID, item.Name));
+                finded.Add(new ChatInfo(item.ID, item.Name,item.IsGroupChat));
 
             return finded;
+        }
+
+        public async Task<ChatInfo> GetChatByID(int chatID)
+        {
+            ChatInfo findedChat = null;
+            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
+            if (finded != null)
+                findedChat = new ChatInfo(finded.ID, finded.Name, finded.IsGroupChat);
+            
+            return findedChat;
         }
         #endregion
 

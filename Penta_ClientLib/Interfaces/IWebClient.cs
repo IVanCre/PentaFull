@@ -24,6 +24,8 @@ namespace Penta_ClientLib.Interfaces
 
         Task<bool> ConnectToMessageHub();
         Task<bool> SendMessage(Message message);
+
+        public bool IsConnected();
         public event MessageRecieved RecievedMessage;//обработка входящих сообщений с помощью внешней функции
         public event MessageSended MessageSended;//факт успешной отправки сообщения на сервер
         public event ConnectionStateChanged ConnectionStateChanged;//состояние подключение к серваку

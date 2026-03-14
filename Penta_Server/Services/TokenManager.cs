@@ -9,6 +9,7 @@ using Penta_Server.Services.Repositories;
 using Penta_Server.Services.Repositories.Models;
 using Penta_Server.StaticUtilits;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace Penta_Server.Services
 {
@@ -32,8 +33,8 @@ namespace Penta_Server.Services
                 db.Tokens.Add(
                     new TokenEntity() {
                         User= finded,
-                        AccessToken= tokenPack[0],
-                        RefreshToken = tokenPack[1]
+                        AccessHash= GetTokenHash(tokenPack[0]),
+                        RefreshHash = GetTokenHash(tokenPack[1])
                     });
 
                 db.SaveChanges();
@@ -67,8 +68,9 @@ namespace Penta_Server.Services
                         SecurityAlgorithms.HmacSha256));
 
             var refreshJwt = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
+                //issuer: _config["Jwt:Issuer"],
+                //audience: _config["Jwt:Audience"],
+                claims: claims,
                 expires: DateTime.UtcNow.Add(TimeSpan.FromDays(Convert.ToInt32(365))),//ну типа если ты год не заходишь -ну сорямба((
                 signingCredentials: new SigningCredentials(
                     new SymmetricSecurityKey(
@@ -88,13 +90,14 @@ namespace Penta_Server.Services
             string[] tokenPack = new string[2];
             using (DB db = new DB(_config["WorkDB:ConnString"]))
             {
-                var finded = db.Tokens.FirstOrDefault(x => x.RefreshToken == refreshToken);
+                var calcHash = GetTokenHash(refreshToken);
+                var finded = db.Tokens.FirstOrDefault(x => x.RefreshHash == calcHash);
                 if(finded!=null)
                 {
-                    var claims = GetClaims(finded.AccessToken);//берем старую инфу
+                    var claims = GetClaims(refreshToken);//берем старую инфу
                     var newPack = GenerateTokenPack(claims);
-                    finded.AccessToken = newPack[0];
-                    finded.RefreshToken = newPack[1];
+                    finded.AccessHash = GetTokenHash(newPack[0]);
+                    finded.RefreshHash = GetTokenHash(newPack[1]);
                     tokenPack = newPack;
 
                     db.SaveChanges();
@@ -107,7 +110,8 @@ namespace Penta_Server.Services
         {
             using (DB db = new DB(_config["WorkDB:ConnString"]))
             {
-                var finded =db.Tokens.FirstOrDefault(x => x.AccessToken == accessToken);
+                var calcHash = GetTokenHash(accessToken);
+                var finded =db.Tokens.FirstOrDefault(x => x.AccessHash == calcHash);
                 if (finded != null)
                 {
                     var findedUser = db.Users.FirstOrDefault(x => x.ID == finded.ID);
@@ -142,6 +146,7 @@ namespace Penta_Server.Services
 
             return TimeSpan.Zero;
         }
+
         private IEnumerable<Claim> GetClaims(string token)
         {
             var handler = new JwtSecurityTokenHandler();
@@ -155,6 +160,22 @@ namespace Penta_Server.Services
             catch (Exception)
             {
                 return null;
+            }
+        }
+
+        public string GetTokenHash(string token)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                // Преобразуем строку токена в байты
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+                // Преобразуем байты в компактную шестнадцатеричную строку (Hex)
+                var builder = new StringBuilder();
+                foreach (var b in bytes)
+                {
+                    builder.Append(b.ToString("x2"));
+                }
+                return builder.ToString(); // Вернет строку длиной 64 символа
             }
         }
     }

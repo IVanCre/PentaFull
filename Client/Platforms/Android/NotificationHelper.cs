@@ -22,7 +22,7 @@ namespace Client.Platforms.Android
             CreateNotificationChannel();
 
             smallIconID = context.Resources.GetIdentifier("hands", "drawable", context.PackageName);//объявляется в манифесте, живет в папке Images
-            largeIconID = context.Resources.GetIdentifier("appicon", "mipmap", context.PackageName);
+            largeIconID = context.Resources.GetIdentifier("message", "drawable", context.PackageName);//drawable -это ТИП ресурса
         }
 
         private void CreateNotificationChannel()

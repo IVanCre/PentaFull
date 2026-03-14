@@ -28,7 +28,7 @@ public partial class ContactCreatorPage : ContentPage
             var contact = new ContactInfo(userName,contactID);
             if (await _facade.AddNewContactAsync(userName, contactID))
             {
-                _uiContacts.Add(contact);
+                MainThread.BeginInvokeOnMainThread(() => _uiContacts.Add(contact));
                 await Navigation.PopAsync();//сразщу возвращаемся на страницу контактов
             }
         }

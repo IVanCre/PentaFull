@@ -102,6 +102,7 @@ namespace Penta_ClientLib
 
 
         public Task<bool> ConnectToServerAsync()=>_client.ConnectToMessageHub();
+        public bool IsConnected() => _client.IsConnected();
 
         public Task<Tuple<bool, Exception>> DeleteAccountAsync()=>_accManager.DeleteAccount();
 
@@ -116,7 +117,7 @@ namespace Penta_ClientLib
 
         public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,string userContactID, MessageType type, byte[] data)
         {
-            if(ContactConverter.ContactIdValid(userContactID))
+            if(!ContactConverter.ContactIdValid(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
 
             int recieverUserID = ContactConverter.ExtractUserID(userContactID);
@@ -148,7 +149,7 @@ namespace Penta_ClientLib
 
         public Task<Tuple<bool, Exception>> AddUserToGroupChatAsync(int chatID, string userContactID)
         {
-            if (ContactConverter.ContactIdValid(userContactID))
+            if (!ContactConverter.ContactIdValid(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userConnectID invalid struct")));
 
             return _chatManager.SendAddUserToGroupChat(chatID, userContactID);
@@ -156,7 +157,7 @@ namespace Penta_ClientLib
         public Task<Tuple<bool, Exception>> LeaveGroupChatAsync(int chatID)=>_chatManager.SendLeaveGroupChat(chatID);
         public Task<Tuple<bool, Exception>> DeleteUserFromGroupChatAsync(int chatID, string userContactID)
         {
-            if (ContactConverter.ContactIdValid(userContactID))
+            if (!ContactConverter.ContactIdValid(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userConnectID should be not null or empty")));
 
             return _chatManager.SendDeleteUserFromGroupChat(chatID, userContactID);
@@ -164,6 +165,7 @@ namespace Penta_ClientLib
         public Task<Tuple<bool, Exception>> DeleteGroupChatAsync(int chatID)=>_chatManager.SendDeleteGroupChat(chatID);
         public Task<bool> DeletePrivateChatAsync(int chatID) => _chatManager.DeletePrivateChat(chatID);
         public Task<List<ChatInfo>> GetAllChatsInfoAsync() => _chatManager.GetAllChatsInfo();
+        public Task<ChatInfo> GetChatByID(int chatID) => _chatManager.GetChatByID(chatID);
         public Task<bool> AmCreatedGroupChat(int chatID)=>_chatManager.AmCreatedThisGroupChat(chatID);
 
 

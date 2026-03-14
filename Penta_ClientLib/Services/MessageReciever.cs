@@ -8,12 +8,13 @@ namespace Penta_ClientLib.Services
         private IChatHolder _chatHolder;
         private IWebClient _messListener;
         private IMessageHolder _messHolder;
+        private IContactHolder _contactHolder;
 
 
         public event ChatChanged CreatedNewChat;
         public event ChatChanged ChatDeleted;
-        public event ChatUserListChanged UserAdded;//пока не используем
-        public event ChatUserListChanged UserRemoved;//пока не используем
+        public event ChatUserListChanged UserAdded;
+        public event ChatUserListChanged UserRemoved;
         public event NewMessageInChat MessageAddedToChat;
         public event AccountDeleted AccountDeleted;
 
@@ -21,13 +22,15 @@ namespace Penta_ClientLib.Services
         public MessageReciever(
             IWebClient messListener,
             IChatHolder chatProvider,
-            IMessageHolder messHolder
+            IMessageHolder messHolder,
+            IContactHolder contactHolder
             )
         {
             _messListener = messListener;
             _messListener.RecievedMessage += ProcessResponce;
             _chatHolder = chatProvider;
             _messHolder = messHolder;
+            _contactHolder = contactHolder;
         }        
         
         private async void ProcessResponce(Message msg)//просматриваем ответы от сервера
@@ -50,16 +53,16 @@ namespace Penta_ClientLib.Services
         }
 
 
-        private async Task UserAddedToGroupChat(Message msg)
+        private async Task UserAddedToGroupChat(Message msg)//нас добавили в группу и нам кинули уведомление
         {
-            if (msg.ChatID != -1)//значит сервак успешно создал
+            var chatName = msg.GetDataLikeString();
+            var finded = await _chatHolder.GetChatIDByName(chatName);
+            if (finded == 0)//у нас такого чата нет
             {
-                var chatName = msg.GetDataLikeString();
                 if (await _chatHolder.CreateGroupChat(msg.ChatID, chatName, false))
                     CreatedNewChat?.Invoke(msg.ChatID, chatName);
-
-                AddUserToGroupResponce(msg);
             }
+            UserAdded?.Invoke(msg.ChatID, msg.ToID);
         }
 
         private async Task CreateGroupChatResponce(Message msg)//ответ на наш запрос(значит мы являемся админом)
@@ -69,14 +72,12 @@ namespace Penta_ClientLib.Services
                 var chatName = msg.GetDataLikeString();
                 if(await _chatHolder.CreateGroupChat(msg.ChatID,chatName, true ))
                     CreatedNewChat?.Invoke(msg.ChatID,chatName);
-
-                AddUserToGroupResponce(msg);
             }
         }
 
-        private void AddUserToGroupResponce(Message msg)
+        private void AddUserToGroupResponce(Message msg)//нам ответили, что юзера добавили по нашему запросу
         {
-            UserAdded?.Invoke(msg.ChatID, msg.ToID);
+            //UserAdded?.Invoke(msg.ChatID, msg.ToID);
         }
         private void DeleteUserFromGroupResponce(Message msg)
         {
@@ -95,8 +96,16 @@ namespace Penta_ClientLib.Services
         {
             if (msg.ChatID == -1)//личное сообщение
             {
+                int chatID = 0;
                 var userConnectionID = ContactConverter.ConvertUserIDToContactID(msg.FromID);
-                var chatID = await _chatHolder.GetChatID(userConnectionID);//чаты ВСЕГДА хранятся с именем в виде contactID
+
+                var userName =await _contactHolder.GetUserNameByContactID(userConnectionID);//ищем контакт, с указанным ID
+                if(!string.IsNullOrEmpty(userName))
+                    chatID= await _chatHolder.GetChatIDByName(userName);//ищем чат, у которого имя соответсвует имю из контакта
+
+                if(chatID==0)//поиск по контакту не дал результата(контакта нет?)
+                    chatID = await _chatHolder.GetChatIDByName(userConnectionID);//ищем по самому contactID(это дефолтное)
+
                 if (chatID != 0)//чат с указанным connectID есть
                 {
                     if (await _messHolder.SaveMessage(

@@ -82,7 +82,7 @@ namespace Penta_Server.Services.MessagesProcessors
         {
             _logger?.SaveForDEBUG("Запрос добавление юзера в группу");
             var findedChat = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-            if (findedChat != null)//указанная группа есть
+            if (findedChat != null && findedChat.AdminGroupID==msg.FromID)//запрос от админа
             {
                 if (await _groupRepo.AddUserToGroupAsync(msg.ToID, findedChat.ID))//после этого сущность findedChat имеет еще старый список
                 {
@@ -114,13 +114,11 @@ namespace Penta_Server.Services.MessagesProcessors
         {
             _logger?.SaveForDEBUG($"Получен запрос на удаление чата id={msg.ChatID}");
             var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
-            if (findedGroup != null)
+            if (findedGroup != null && findedGroup.AdminGroupID== msg.FromID)//только админ могет удалять
             {
-                if (await _groupRepo.DeleteGroup(msg.FromID, msg.ChatID))
-                {
-                    foreach (var recieverID in findedGroup.UserIDsInGroup())
-                        _messageSaver.Save(MessageFactory.DeleteGroupChat_Response(msg, recieverID));
-                }
+                foreach (var recieverID in findedGroup.UserIDsInGroup())
+                    _messageSaver.Save(MessageFactory.DeleteGroupChat_Response(msg, recieverID));
+                _ = _groupRepo.DeleteGroup(msg.FromID, msg.ChatID);
             }
         }
         private async void SendToGroup(Message msg)
@@ -129,10 +127,13 @@ namespace Penta_Server.Services.MessagesProcessors
             if (findedGroup != null)
             {
                 var userInGroup = findedGroup.UserIDsInGroup();
-                foreach (var recieverID in userInGroup)
+                if (userInGroup.Contains(msg.FromID))//только действующий участник может писать в группу
                 {
-                    if(recieverID!=msg.FromID)
-                        _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID),userInGroup.Length-1);
+                    foreach (var recieverID in userInGroup)
+                    {
+                        if (recieverID != msg.FromID)
+                            _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID), userInGroup.Length - 1);
+                    }
                 }
             }
         }

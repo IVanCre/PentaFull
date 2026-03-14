@@ -153,8 +153,9 @@ namespace Penta_ClientLib.Services
                     case HttpStatusCode.Conflict:
                     case HttpStatusCode.BadRequest:
                         {
-                            var error = JsonSerializer.Deserialize<Exception>(serialized);
-                            return Tuple.Create<int, Exception>(userID, error);
+                            var doc = JsonDocument.Parse(serialized);
+                            string message = doc.RootElement.GetProperty("message").GetString();
+                            return Tuple.Create<int, Exception>(userID, new Exception(message));
                         }
                 }
             }
@@ -281,6 +282,14 @@ namespace Penta_ClientLib.Services
 
             return false;
         }
+
+        public bool IsConnected()
+        {
+            if(_messHabConnection!=null)
+                return _messHabConnection.State == HubConnectionState.Connected;
+            else
+                return false;
+        }
         public async Task<bool> ConnectToMessageHub()
         {
 
@@ -312,15 +321,15 @@ namespace Penta_ClientLib.Services
 
                 _messHabConnection.Closed += async (ex) =>
                 {
-                    ConnectionStateChanged?.Invoke(false);
+                    ConnectionStateChanged?.Invoke(false);//отключились
                     await InicializeConnect();// Сюда попадаем, если переподключение не удалось (например, нет сети)
                 };
-                _messHabConnection.Reconnecting += async (ex) =>
+                _messHabConnection.Reconnecting += async (ex) =>//идет переподключение
                 {
                     ConnectionStateChanged?.Invoke(false);
                     await Task.CompletedTask;
                 };
-                _messHabConnection.Reconnected += async (ex) =>
+                _messHabConnection.Reconnected += async (ex) =>//переподключились
                 {
                     ConnectionStateChanged?.Invoke(true);
                     await Task.CompletedTask;
@@ -352,6 +361,7 @@ namespace Penta_ClientLib.Services
                     ConnectionStateChanged?.Invoke(true);
             }
         }
+
         #endregion
 
         private async void DisconnectFromMessageHub()

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using TimerLib=System.Timers;
 
 namespace Client.UIElements
 {
@@ -27,9 +24,9 @@ namespace Client.UIElements
         private void EndClick(object sender, EventArgs e)
         {
             if ((DateTime.Now - _startPress).TotalSeconds >= _pressSeconds)
-                LongPressClicked?.Invoke(sender,e);
+                LongPressClicked?.Invoke(sender, e);
             else
-                ShortPressClicked?.Invoke(sender,e);
+                ShortPressClicked?.Invoke(sender, e);
 
         }
     }

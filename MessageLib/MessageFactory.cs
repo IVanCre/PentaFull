@@ -71,7 +71,7 @@ namespace MessageLib
                              request.ID,
                              request.FromID,//кто добавляет
                              request.ChatID,//куда добавляют
-                             recieverUserID,//кого добавляют
+                             recieverUserID,//кто получит это сообщение
                              MessageType.AddUserToGroupResponse,
                              null,
                              DateTime.Now);

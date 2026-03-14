@@ -50,7 +50,7 @@ namespace Penta_ClientLib.Services
                      input[9] == '-' &&
                      input[12] == '-')
                 {
-
+                    return true;
                 }
             }
 

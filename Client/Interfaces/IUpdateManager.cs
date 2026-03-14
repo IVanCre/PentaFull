@@ -4,6 +4,11 @@ namespace Client.Interfaces
 {
     internal interface IUpdateManager
     {
+        /// <summary>
+        /// Запускает автоматическое автообновление клиента
+        /// </summary>
+        /// <param name="clientType"></param>
+        /// <returns></returns>
         Task TryUpdateClientAsync(ClientType clientType);
     }
 }

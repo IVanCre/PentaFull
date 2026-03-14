@@ -24,22 +24,28 @@ namespace Client.Pages
             _clientFacade.ContactChanged += TryUpdateChatName;
             BindingContext = this;
         }
+
+
         protected override async void OnAppearing()//вызываетс€ при отображении страницы
         {
             base.OnAppearing();
 
-            ChatsList?.Clear();
             var findedChats = await _clientFacade.GetAllChatsInfoAsync();
             var findedContacts = await _clientFacade.GetAllContactsAsync();
             ContactInfo identityContact;
-            foreach (var chatInfo in findedChats)
+
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
-                if(identityContact!=null)
-                    ChatsList.Add(new ChatInfo(chatInfo.ID,identityContact.UserName));//прописываем им€ юзера из контакта
-                else
-                    ChatsList.Add(chatInfo);//оставл€ем как есть
-            }
+                ChatsList?.Clear();
+                foreach (var chatInfo in findedChats)
+                {
+                    identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
+                    if (identityContact != null)
+                        ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.IsGroupChat));//прописываем им€ юзера из контакта
+                    else
+                        ChatsList.Add(chatInfo);//оставл€ем как есть
+                }
+            });
         }
 
         private async void OnShortClick(object sender, EventArgs e)
@@ -56,34 +62,47 @@ namespace Client.Pages
 
             if(await _actionMenuSelector.ShowConfirmDialog("","”далить чат?","ƒа","Ќет"))
             {
-                ChatsList.Remove(chat);
-                await _clientFacade.DeletePrivateChatAsync(chat.ID);
+                MainThread.BeginInvokeOnMainThread(() => ChatsList.Remove(chat));
+                if(chat.IsGroupChat)
+                    await _clientFacade.DeleteGroupChatAsync(chat.ID);
+                else
+                    await _clientFacade.DeletePrivateChatAsync(chat.ID);
             }
         }
 
         private void TryUpdateChatName(string oldName, string newName)
         {
-            var finded = ChatsList.FirstOrDefault(x => x.ChatName == oldName);
-            if(finded!=null)
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                ChatsList.Remove(finded);
-                ChatsList.Add(new ChatInfo(finded.ID, newName));//чтобы перерисовку вызвать
-            }
+                var finded = ChatsList.FirstOrDefault(x => x.ChatName == oldName);
+                if (finded != null)
+                {
+                    ChatsList.Remove(finded);
+                    ChatsList.Add(new ChatInfo(finded.ID, newName, finded.IsGroupChat));//чтобы перерисовку вызвать
+                }
+            });
         }
 
-        private async void OnStartNewClick(object sender, EventArgs e)
+        private async void OnCreateNew(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new ChatCreatorPage());//тут отправим запрос  на создание чата
         }
 
-        private async void ChatCreated(int chatID, string chatName)
+        private async void ChatCreated(int chatID, string chatName)//обработка ответа на создание группового чата 
         {
             var findedContacts = await _clientFacade.GetAllContactsAsync();
             var findedContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatName);
-            if(findedContact!=null)
-                ChatsList.Add(new ChatInfo(chatID, findedContact.UserName));//сохран€ем с указанным именем
+
+            ChatInfo createdChatInfo;
+            if (findedContact != null)
+                createdChatInfo = new ChatInfo(chatID, findedContact.UserName, false);//сохран€ем с указанным именем(т.к. есть аналогичный контакт)
             else
-                ChatsList.Add(new ChatInfo(chatID,chatName));//сохран€ем с исходным именем
+            {
+                var findedChat = await _clientFacade.GetChatByID(chatID);
+                createdChatInfo = new ChatInfo(chatID, chatName, findedChat.IsGroupChat);//сохран€ем с исходным именем
+            }
+
+            MainThread.BeginInvokeOnMainThread(() => ChatsList.Add(createdChatInfo));
         }
     }
 }
