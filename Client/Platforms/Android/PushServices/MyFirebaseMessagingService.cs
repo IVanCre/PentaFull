@@ -1,9 +1,9 @@
-﻿using AndroidAppLib= Android.App;
+﻿using AndroidAppLib = Android.App;
 using Firebase.Messaging;
 using Android.Runtime;
 
 
-namespace Client.Platforms.Android
+namespace Client.Platforms.Android.PushServices
 {
     //сервис, который в фоне обрабатывает входящие сообщения от Firebase
     [Register("com.companyname.penta.MyFirebaseMessagingService")]
@@ -22,13 +22,13 @@ namespace Client.Platforms.Android
                 string title = message.Data["title"];
                 string text = message.Data["message"];
 
-                ProcessInBackground(title,text);
+                ProcessInBackground(title, text);
             }
         }
         private void ProcessInBackground(string title, string text)
         {
             var _notifier = new NotificationHelper(AndroidAppLib.Application.Context);
-            _notifier.ShowNotification(title,text);
+            _notifier.ShowNotification(title, text);
         }
 
         // Срабатывает при обновлении токена (нужно отправить на ваш сервер)

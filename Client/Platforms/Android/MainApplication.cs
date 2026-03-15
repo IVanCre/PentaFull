@@ -1,6 +1,8 @@
 ﻿using Android.App;
 using Android.Runtime;
 using Client.Interfaces;
+using Client.Platforms.Android.PushServices;
+using Client.Platforms.Android.UpdateServices;
 
 
 namespace Client.Platforms.Android

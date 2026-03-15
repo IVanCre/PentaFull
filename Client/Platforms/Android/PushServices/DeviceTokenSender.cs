@@ -3,12 +3,12 @@ using Firebase.Messaging;
 using Penta_ClientLib.Interfaces;
 
 
-namespace Client.Platforms.Android
+namespace Client.Platforms.Android.PushServices
 {
     internal class DeviceTokenSender
     {
         private IWebClient _client;
-        public DeviceTokenSender(IWebClient client) 
+        public DeviceTokenSender(IWebClient client)
         {
             _client = client;
         }

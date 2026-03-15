@@ -2,7 +2,7 @@
 using Android.Content;
 
 
-namespace Client.Platforms.Android
+namespace Client.Platforms.Android.UpdateServices
 {
     [BroadcastReceiver(Enabled = true, Exported = true)]
     [IntentFilter(new[] { Intent.ActionMyPackageReplaced })]

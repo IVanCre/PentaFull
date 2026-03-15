@@ -1,12 +1,14 @@
 ﻿using Penta_Server.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using MessageLib;
+using Microsoft.AspNetCore.Authorization;
+using Penta_Server.StaticUtilits;
 
 namespace Penta_Server.Controllers
 {
     [Route("Admin")]
     [ApiController]
-//[Authorize(Roles = RoleNames.Admin)]
+    [Authorize(Roles = RoleNames.Admin)]
     public class AdminController(
         ILogReader logReader,
         IClientNotifier notifier,

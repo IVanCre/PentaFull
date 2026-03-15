@@ -6,7 +6,7 @@ using Android.Graphics;
 
 
 
-namespace Client.Platforms.Android
+namespace Client.Platforms.Android.PushServices
 {
     public class NotificationHelper//отображает уведомления и позволяет тапать по ним
     {
@@ -46,7 +46,7 @@ namespace Client.Platforms.Android
         public int ShowNotification(string title, string text)
         {
             var notificationManager = NotificationManagerCompat.From(_context);
-            notificationManager.Notify(GenerateNextID(), CreateNotify(title,text));
+            notificationManager.Notify(GenerateNextID(), CreateNotify(title, text));
 
             return _counterID;
         }

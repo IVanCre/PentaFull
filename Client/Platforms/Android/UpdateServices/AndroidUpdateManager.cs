@@ -5,11 +5,11 @@ using Penta_ClientLib.Interfaces;
 using System.Reflection;
 
 
-namespace Client.Platforms.Android
+namespace Client.Platforms.Android.UpdateServices
 {
     internal class AndroidUpdateManager(IWebClient client) : IUpdateManager
     {
-        private IWebClient _client=client;
+        private IWebClient _client = client;
 
         public async Task TryUpdateClientAsync(ClientType type)
         {

@@ -12,6 +12,7 @@ using Penta_Server.Services.Repositories;
 using Penta_Server.Services.MessagesProcessors;
 using Penta_Server.Utilits;
 using Penta_Server.Services.Loggers;
+using System.Reflection;
 
 namespace Penta_Server
 {
@@ -138,7 +139,7 @@ namespace Penta_Server
         private static void StartServices(IServiceProvider sprovider)
         {
             var logger = sprovider.GetRequiredService<ILogWriter>();
-            logger.SaveInfo("<---start-new-work--->");//чтобы по логам можно было понять когда стартовал\схлопнулся
+            logger.SaveInfo($"<---start-new-work---v.{Assembly.GetExecutingAssembly().GetName().Version.ToString()}--->");//чтобы по логам можно было понять когда стартовал\схлопнулся
 
             var config = sprovider.GetRequiredService<IConfiguration>();
             using (DB db= new DB(config["WorkDB:ConnString"]))

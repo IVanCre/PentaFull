@@ -3,11 +3,11 @@
 
 using Penta_ClientLib.Interfaces;
 using Client.Interfaces;
-using Client.Platforms.Android;
+using Client.Platforms.Android.PushServices;
 
 namespace Client.Pages
 {
-	public partial class AuthPage : ContentPage
+    public partial class AuthPage : ContentPage
 	{
 		private IClientFacade _clientFacade;
 		private IUINotificator _notifier;
