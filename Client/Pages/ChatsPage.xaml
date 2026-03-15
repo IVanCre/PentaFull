@@ -14,7 +14,7 @@
                 VerticalScrollBarVisibility="Always">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid  ColumnDefinitions="Auto, *" RowDefinitions="Auto" Margin="5">
+                    <Grid  ColumnDefinitions="Auto, *,Auto" RowDefinitions="Auto" Margin="5">
                         <Image  
                             Grid.Column="0" 
                             Source="{Binding ImageSourceName}"
@@ -35,8 +35,9 @@
 
                         <Image 
                             Grid.Column="2" 
+                            HorizontalOptions="End"
                             IsVisible="{Binding HaveUnreadedMessages}"
-                            Source="{Binding NotifySorceName}"/>
+                            Source="{Binding NotifySourceName}"/>
 
                     </Grid>
                 </DataTemplate>

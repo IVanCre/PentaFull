@@ -3,7 +3,6 @@ using Penta_ClientLib.DataStructs;
 using Penta_ClientLib.Interfaces;
 using Penta_ClientLib.Services;
 using SQLite;
-using System.Diagnostics.Contracts;
 
 
 namespace Penta_ClientLib.Repository
@@ -136,7 +135,7 @@ namespace Penta_ClientLib.Repository
 
 
         #region Chats        
-        private async Task<bool> CreateChat(int chatID, string chatName, bool isGroupChat)
+        private async Task<bool> CreateChat(int chatID, string chatName, ChatType chatType)
         {
             InitConnect();
             var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
@@ -147,7 +146,7 @@ namespace Penta_ClientLib.Repository
                     {
                         ID = chatID,
                         Name = chatName,
-                        IsGroupChat= isGroupChat
+                        ChatType= chatType
                     });
 
                 return added == 1;
@@ -157,8 +156,8 @@ namespace Penta_ClientLib.Repository
         }        
         public async Task<bool> CreateGroupChat(int chatID, string chatName, bool requestFromAdminGroup)
         {
-            bool result = await CreateChat(chatID, chatName, true);
-            if(result)
+            bool result = await CreateChat(chatID, chatName, ChatType.Group);
+            if(result && requestFromAdminGroup)
             {
                 await _connection.InsertAsync(
                     new AmGroupAdminEntity()
@@ -168,6 +167,8 @@ namespace Penta_ClientLib.Repository
             }
             return result;
         }
+
+
         public async Task<bool> AmCreatedThisGroupChat(int chatID)
         {
             InitConnect();
@@ -175,7 +176,6 @@ namespace Penta_ClientLib.Repository
             var finded = await _connection.Table<AmGroupAdminEntity>().FirstOrDefaultAsync(x => x.ChatID == chatID);
             return finded != null;//значит указанный чат есть в таблице, значит его создание инциировали мы(мы -хозяинГруппы)
         }
-
         public async Task<int> CreatePrivateChat(string chatName)
         {
             int id = 0;
@@ -185,7 +185,7 @@ namespace Penta_ClientLib.Repository
             if (finded == null)
             {
                 id = GenerateLocalIDByTime();
-                if (!await CreateChat(id, chatName,false))
+                if (!await CreateChat(id, chatName,ChatType.Private))
                     id = 0;
             }
             else
@@ -260,7 +260,7 @@ namespace Penta_ClientLib.Repository
             List<ChatInfo> finded = new();
             var list = await _connection.Table<ChatEntity>().ToListAsync();
             foreach (var item in list)
-                finded.Add(new ChatInfo(item.ID, item.Name,item.IsGroupChat));
+                finded.Add(new ChatInfo(item.ID, item.Name,item.ChatType,item.HaveUnreaded));
 
             return finded;
         }
@@ -270,9 +270,16 @@ namespace Penta_ClientLib.Repository
             ChatInfo findedChat = null;
             var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
             if (finded != null)
-                findedChat = new ChatInfo(finded.ID, finded.Name, finded.IsGroupChat);
+                findedChat = new ChatInfo(finded.ID, finded.Name, finded.ChatType, finded.HaveUnreaded);
             
             return findedChat;
+        }
+        
+        public async Task SetChatHaveUnreaded(int chatID, bool haveUnreaded)//отмечаем состояние новых сообщений в чате
+        {
+            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
+            finded.HaveUnreaded = haveUnreaded;
+            await _connection.UpdateAsync(finded);
         }
         #endregion
 
@@ -292,6 +299,9 @@ namespace Penta_ClientLib.Repository
                      UtcTimestamp = DateTime.Now,
                      IsSended = isMessageFromServer//если оно с сервера -значит оно успешно доставлено и маркер выключаем
                  });
+
+            if (isMessageFromServer && result == 1)//сразщу помечаем, что в чате появилось новое-непрочитанное
+                await SetChatHaveUnreaded(msg.ChatID, true);
 
             return result == 1;
         }
@@ -326,7 +336,7 @@ namespace Penta_ClientLib.Repository
         }
 
 
-        public async Task<List<Message>> GetMessagesByChat(int chatID, int maxLenCount)
+        public async Task<List<Message>> GetLastMessagesByChat(int chatID, int maxLenCount)
         {
             List<Message> result = new();
             var finded = await _connection.Table<MessageItemEntity>()
@@ -345,6 +355,8 @@ namespace Penta_ClientLib.Repository
                         item.Type,
                         item.Data,
                         item.UtcTimestamp));
+
+            await SetChatHaveUnreaded(chatID, false);//если запросили выборку - значит щас прочитают
 
             return result;
         }

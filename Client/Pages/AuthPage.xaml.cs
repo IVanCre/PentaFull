@@ -25,7 +25,9 @@ namespace Client.Pages
 		{
 			if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
 			{
+                LockUIForAwait();
 				var result = await _clientFacade.RegistrationAsync(UsernameEntry.Text, PasswordEntry.Text);
+                UnlockUI();
                 if (result.Item1)
 				{
 					SetBatteryOptimizations();
@@ -43,7 +45,9 @@ namespace Client.Pages
         {
             if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
             {
+                LockUIForAwait();
                 var result = await _clientFacade.LoginAsync(UsernameEntry.Text, PasswordEntry.Text);
+                UnlockUI();
                 if (result.Item1)
                 {
                     await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
@@ -52,6 +56,24 @@ namespace Client.Pages
                     await _notifier.ShowMessage("Внимание", $"Ошибка входа:{result.Item2.Message}", "ок");
             }
         }
+
+        private void LockUIForAwait()//чтобы во время ожидания юзер не шлепнул куда не надо))
+        {
+            LoaderSpin.IsRunning = true;
+            UsernameEntry.IsEnabled = false;
+            PasswordEntry.IsEnabled = false;
+            RegButton.IsEnabled = false;
+            LoginButton.IsEnabled = false;
+        }
+        private void UnlockUI()
+        {
+            LoaderSpin.IsRunning = false;
+            UsernameEntry.IsEnabled = true;
+            PasswordEntry.IsEnabled = true;
+            RegButton.IsEnabled = true;
+            LoginButton.IsEnabled = true;
+        }
+
 
 
         private void RegistrationDevice()

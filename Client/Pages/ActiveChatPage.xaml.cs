@@ -5,17 +5,18 @@ using System.Collections.ObjectModel;
 using MessageLib;
 using Client.Interfaces;
 using Penta_ClientLib.Services;
+using Penta_ClientLib.DataStructs;
 
 
 namespace Client.Pages
 {
-
 	public partial class ActiveChatPage : ContentPage
 	{
 		public ObservableCollection<MessageInfo> MessageList { get; set; }
-		public string ChatName { get; private set; }//если приватный -им€ контакта
+
 		private int _recieverUserID = -1;//используетс€,только если это приватный чат
-		private int _currentChatID;
+		private ChatInfo _chatInfo;
+
 		private int _currentUserID;//идентификатор юзера
 		private IClientFacade _clientFacade;
 		private IUINotificator _notifier;
@@ -23,46 +24,64 @@ namespace Client.Pages
 		private const int messageLoadedNum = 100;//количество последних сообщений дл€ загрузки при старте
 
 
-		public ActiveChatPage(string name, int chatID)
+		public ActiveChatPage(ChatInfo chat)
 		{
 			InitializeComponent();
 
 			MessageList = new();
-			ChatName = name;
-			_currentChatID = chatID;
+			_chatInfo = chat;
 			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
 			_notifier = App.Services.GetRequiredService<IUINotificator>();
-			_settingsHolder =App.Services.GetRequiredService<ISettingsProvider>();
-
+			_settingsHolder = App.Services.GetRequiredService<ISettingsProvider>();
             _clientFacade.MessageAddedToChat += TryAddIncomingMessageToChat;
-			_clientFacade.UserAdded += UserAdded;
-			_clientFacade.UserRemoved += UserRemoved;
 			_clientFacade.ChatDeleted += ChatDeleted;
-			TryInicializeAddToGroupButton();
+			ConfigurateByType();
 			LoadLastMessages();
-			BindingContext = this;
+
+            BindingContext = this;
 		}
+
+		private void ConfigurateByType()
+		{
+			switch(_chatInfo.ChatType)
+			{
+				case ChatType.Group:
+					{
+						TryInicializeAddToGroupButton();
+                        _clientFacade.UserAdded += UserAdded;
+                        _clientFacade.UserRemoved += UserRemoved;
+                    }
+					break;
+				case ChatType.ReadOnly:
+					{
+						MessageText.IsEnabled = false;
+                        MessageText.IsVisible = false;
+
+                        SendButton.IsEnabled = false;
+						SendButton.IsVisible = false;
+                    }
+					break;
+			}
+		}
+
 		private async void TryInicializeAddToGroupButton()//если ты админ группы - у теб€ есть кнопки добавить\удалить юзера из группы
 		{
-			if (_recieverUserID == -1)//это групповой чат
+			bool userIsGroupAdmin = await _clientFacade.AmCreatedGroupChat(_chatInfo.ID);
+			if (userIsGroupAdmin)
 			{
-				bool userIsGroupAdmin = await _clientFacade.AmCreatedGroupChat(_currentChatID);
-				if (userIsGroupAdmin)
+				var item = new ToolbarItem();
+				item.Text = "Members";
+				item.Clicked += (o, e) =>
 				{
-					var item = new ToolbarItem();
-					item.Text = "Members";
-					item.Clicked += (o, e) =>
-					{
-						MembersManager.Show(_currentChatID);//вызываем наше всплывающее окно
-                    };
-					this.ToolbarItems.Add(item);
-				}
+					MembersManager.Show(_chatInfo.ID);//вызываем наше всплывающее окно
+				};
+				this.ToolbarItems.Add(item);
 			}
 		}
 
         private async void LoadLastMessages()
 		{
-			var finded = await _clientFacade.GetMessagesByChatAsync(_currentChatID, messageLoadedNum);
+			var finded = await _clientFacade.GetMessagesByChatAsync(_chatInfo.ID, messageLoadedNum);
 			_currentUserID =await _settingsHolder.GetUserID();
 			TextAlignment alignType;
 			foreach (var mess in finded)
@@ -72,9 +91,9 @@ namespace Client.Pages
 				else
 					alignType = TextAlignment.End;//все остальное -справа
 
-
                 switch (mess.Type)
 				{
+					case MessageType.SystemNotify:
 					case MessageType.Text: MessageList.Add(new MessageInfo() {Type=alignType, Text = mess.GetDataLikeString() }); break;
 
 					case MessageType.Picture: MessageList.Add(new MessageInfo() { Type =alignType, Text = "Unsupported Message Type" }); break;//на будущее задел
@@ -85,7 +104,7 @@ namespace Client.Pages
 
         private void TryAddIncomingMessageToChat(int chatID, Message msg)
 		{
-			if (chatID == _currentChatID)//групповой чат
+			if (chatID == _chatInfo.ID)//групповой чат
 			{
 				MessageList.Add(
 					new MessageInfo()
@@ -94,7 +113,7 @@ namespace Client.Pages
 						Text = msg.GetDataLikeString()
 					});
 			}
-			else
+			else//значит приватный чат
 			{
 				if (chatID == -1 && _recieverUserID == msg.FromID)//отправитель-это тот, кому мы пишем в этом чате
 					MessageList.Add(
@@ -112,14 +131,14 @@ namespace Client.Pages
 			MessageText.Text = "";
 
 			Tuple<bool, Exception> result = default;
-			if (_currentChatID > 0)
+			if (_chatInfo.ID > 0)//значит групповой чат
 			{
-				result = await _clientFacade.SendMessageToGroupChatAsync(_currentChatID, MessageType.Text, MessageUtils.TextToBytes(input));
+				result = await _clientFacade.SendMessageToGroupChatAsync(_chatInfo.ID, MessageType.Text, MessageUtils.TextToBytes(input));
 			}
-			else
+			else//значит приватный чат
 			{
-				_recieverUserID =await _clientFacade.GetRecieverIDFromChatAsync(ChatName);
-                result = await _clientFacade.SendMessageToUserAsync(_currentChatID,_recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input));
+				_recieverUserID =await _clientFacade.GetRecieverIDFromChatAsync(_chatInfo.ChatName);
+                result = await _clientFacade.SendMessageToUserAsync(_chatInfo.ID, _recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input));
 			}
 
 			if (!result.Item1)
@@ -150,7 +169,7 @@ namespace Client.Pages
         }
 		private void ChatDeleted(int chatID, string chatName)
         {
-			if (_currentChatID == chatID)
+			if (_chatInfo.ID == chatID)
 			{
 				string text = "„ј“ ”ƒјЋ≈Ќ ’ќ«я»Ќќћ";
 				MessageList.Add(new MessageInfo() { Type = TextAlignment.Center, Text = text });

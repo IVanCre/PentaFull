@@ -4,6 +4,7 @@ using Penta_ClientLib.DataStructs;
 using Penta_ClientLib.Interfaces;
 using System.Collections.ObjectModel;
 using Client.UIElements;
+using MessageLib;
 
 
 namespace Client.Pages
@@ -20,6 +21,7 @@ namespace Client.Pages
 
             _clientFacade = App.Services.GetRequiredService<IClientFacade>();
             _actionMenuSelector = App.Services.GetRequiredService<IUINotificator>();
+            _clientFacade.MessageAddedToChat += ShowNewMessageInChat;
             _clientFacade.CreatedNewChat += ChatCreated;
             _clientFacade.ContactChanged += TryUpdateChatName;
             BindingContext = this;
@@ -41,7 +43,7 @@ namespace Client.Pages
                 {
                     identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
                     if (identityContact != null)
-                        ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.IsGroupChat));//прописываем имя юзера из контакта
+                        ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.ChatType,chatInfo.HaveUnreadedMessages));//прописываем имя юзера из контакта
                     else
                         ChatsList.Add(chatInfo);//оставляем как есть
                 }
@@ -53,7 +55,7 @@ namespace Client.Pages
             var button = sender as LongButton;
             var chat = (ChatInfo)button?.BindingContext;
 
-            await Navigation.PushAsync(new ActiveChatPage(chat.ChatName,chat.ID));//сразу переходим в переписку чата
+            await Navigation.PushAsync(new ActiveChatPage(chat));//сразу переходим в переписку чата
         }
         private async void OnLongClick(object sender, EventArgs e)
         {
@@ -63,7 +65,7 @@ namespace Client.Pages
             if(await _actionMenuSelector.ShowConfirmDialog("","Удалить чат?","Да","Нет"))
             {
                 MainThread.BeginInvokeOnMainThread(() => ChatsList.Remove(chat));
-                if(chat.IsGroupChat)
+                if(chat.ChatType== ChatType.Group)
                     await _clientFacade.DeleteGroupChatAsync(chat.ID);
                 else
                     await _clientFacade.DeletePrivateChatAsync(chat.ID);
@@ -78,7 +80,7 @@ namespace Client.Pages
                 if (finded != null)
                 {
                     ChatsList.Remove(finded);
-                    ChatsList.Add(new ChatInfo(finded.ID, newName, finded.IsGroupChat));//чтобы перерисовку вызвать
+                    ChatsList.Add(new ChatInfo(finded.ID, newName, finded.ChatType,finded.HaveUnreadedMessages));//чтобы перерисовку вызвать
                 }
             });
         }
@@ -95,14 +97,25 @@ namespace Client.Pages
 
             ChatInfo createdChatInfo;
             if (findedContact != null)
-                createdChatInfo = new ChatInfo(chatID, findedContact.UserName, false);//сохраняем с указанным именем(т.к. есть аналогичный контакт)
+                createdChatInfo = new ChatInfo(chatID, findedContact.UserName, ChatType.Private,false);//сохраняем с указанным именем(т.к. есть аналогичный контакт)
             else
             {
                 var findedChat = await _clientFacade.GetChatByID(chatID);
-                createdChatInfo = new ChatInfo(chatID, chatName, findedChat.IsGroupChat);//сохраняем с исходным именем
+                createdChatInfo = new ChatInfo(chatID, chatName, findedChat.ChatType,false);//сохраняем с исходным именем
             }
 
             MainThread.BeginInvokeOnMainThread(() => ChatsList.Add(createdChatInfo));
+        }
+
+        private void ShowNewMessageInChat(int chatID, Message mesage)
+        {
+            var index = ChatsList.IndexOf(ChatsList.FirstOrDefault(x => x.ID == chatID));
+            if (index != -1)
+            {
+                var chat = ChatsList[index];
+                chat.HaveUnreadedMessages = true;
+                ChatsList[index] = chat;//пересоздание приведет к автоизменению UI
+            }
         }
     }
 }

@@ -64,7 +64,7 @@
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\hands.svg" BaseSize="128,128" />
 		<MauiImage Include="Resources\Images\message.png" />
-		<MauiImage Include="Resources\Images\new_mesages.png" />
+		<MauiImage Include="Resources\Images\notify_chat.png" />
 		<MauiImage Include="Resources\Images\private_chat.png" />
 
 		<!-- Custom Fonts -->
@@ -81,7 +81,7 @@
 	  <None Remove="Resources\Images\contact.png" />
 	  <None Remove="Resources\Images\hands.svg" />
 	  <None Remove="Resources\Images\message.png" />
-	  <None Remove="Resources\Images\new_mesages.png" />
+	  <None Remove="Resources\Images\notify_chat.png" />
 	</ItemGroup>
 
 	

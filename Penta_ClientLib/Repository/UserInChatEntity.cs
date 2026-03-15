@@ -8,9 +8,10 @@ namespace Penta_ClientLib.Repository
         [PrimaryKey, AutoIncrement]
         public int ID { get; set; }
 
-        [Indexed(Name = "UserID", Unique = true)]
+        [Indexed(Name = "UserID")]
         public int UserId { get; set; }
 
+        [Indexed(Name = "ChatId")]
         public int ChatId { get; set; }
     }
 }

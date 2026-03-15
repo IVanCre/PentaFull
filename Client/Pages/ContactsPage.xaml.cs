@@ -39,24 +39,6 @@ namespace Client.Pages
             });
         }
 
-        private async void OnShortClick(object sender, EventArgs e)
-        {
-            var button = sender as Button;
-            var contact = (ContactInfo)button?.BindingContext;
-
-            int chatID = 0;
-            var allChats =await _clientFacade.GetAllChatsInfoAsync();
-            var findedChat = allChats.FirstOrDefault(x => x.ChatName == contact.UserContactID);//попытаемся найти уже существующий
-            if(findedChat!=null)
-                chatID=findedChat.ID;
-            else
-                chatID = await _clientFacade.CreatePrivateChatAsync(contact.UserName);//создаем новый чат(на самом деле это не чат)
-
-            if (chatID != 0)//успешно создан
-            {
-                await Navigation.PushAsync(new ActiveChatPage(contact.UserName, chatID));//переходим в чат
-            }
-        }
         private async void OnLongClick(object sender, EventArgs e)
         {
 

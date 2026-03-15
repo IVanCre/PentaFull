@@ -26,7 +26,8 @@
                     VerticalOptions="End"
                     HorizontalOptions="FillAndExpand"
                     BackgroundColor="{StaticResource PrimaryDark}"/>
-            <Button Grid.Column="1" 
+            <Button Grid.Column="1"
+                    x:Name="SendButton"
                     Text="Send"
                     Clicked="OnSendMessage"
                     VerticalOptions="End"/>

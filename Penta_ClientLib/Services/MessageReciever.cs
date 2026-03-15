@@ -43,12 +43,14 @@ namespace Penta_ClientLib.Services
                 case MessageType.RemoveUserFromGroupResponce:   DeleteUserFromGroupResponce(msg); break;
                 case MessageType.CreateGroupResponce:           await CreateGroupChatResponce(msg);break;
                 case MessageType.DeleteGroupResponce:           await DeleteGroupResponce(msg);break;
-                case MessageType.DeleteSelfAccountResponce:     AccountDeleted?.Invoke(); ; break;
+                case MessageType.DeleteSelfAccountResponce:     AccountDeleted?.Invoke();break;
 
                 //указанные сообщения сохранятся
+                case MessageType.SystemNotify:                  await ProcessSystemNotify(msg); break;
+
                 case MessageType.Text:
                 case MessageType.Picture:
-                case MessageType.Voice:                         await ProcessMessageFromUser(msg);break;
+                case MessageType.Voice:                         await ProcessMessageWithData(msg);break;
             }
         }
 
@@ -92,7 +94,7 @@ namespace Penta_ClientLib.Services
         }
 
 
-        private async Task ProcessMessageFromUser(Message msg)
+        private async Task ProcessMessageWithData(Message msg)
         {
             if (msg.ChatID == -1)//личное сообщение
             {
@@ -151,6 +153,28 @@ namespace Penta_ClientLib.Services
                 if (await _messHolder.SaveMessage(msg,true))
                     MessageAddedToChat?.Invoke(msg.ChatID, msg);
             }
+        }
+
+        private async Task ProcessSystemNotify(Message msg)//для системных уведомлений
+        {
+            var chatID = await _chatHolder.GetChatIDByName("Системные оповещения");
+            if (chatID == 0)
+            {
+                chatID = await _chatHolder.CreatePrivateChat("Системные оповещения");
+                if (chatID != 0)
+                    CreatedNewChat?.Invoke(chatID, "Системные оповещения");
+            }
+
+            if (chatID != 0 && await _messHolder.SaveMessage(
+                new Message(
+                    msg.ID,
+                    msg.FromID,
+                    chatID,
+                    msg.ToID,
+                    msg.Type,
+                    msg.Data,
+                    msg.UtcTimestamp),true))
+                MessageAddedToChat?.Invoke(chatID, msg);
         }
     }
 }

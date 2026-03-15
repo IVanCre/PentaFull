@@ -28,7 +28,9 @@
         DeleteSelfAccountRequest=57,//удаляет аккаунт на сервере
         DeleteSelfAccountResponce=58,
 
-        UserAddedToGroupResponse=59//для уведомления юзера в какую группу ЕГО добавили
+        UserAddedToGroupResponse=59,//для уведомления юзера в какую группу ЕГО добавили
 #endregion
+
+        SystemNotify=60//для оповещения всех юзеров 
     }
 }

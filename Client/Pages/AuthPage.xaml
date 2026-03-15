@@ -39,7 +39,12 @@
                 TextColor="{StaticResource White}"
                 Clicked="OnLoginButtonClicked" />
 
-
+        <ActivityIndicator 
+            x:Name="LoaderSpin"
+            IsRunning="False" 
+            Color="MediumPurple"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center" />
 
 
     </StackLayout>

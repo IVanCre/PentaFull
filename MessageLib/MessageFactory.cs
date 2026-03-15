@@ -165,13 +165,25 @@ namespace MessageLib
         public static Message DeleteAccountResponce(Message request)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-            Message.GenerateIDByTime(),
-            request.FromID,
-            -1,
-            request.FromID,
-            MessageType.DeleteSelfAccountRequest,
-            null,
-            DateTime.Now);
+                Message.GenerateIDByTime(),
+                request.FromID,
+                -1,
+                request.FromID,
+                MessageType.DeleteSelfAccountRequest,
+                null,
+                DateTime.Now);
+        }
+
+        public static Message CreateNotify(int recieverID, string message)
+        {
+            return new Message(//создаем новое сообщения для всех кто в группе
+                Message.GenerateIDByTime(),
+                -1,
+                -1,
+                recieverID,
+                MessageType.SystemNotify,
+                MessageUtils.TextToBytes(message),
+                DateTime.Now);
         }
     }
 }

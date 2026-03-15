@@ -203,7 +203,7 @@ namespace Penta_ClientLib
         public async Task<List<ContactInfo>> GetAllContactsAsync()=>await _contactHolder.GetAllContacts();
 
 
-        public Task<List<Message>> GetMessagesByChatAsync(int chatID, int maxLastMessageCount)=>_messHolder.GetMessagesByChat(chatID, maxLastMessageCount);
+        public Task<List<Message>> GetMessagesByChatAsync(int chatID, int maxLastMessageCount)=>_messHolder.GetLastMessagesByChat(chatID, maxLastMessageCount);
         private async void SendNonSended(bool connectionToServer)
         {
             if(connectionToServer)

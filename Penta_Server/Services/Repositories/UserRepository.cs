@@ -96,5 +96,13 @@ namespace Penta_Server.Services.Repositories
 
             return false;
         }
+
+        public async Task<List<int>> GetAllUsers()
+        {
+            using (DB db=new DB(_connStr))
+            {
+                return await db.Users.Select(x => x.ID).ToListAsync();
+            }
+        }
     }
 }
