@@ -18,7 +18,7 @@ namespace Penta_Server.Services.MessagesProcessors
             ILogWriter logger,
             IConfiguration config)
         {
-            minutesTimeout = Convert.ToInt32(config["WorkDB:AutoCleanPeriodMinutes"]);
+            minutesTimeout = Convert.ToInt32(config["DBCleaner:AutoCleanPeriodMinutes"]);
             _cleaner = new SysTimer(60_000 * minutesTimeout);
             _cleaner.Elapsed += Timer_Elapsed;
             _cleaner.AutoReset = true; // повторять

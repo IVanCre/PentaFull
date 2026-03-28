@@ -31,19 +31,26 @@ namespace Penta_Server.Services.Repositories
             }
         }
 
-        public async Task<long> SaveDataLikeShared(byte[] data, int copyCount)
+        public long SaveDataLikeShared(long sharedMarker, byte[] data, int copyCount)
         {
             using (DB db = new DB(connStr))
             {
-                var dataEntity = new SharedDataEntity()
+                var findedCopy =db.SharedDatas.FirstOrDefault(x => x.SharedMarker == sharedMarker);
+                if (findedCopy == null)
                 {
-                    Data = data,
-                    CopyCount = copyCount,
-                };
-                db.SharedDatas.Add(dataEntity);
+                    var dataEntity = new SharedDataEntity()
+                    {
+                        SharedMarker = sharedMarker,
+                        Data = data,
+                        CopyCount = copyCount,
+                    };
+                    db.SharedDatas.Add(dataEntity);
 
-                db.SaveChanges();
-                return dataEntity.ID;
+                    db.SaveChanges();
+                    return dataEntity.ID;
+                }
+                else//кто-то уже создал данные, привязываемся к этому объекту
+                    return findedCopy.ID;
             }
         }
         public void SaveWithData(Message msg,long sharedDataID)

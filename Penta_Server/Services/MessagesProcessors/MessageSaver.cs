@@ -5,6 +5,9 @@ using System.Collections.Concurrent;
 
 namespace Penta_Server.Services.MessagesProcessors
 {
+
+
+
     /// <summary>
     /// Сохраняет все входящие сообщения
     /// </summary>
@@ -12,41 +15,52 @@ namespace Penta_Server.Services.MessagesProcessors
     public class MessageSaver(IMessageRepository repository) : IMessageSaver
     {
         private readonly IMessageRepository _messageRepo = repository;
-        private ConcurrentQueue<Message> _inputMessages = new ();
+        private ConcurrentQueue<MessagePack> _inputMessages = new();
         private bool taskWork = false;
         public event MesageSaved MessageSaved;//отдает сохраненное сообщение
 
-        public async void Save(Message message, int copyCount)
+
+        public async void Save(Message message,long sharedDataMarker, int dataCopyCount)
         {
-            _inputMessages.Enqueue(message);
+            _inputMessages.Enqueue(new MessagePack(message,dataCopyCount, sharedDataMarker));
 
             if (_inputMessages.Count > 0 && !taskWork)
             {
-                await Task.Factory.StartNew(async() =>
+                await Task.Factory.StartNew(() =>
                 {
                     taskWork = true;
-
-                    if(copyCount<1)//защита от дурака
-                        copyCount = 1;
-
                     while (_inputMessages.Count > 0)
                     {
-                        if (_inputMessages.TryDequeue(out Message msg))
+                        if (_inputMessages.TryDequeue(out MessagePack msgPack))
                         {
                             if (message.Data != null)
                             {
-                                var sharedDataID = await _messageRepo.SaveDataLikeShared(msg.Data, copyCount);
-                                _messageRepo.SaveWithData(msg, sharedDataID);
+                                if (dataCopyCount < 1)//защита от дурака, т.к. этот метод всегда идет с данными
+                                    dataCopyCount = 1;
+
+                                var sharedDataID = _messageRepo.SaveDataLikeShared(msgPack.SharedMarker, msgPack.Message.Data, dataCopyCount);
+                                _messageRepo.SaveWithData(msgPack.Message, sharedDataID);
                             }
                             else
-                                _messageRepo.SaveWithoutData(msg);
+                                _messageRepo.SaveWithoutData(msgPack.Message);
 
-                            MessageSaved?.Invoke(msg);
+                            MessageSaved?.Invoke(msgPack.Message);
                         }
                     }
                     taskWork = false;
                 });
             }
         }
+
+        private class MessagePack(
+            Message msg,
+            int count,
+            long marker)
+        {
+            public Message Message { get; private set; } = msg;
+            public int DataCopyCount { get; private set; } = count;
+            public long SharedMarker { get; private set; } = marker;//какие сообщения имеют общие Data
+        }
+
     }
 }

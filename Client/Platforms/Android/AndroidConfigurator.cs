@@ -19,10 +19,8 @@ namespace Client.Platforms.Android
 
         private void RegistrationDeviceForPush()
         {
-
             var sender = App.Services.GetRequiredService<DeviceTokenSender>();
             sender.SendTokenToServer();
-
         }
         private void SetBatteryOptimizations()//это чтобы фоновая активность не убивалась ОС
         {

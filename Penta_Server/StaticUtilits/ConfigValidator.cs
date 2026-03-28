@@ -8,6 +8,7 @@
             CheckLogs(config);
             CheckJwt(config);
             CheckWorkDB(config);
+            CheckDBCleaner(config);
         }
 
         private static void CheckUrls(IConfiguration config)
@@ -69,13 +70,14 @@
             string connStr = config["WorkDB:ConnString"];
             if (string.IsNullOrEmpty(connStr))
                 throw new ArgumentException("Invalid WorkDB ConnString");
+        }
 
-            string autoCleanDB = config["WorkDB:AutoCleanPeriodMinutes"];
+        private static void CheckDBCleaner(IConfiguration config)
+        {
+            string autoCleanDB = config["DBCleaner:AutoCleanPeriodMinutes"];
             if (string.IsNullOrEmpty(autoCleanDB))
-                throw new ArgumentException("Invalid WorkDB AutoCleanPeriodMinutes");
+                throw new ArgumentException("Invalid DBCleaner AutoCleanPeriodMinutes");
             int period =int.Parse(autoCleanDB);
-            if (period < 5)
-                throw new ArgumentException("WorkDB AutoCleanPeriodMinutes should be >5");
         }
     }
 }

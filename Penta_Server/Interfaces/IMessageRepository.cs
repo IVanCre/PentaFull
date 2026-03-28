@@ -23,10 +23,11 @@ namespace Penta_Server.Interfaces
         /// <summary>
         /// Сохраняет указанный массив данных с ограниченным числом чтения\копирования
         /// </summary>
-        /// <param name="data"></param>
-        /// <param name="copyCount"></param>
+        /// <param name="sharedMarker">используется для опознания нужно создавать данные или использовать имеющиеся</param>
+        /// <param name="data">сами данные</param>
+        /// <param name="copyCount">сколько чтений допустимо</param>
         /// <returns></returns>
-        Task<long> SaveDataLikeShared(byte[] data, int copyCount);
+        long SaveDataLikeShared(long sharedMarker,byte[] data, int copyCount);
 
         Task<List<Message>> GetNonSendedForUserAsync(int userID);
         Task<bool> HasNonSended(int userID);

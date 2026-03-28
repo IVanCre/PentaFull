@@ -56,7 +56,7 @@ namespace Penta_Server.Services.MessagesProcessors
                         if (msg.ToID == -1 && msg.ChatID != -1)
                             SendToGroup(msg);//сообщение для группового чата
                         else
-                            _messageSaver.Save(msg);//сообщение для конкретного юзера
+                            _messageSaver.Save(msg, msg.ID);//сообщение для конкретного юзера
                     }; break;
             }
         }
@@ -66,14 +66,14 @@ namespace Penta_Server.Services.MessagesProcessors
             _logger?.SaveForDEBUG("Получен запрос на создание чата");
             var groupID = await _groupRepo.CreatGroupAsync(msg.FromID,msg.GetDataLikeString());
             if(groupID!=-1)
-                _messageSaver.Save(MessageFactory.CreateGroupChat_Response(groupID, msg));//сохраняем в БД(вдруг хаба нет или связь плохая)
+                _messageSaver.Save(MessageFactory.CreateGroupChat_Response(groupID, msg), msg.ID);//сохраняем в БД(вдруг хаба нет или связь плохая)
         }
         private async void DeleteAccount(Message msg)
         {
             _logger?.SaveForDEBUG($"Получен запрос на удаление аккаунта id={msg.FromID}");
             var result = await _userRepo.DeleteUserByIDAsync(msg.FromID);
             if (result)
-                _messageSaver.Save(MessageFactory.DeleteAccountResponce(msg));
+                _messageSaver.Save(MessageFactory.DeleteAccountResponce(msg),msg.ID);
         }
 
 
@@ -87,10 +87,11 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 if (await _groupRepo.AddUserToGroupAsync(msg.ToID, findedChat.ID))//после этого сущность findedChat имеет еще старый список
                 {
-                    _messageSaver.Save(MessageFactory.UserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name));//для добавляемого юзера
-                    
+                    _messageSaver.Save(MessageFactory.UserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name), msg.ID);//для добавляемого юзера
+
+                    var sharedMarker = msg.ID;
                     foreach (var recieverID in findedChat.UserIDsInGroup())
-                        _messageSaver.Save(MessageFactory.AddUserToGroupChat_Response(msg, recieverID));
+                        _messageSaver.Save(MessageFactory.AddUserToGroupChat_Response(msg, recieverID),sharedMarker);
                 }
             }
         }
@@ -106,8 +107,9 @@ namespace Penta_Server.Services.MessagesProcessors
                 if (await _groupRepo.RemoveUserFromGroupAsync(msg.ToID, findedGroup.ID))
                 {
                     var userInGroup = findedGroup.UserIDsInGroup();
+                    var sharedMarker = msg.ID;
                     foreach (var recieverID in userInGroup)
-                        _messageSaver.Save(MessageFactory.DeleteUserFromGroupChat_Response(msg, recieverID), userInGroup.Length);
+                        _messageSaver.Save(MessageFactory.DeleteUserFromGroupChat_Response(msg, recieverID),sharedMarker, userInGroup.Length);
                 }
             }
         }
@@ -117,8 +119,9 @@ namespace Penta_Server.Services.MessagesProcessors
             var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
             if (findedGroup != null && findedGroup.AdminGroupID== msg.FromID)//только админ могет удалять
             {
+                var sharedMarker = msg.ID;
                 foreach (var recieverID in findedGroup.UserIDsInGroup())
-                    _messageSaver.Save(MessageFactory.DeleteGroupChat_Response(msg, recieverID));
+                    _messageSaver.Save(MessageFactory.DeleteGroupChat_Response(msg, recieverID),sharedMarker);
 
                 _ = _groupRepo.DeleteGroup(msg.FromID, msg.ChatID);
             }
@@ -131,10 +134,11 @@ namespace Penta_Server.Services.MessagesProcessors
                 var userInGroup = findedGroup.UserIDsInGroup();
                 if (userInGroup.Contains(msg.FromID))//только действующий участник может писать в группу
                 {
+                    var sharedMarker = msg.ID;
                     foreach (var recieverID in userInGroup)
                     {
                         if (recieverID != msg.FromID)
-                            _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID), userInGroup.Length - 1);
+                            _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID),sharedMarker, userInGroup.Length - 1);
                     }
                 }
             }
@@ -142,9 +146,10 @@ namespace Penta_Server.Services.MessagesProcessors
         private async void NotifyAll(Message msg)
         {
             var allUsers = await _userRepo.GetAllUsers();
+            var sharedMarker = msg.ID;
             foreach (var recieverID in allUsers)
             {
-                _messageSaver.Save(MessageFactory.CreateNotify(recieverID, msg.GetDataLikeString()), allUsers.Count);
+                _messageSaver.Save(MessageFactory.CreateNotify(recieverID, msg.GetDataLikeString()),sharedMarker, allUsers.Count);
             }
         }
         #endregion

@@ -16,6 +16,7 @@ namespace Penta_Server.Interfaces
         /// </summary>
         /// <param name="msg"></param>
         /// <param name="dataCopyCount">для скольких копий предназначенны данные(byte[] Data)</param>
-        public void Save(Message msg, int dataCopyCount=1);
+        /// <param name="sharedDataMarker">объединяет сообщения, которые имеют одинаковые Data</param>
+        public void Save(Message msg,long sharedDataMarker, int dataCopyCount=1);
     }
 }
