@@ -7,7 +7,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Text.Json;
 using Penta_ClientLib.DataStructs;
-using Microsoft.Extensions.DependencyInjection;
 
 
 
@@ -312,10 +311,8 @@ namespace Penta_ClientLib.Services
                             return token;
                         };
                         options.HttpMessageHandlerFactory = _ => HandlerCustomCertCheck();
-                        
                     })
                     .WithAutomaticReconnect(new InfiniteReconnectPolicy())
-                    .AddMessagePackProtocol()
                     .Build();
 
                 _messHabConnection.KeepAliveInterval=TimeSpan.FromSeconds(_pingIntervalSeconds);

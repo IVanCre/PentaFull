@@ -1,5 +1,6 @@
 ﻿
-using Client.Services;
+
+using Client.Platforms.Android.PushServices;
 
 namespace Client
 {
@@ -16,6 +17,12 @@ namespace Client
 
             Services = services;
             MainPage = new AppShell();
+        }
+
+        protected override void OnStart()
+        {
+            base.OnStart();
+            NotificationHelper.SkipAllNotifications();
         }
 
         protected override void OnSleep()//передаем состояние системы

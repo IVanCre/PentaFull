@@ -18,6 +18,8 @@ namespace Penta_Server
 {
     public class Program
     {
+        private static int _pingSec = 5;
+
         public static void Main(string[] args)
         {
             try
@@ -103,7 +105,7 @@ namespace Penta_Server
             services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
-            }).AddMessagePackProtocol();
+            });
         }
 
         private static void SetSecurity(IHostApplicationBuilder builder)

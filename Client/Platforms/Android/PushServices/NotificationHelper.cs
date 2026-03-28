@@ -94,5 +94,14 @@ namespace Client.Platforms.Android.PushServices
 
             return _counterID++;
         }
+
+        /// <summary>
+        /// Удаляет все уведомления
+        /// </summary>
+        public static void SkipAllNotifications()
+        {
+            var manager = (NotificationManager)Platform.CurrentActivity.GetSystemService(Context.NotificationService);
+            manager?.CancelAll();
+        }
     }
 }
