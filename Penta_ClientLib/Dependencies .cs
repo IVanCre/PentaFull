@@ -10,6 +10,7 @@ namespace Penta_ClientLib
     {
         public static IServiceCollection AddClientDependencies(this IServiceCollection services)
         {
+            services.AddSingleton<ILogger, SysLogger>();
             services.AddSingleton<ISettingsHolder, DBManager>();
             services.AddSingleton<IChatHolder, DBManager>();
             services.AddSingleton<IMessageHolder, DBManager>();

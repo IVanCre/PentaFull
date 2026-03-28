@@ -84,7 +84,8 @@ namespace Penta_ClientLib.Services
         private void DeleteUserFromGroupResponce(Message msg)
         {
             var userIDToDelete = msg.GetDataLikeInt();
-            UserRemoved?.Invoke(msg.ChatID, userIDToDelete);
+            if(userIDToDelete!=null)
+                UserRemoved?.Invoke(msg.ChatID, userIDToDelete.Value);
         }        
         
         private async Task DeleteGroupResponce(Message msg)
@@ -99,14 +100,13 @@ namespace Penta_ClientLib.Services
             if (msg.ChatID == -1)//личное сообщение
             {
                 int chatID = 0;
-                var userConnectionID = ContactConverter.ConvertUserIDToContactID(msg.FromID);
 
-                var userName =await _contactHolder.GetUserNameByContactID(userConnectionID);//ищем контакт, с указанным ID
+                var userName =await _contactHolder.GetUserNameByID(msg.FromID);//ищем контакт, с указанным ID
                 if(!string.IsNullOrEmpty(userName))
                     chatID= await _chatHolder.GetChatIDByName(userName);//ищем чат, у которого имя соответсвует имю из контакта
 
-                if(chatID==0)//поиск по контакту не дал результата(контакта нет?)
-                    chatID = await _chatHolder.GetChatIDByName(userConnectionID);//ищем по самому contactID(это дефолтное)
+                if (chatID == 0)//поиск по контакту не дал результата(контакта нет?)
+                    chatID = await _chatHolder.GetChatIDByName(ContactConverter.ConvertUserIDToContactID(msg.FromID));//ищем по самому contactID(это дефолтное)
 
                 if (chatID != 0)//чат с указанным connectID есть
                 {
@@ -124,6 +124,7 @@ namespace Penta_ClientLib.Services
                 }
                 else//нет чата с указанным connectID
                 {
+                    var userConnectionID = ContactConverter.ConvertUserIDToContactID(msg.FromID);
                     chatID = await _chatHolder.CreatePrivateChat(userConnectionID);
                     if (chatID != 0)//значит чат создан
                     {
@@ -160,7 +161,7 @@ namespace Penta_ClientLib.Services
             var chatID = await _chatHolder.GetChatIDByName("Системные оповещения");
             if (chatID == 0)
             {
-                chatID = await _chatHolder.CreatePrivateChat("Системные оповещения");
+                chatID = await _chatHolder.CreateReadOnlyChat("Системные оповещения");
                 if (chatID != 0)
                     CreatedNewChat?.Invoke(chatID, "Системные оповещения");
             }

@@ -5,7 +5,7 @@ using Penta_ClientLib.DataStructs;
 
 namespace Penta_ClientLib.Interfaces
 {
-
+    public delegate void SysLogRecieved(LogEventType type, string text, DateTime timestamp);
     public delegate void NewMessageInChat(int chatID, Message mesage);
     public delegate void ChatChanged(int chatID, string chatName);
     public delegate void ContactChanged(string oldContactName, string newContactName);
@@ -59,7 +59,10 @@ namespace Penta_ClientLib.Interfaces
         /// </summary>
         event ConnectionStateChanged ConnectionToServerChanged;
 
-
+        /// <summary>
+        /// Отслеживание системных-отладочных логов
+        /// </summary>
+        event SysLogRecieved SysLogRecieved;
 
         /// <summary>
         /// Регистрация в системе(через сервер)
@@ -190,12 +193,13 @@ namespace Penta_ClientLib.Interfaces
         Task<Tuple<bool, Exception>> DeleteAccountAsync();
 
         /// <summary>
-        /// Возвращает указанное количество последних(самых свежих) сообщений из чата
+        /// Возвращает указанное количество сообщений из чата, которые имеют метку старше указанной
         /// </summary>
         /// <param name="chatID">номер чата</param>
-        /// <param name="lastMessageCount">сколько самых свежих сообщений подгрузить</param>
+        /// <param name="lastMessageCount">сколько сообщений подгрузить</param>
+        /// <param name="loadStart">метка времени, относительно который стартует историчейский поиск(более старые)</param>>
         /// <returns></returns>
-        Task<List<Message>> GetMessagesByChatAsync(int chatID, int lastMessageCount);
+        Task<List<Message>> GetOldMessagesByChatAsync(int chatID, int lastMessageCount, DateTimeOffset loadStart);
 
         /// <summary>
         /// Извлекает из названия приватного чата идентифкатор собеседника
@@ -226,11 +230,26 @@ namespace Penta_ClientLib.Interfaces
         Task<List<ContactInfo>> GetAllContactsAsync();
 
         /// <summary>
+        /// Ищет имя юзера по идентификатору. Вернет или Имя или contactID
+        /// </summary>
+        /// <param name="userID"></param>
+        /// <returns></returns>
+        Task<string> FindUserPseudonimeByID(int userID);
+
+        /// <summary>
         /// Являемся ли мы админом-создателем указанного группового чата
         /// </summary>
         /// <param name="chatID"></param>
         /// <returns></returns>
         Task<bool> AmCreatedGroupChat(int chatID);
+
+        /// <summary>
+        /// Включение сбора системных логов
+        /// </summary>
+        /// <param name="canUse"></param>
+        /// <returns></returns>
+        void UseSysLogger(bool canUse);
+
 
         /// <summary>
         /// вызывает закрытие всех ресурсов клиента.

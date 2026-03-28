@@ -1,6 +1,4 @@
 ﻿
-using TimerLib=System.Timers;
-
 namespace Client.UIElements
 {
     internal sealed class LongButton:Button

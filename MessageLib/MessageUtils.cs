@@ -9,10 +9,6 @@ namespace MessageLib
         {
             return Encoding.UTF8.GetBytes(text);
         }
-        public static byte[] BooleanToBytes(bool val)
-        {
-            return BitConverter.GetBytes(val);
-        }
         public static byte[] IntToBytes(int value)
         {
             return BitConverter.GetBytes(value);
@@ -21,15 +17,17 @@ namespace MessageLib
 
         public static string GetDataLikeString(this Message msg)
         {
-            return Encoding.UTF8.GetString(msg.Data);
+            if(msg.Data!=null && msg.Data.Length>0)
+                return Encoding.UTF8.GetString(msg.Data);
+            else
+                return "";
         }
-        public static bool GetDataLikeBoolean(this Message msg)
+        public static int? GetDataLikeInt(this Message msg)
         {
-            return (msg.Data[0] == 1);
-        }
-        public static int GetDataLikeInt(this Message msg)
-        {
-           return BitConverter.ToInt32(msg.Data, 0);
+            if (msg.Data != null && msg.Data.Length > 0)
+                return BitConverter.ToInt32(msg.Data, 0);
+            else
+                return null;//чтобы понять что парсинг отвалился
         }
 
     }

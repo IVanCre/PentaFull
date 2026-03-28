@@ -3,7 +3,6 @@ using MessageLib;
 using Penta_ClientLib.DataStructs;
 using Penta_ClientLib.Services;
 
-
 namespace Penta_ClientLib
 {
     // ui->facade->chatManager->(DB)->webClient  --->
@@ -17,6 +16,7 @@ namespace Penta_ClientLib
         private IContactHolder _contactHolder;
         private IMessageReciever _messReciever;
         private IWebClient _client;
+        private ILogger _logger;
 
         public ClientFacade(
             IAccountManager accManager,
@@ -25,7 +25,8 @@ namespace Penta_ClientLib
             ISettingsProvider settingsProvider,
             IMessageHolder messHolder,
             IContactHolder contactHolder,
-            IWebClient client)
+            IWebClient client,
+            ILogger logger)
         {
             _accManager = accManager;
             _chatManager = chatManager;
@@ -34,6 +35,7 @@ namespace Penta_ClientLib
             _contactHolder = contactHolder;
             _messReciever = messReciever;
             _client = client;
+            _logger = logger;
 
             _client.ConnectionStateChanged += SendNonSended;
             _client.MessageSended +=(messageID) => _messHolder.MarkMessageLikeSended(messageID);
@@ -78,7 +80,11 @@ namespace Penta_ClientLib
             add => _client.ConnectionStateChanged += value;
             remove => _client.ConnectionStateChanged -= value;
         }
-        
+        public event SysLogRecieved SysLogRecieved
+        {
+            add=> _logger.SysLogRecieved += value;
+            remove => _logger.SysLogRecieved -= value;
+        }
 
 
         public Task<Tuple<bool, Exception>> RegistrationAsync(string login, string password)
@@ -201,9 +207,23 @@ namespace Penta_ClientLib
             return deleted;
         }
         public async Task<List<ContactInfo>> GetAllContactsAsync()=>await _contactHolder.GetAllContacts();
+        public async Task<string> FindUserPseudonimeByID(int userID)
+        {
+            string userName = await _contactHolder.GetUserNameByID(userID);
+            if (string.IsNullOrEmpty(userName))
+            {
+                if (userID == -1)//такой отправитель может быть только у Системы.
+                    userName = "Система";
+                else
+                    userName = ContactConverter.ConvertUserIDToContactID(userID);
+            }
+            return userName;
+        }
 
 
-        public Task<List<Message>> GetMessagesByChatAsync(int chatID, int maxLastMessageCount)=>_messHolder.GetLastMessagesByChat(chatID, maxLastMessageCount);
+        public Task<List<Message>> GetOldMessagesByChatAsync(int chatID, int maxLastMessageCount,DateTimeOffset startTimestamp)=>
+            _messHolder.GetLastMessagesByChat(chatID, maxLastMessageCount, startTimestamp);
+
         private async void SendNonSended(bool connectionToServer)
         {
             if(connectionToServer)
@@ -217,6 +237,9 @@ namespace Penta_ClientLib
                 catch (Exception ex) { }
             }
         }
+
+
+        public void UseSysLogger(bool canWork) => _logger.CanUseLogs(canWork);
 
 
         public void DisposeClient()

@@ -4,7 +4,7 @@ using Client.Interfaces;
 namespace Client.Services
 {
 
-    public class NotificationService: IUINotificator
+    public class NotificationService: IDialogManager
     {
         public async Task<bool> ShowConfirmDialog(string title, string message, string accept, string cancel)
         {

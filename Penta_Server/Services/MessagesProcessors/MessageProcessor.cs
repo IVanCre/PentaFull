@@ -39,13 +39,14 @@ namespace Penta_Server.Services.MessagesProcessors
             switch (msg.Type)
             {
                 //системные-одиночный ответ
-                case MessageType.CreateGroupRequest: CreateGroupChat(msg); break;
-                case MessageType.DeleteSelfAccountRequest: DeleteAccount(msg); break;
+                case MessageType.CreateGroupRequest:        CreateGroupChat(msg); break;
+                case MessageType.DeleteSelfAccountRequest:  DeleteAccount(msg); break;
 
                 //системные-групповой ответ
-                case MessageType.AddToGroupRequest: AddToGroupChatRequest(msg); break;
-                case MessageType.RemoveUserFromGroupRequest: RemoveUserFromGroupChatRequest(msg); break;
-                case MessageType.DeleteGroupRequest: DeleteGroupChatRequest(msg); break;
+                case MessageType.AddToGroupRequest:             AddToGroupChatRequest(msg); break;
+                case MessageType.RemoveUserFromGroupRequest:    RemoveUserFromGroupChatRequest(msg); break;
+                case MessageType.DeleteGroupRequest:            DeleteGroupChatRequest(msg); break;
+                case MessageType.SystemNotify:                  NotifyAll(msg);break;
 
                 //пользовательские
                 case MessageType.Text:
@@ -118,6 +119,7 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 foreach (var recieverID in findedGroup.UserIDsInGroup())
                     _messageSaver.Save(MessageFactory.DeleteGroupChat_Response(msg, recieverID));
+
                 _ = _groupRepo.DeleteGroup(msg.FromID, msg.ChatID);
             }
         }
@@ -135,6 +137,14 @@ namespace Penta_Server.Services.MessagesProcessors
                             _messageSaver.Save(MessageFactory.CreateResponseForGroupMember(msg, recieverID), userInGroup.Length - 1);
                     }
                 }
+            }
+        }
+        private async void NotifyAll(Message msg)
+        {
+            var allUsers = await _userRepo.GetAllUsers();
+            foreach (var recieverID in allUsers)
+            {
+                _messageSaver.Save(MessageFactory.CreateNotify(recieverID, msg.GetDataLikeString()), allUsers.Count);
             }
         }
         #endregion

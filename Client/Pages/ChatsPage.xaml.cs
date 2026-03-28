@@ -13,24 +13,24 @@ namespace Client.Pages
     {
         public ObservableCollection<ChatInfo> ChatsList { get;set; } = new();
         private IClientFacade _clientFacade;
-        private IUINotificator _actionMenuSelector;
+        private IDialogManager _actionMenuSelector;
+
 
         public ChatsPage()
         {
             InitializeComponent();
-
-            _clientFacade = App.Services.GetRequiredService<IClientFacade>();
-            _actionMenuSelector = App.Services.GetRequiredService<IUINotificator>();
-            _clientFacade.MessageAddedToChat += ShowNewMessageInChat;
-            _clientFacade.CreatedNewChat += ChatCreated;
-            _clientFacade.ContactChanged += TryUpdateChatName;
-            BindingContext = this;
         }
 
 
         protected override async void OnAppearing()//вызывается при отображении страницы
         {
             base.OnAppearing();
+
+            _clientFacade = App.Services.GetRequiredService<IClientFacade>();
+            _actionMenuSelector = App.Services.GetRequiredService<IDialogManager>();
+            _clientFacade.MessageAddedToChat += ShowNewMessageInChat;
+            _clientFacade.CreatedNewChat += ChatCreated;
+            _clientFacade.ContactChanged += TryUpdateChatName;
 
             var findedChats = await _clientFacade.GetAllChatsInfoAsync();
             var findedContacts = await _clientFacade.GetAllContactsAsync();
@@ -48,21 +48,36 @@ namespace Client.Pages
                         ChatsList.Add(chatInfo);//оставляем как есть
                 }
             });
+            BindingContext = this;
+        }
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            _clientFacade.MessageAddedToChat -= ShowNewMessageInChat;
+            _clientFacade.CreatedNewChat -= ChatCreated;
+            _clientFacade.ContactChanged -= TryUpdateChatName;
         }
 
         private async void OnShortClick(object sender, EventArgs e)
         {
+            LoaderSpin.IsRunning = true;
             var button = sender as LongButton;
+var backClr = button.BackgroundColor;
+button.BackgroundColor = Color.Parse("LightGray");
             var chat = (ChatInfo)button?.BindingContext;
 
             await Navigation.PushAsync(new ActiveChatPage(chat));//сразу переходим в переписку чата
+button.BackgroundColor = backClr;
+            LoaderSpin.IsRunning = false;
         }
         private async void OnLongClick(object sender, EventArgs e)
         {
             var button = sender as LongButton;
             var chat = (ChatInfo)button?.BindingContext;
 
-            if(await _actionMenuSelector.ShowConfirmDialog("","Удалить чат?","Да","Нет"))
+var backClr = button.BackgroundColor;
+button.BackgroundColor = Color.Parse("LightGray");
+            if (await _actionMenuSelector.ShowConfirmDialog("","Удалить чат?","Да","Нет"))
             {
                 MainThread.BeginInvokeOnMainThread(() => ChatsList.Remove(chat));
                 if(chat.ChatType== ChatType.Group)
@@ -70,6 +85,7 @@ namespace Client.Pages
                 else
                     await _clientFacade.DeletePrivateChatAsync(chat.ID);
             }
+button.BackgroundColor = backClr;
         }
 
         private void TryUpdateChatName(string oldName, string newName)
@@ -95,16 +111,18 @@ namespace Client.Pages
             var findedContacts = await _clientFacade.GetAllContactsAsync();
             var findedContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatName);
 
-            ChatInfo createdChatInfo;
+            ChatInfo createdChatInfo=null;
             if (findedContact != null)
                 createdChatInfo = new ChatInfo(chatID, findedContact.UserName, ChatType.Private,false);//сохраняем с указанным именем(т.к. есть аналогичный контакт)
             else
             {
                 var findedChat = await _clientFacade.GetChatByID(chatID);
-                createdChatInfo = new ChatInfo(chatID, chatName, findedChat.ChatType,false);//сохраняем с исходным именем
+                if(findedChat!=null)
+                    createdChatInfo = new ChatInfo(chatID, chatName, findedChat.ChatType,false);//сохраняем с исходным именем
             }
 
-            MainThread.BeginInvokeOnMainThread(() => ChatsList.Add(createdChatInfo));
+            if(createdChatInfo!=null)
+                MainThread.BeginInvokeOnMainThread(() => ChatsList.Add(createdChatInfo));
         }
 
         private void ShowNewMessageInChat(int chatID, Message mesage)

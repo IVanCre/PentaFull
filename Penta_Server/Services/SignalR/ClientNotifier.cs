@@ -55,7 +55,7 @@ namespace Penta_Server.Services.SignalR
             }
             else//пытаемся отослать пуш-уведомление(чтобы юзер открыл приложение и получил сообщение)
             {
-                _ = _pushMngr.SendPushToUserDevices(msg.ToID);
+                _ = _pushMngr.SendPushToUserDevices(msg.ToID,msg.FromID);
             }
         }
 

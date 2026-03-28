@@ -3,21 +3,22 @@
 
 using Penta_ClientLib.Interfaces;
 using Client.Interfaces;
-using Client.Platforms.Android.PushServices;
+
 
 namespace Client.Pages
 {
     public partial class AuthPage : ContentPage
 	{
 		private IClientFacade _clientFacade;
-		private IUINotificator _notifier;
+		private IDialogManager _notifier;
+        private IPlatformConfigurator _platformConfigurator;
 
         public AuthPage()
 		{
 			InitializeComponent();
 
 			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
-			_notifier = App.Services.GetRequiredService<IUINotificator>();
+			_notifier = App.Services.GetRequiredService<IDialogManager>();
         }
 
 
@@ -30,8 +31,7 @@ namespace Client.Pages
                 UnlockUI();
                 if (result.Item1)
 				{
-					SetBatteryOptimizations();
-                    RegistrationDevice();
+                    _platformConfigurator?.FirstConfigurate();
 
                     await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
                 }
@@ -72,31 +72,6 @@ namespace Client.Pages
             PasswordEntry.IsEnabled = true;
             RegButton.IsEnabled = true;
             LoginButton.IsEnabled = true;
-        }
-
-
-
-        private void RegistrationDevice()
-        {
-#if ANDROID
-            var sender =App.Services.GetRequiredService<DeviceTokenSender>();
-            sender.SendTokenToServer();
-#endif
-        }
-		private void SetBatteryOptimizations()//это чтобы фоновая активность не убивалась ОС
-		{
-#if ANDROID
-            var intent = new Android.Content.Intent();
-            var packageName = Android.App.Application.Context.PackageName;
-            var pm = (Android.OS.PowerManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.PowerService);
-            if (!pm.IsIgnoringBatteryOptimizations(packageName))
-            {
-                intent.SetAction(Android.Provider.Settings.ActionRequestIgnoreBatteryOptimizations);
-                intent.SetData(Android.Net.Uri.Parse("package:" + packageName));
-                intent.SetFlags(Android.Content.ActivityFlags.NewTask);
-                Android.App.Application.Context.StartActivity(intent);
-            }
-#endif
         }
     }
 }

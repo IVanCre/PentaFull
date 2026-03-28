@@ -44,10 +44,10 @@
         
         <Button 
             Grid.Row="2"
-            Text="AddNewContact" 
-            BackgroundColor="{StaticResource Secondary}"
+            Text="Добавить" 
+            BackgroundColor="{StaticResource PrimaryDark}"
             TextColor="{StaticResource Black}"
-            HorizontalOptions="Center"
+            HorizontalOptions="FillAndExpand"
             VerticalOptions="End"
             Margin="10"
             Clicked="OnContactCreateClick" />

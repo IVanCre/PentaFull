@@ -6,19 +6,25 @@
 
     <VerticalStackLayout Margin="20" Spacing="15">
         <Grid ColumnDefinitions="*, Auto">
-            <Label Text="CurrentVersion" VerticalOptions="Center"/>
+            <Label Text="Версия клиента" VerticalOptions="Center"/>
             <Label Grid.Column="1" Text="{Binding AppVersion}" FontAttributes="Bold"/>
         </Grid>
 
         <Grid ColumnDefinitions="*, Auto">
-            <Label Text="ServerAvailable" VerticalOptions="Center"/>
+            <Label Text="Связь с сервером" VerticalOptions="Center"/>
             <Label Grid.Column="1" Text="{Binding ServerAvailable}" FontAttributes="Bold"/>
         </Grid>
 
         <Grid ColumnDefinitions="*, Auto">
-            <Label Text="NewVersion" VerticalOptions="Center"/>
-            <Button Text="Install" Clicked="DownloadClick" HorizontalOptions="End" />
+            <Label Text="Новая версия" VerticalOptions="Center"/>
+            <Button Text="Установить" Clicked="DownloadClick" HorizontalOptions="End" />
         </Grid>
+
+        <Grid ColumnDefinitions="*, Auto">
+            <Label Text="Показывать сис.логи" VerticalOptions="Center" />
+            <CheckBox x:Name="LoggerButon" HorizontalOptions="End" CheckedChanged="UseLoggerChanged"/>
+        </Grid>
+
 
     </VerticalStackLayout>
 </ContentPage>

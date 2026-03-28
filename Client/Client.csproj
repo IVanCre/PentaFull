@@ -106,8 +106,11 @@
 	  <Compile Update="Pages\ChatsPage.xaml.cs">
 	    <DependentUpon>ChatsPage.xaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Pages\MembersManager.xaml.cs">
+	  <Compile Update="UIElements\MembersManager.xaml.cs">
 	    <DependentUpon>MembersManager.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="UIElements\MessageInfoForm.xaml.cs">
+	    <DependentUpon>MessageInfoForm.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
@@ -133,10 +136,13 @@
 	  <MauiXaml Update="Pages\LoadingPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Pages\MembersManager.xaml">
+	  <MauiXaml Update="UIElements\MembersManager.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Pages\SettingsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="UIElements\MessageInfoForm.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>

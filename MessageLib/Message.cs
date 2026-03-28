@@ -13,7 +13,7 @@ namespace MessageLib
         public int ToID { get; private set; }
         public MessageType Type { get; private set; }
         public byte[] Data { get; private set; }
-        public DateTime UtcTimestamp { get; private set; }
+        public DateTimeOffset UtcTimestamp { get; private set; }
 
         [JsonConstructor]
         public Message(
@@ -23,7 +23,7 @@ namespace MessageLib
            int ToID,
            MessageType Type,
            byte[] Data,
-           DateTime UtcTimestamp)
+           DateTimeOffset UtcTimestamp)
         {
             this.ID = ID;
             this.FromID = FromID;
@@ -31,7 +31,7 @@ namespace MessageLib
             this.ToID = ToID;
             this.Type = Type;
             this.Data = Data;
-            this.UtcTimestamp = UtcTimestamp.ToUniversalTime();
+            this.UtcTimestamp = UtcTimestamp;
         }
 
         public void SetNewID(long newID)

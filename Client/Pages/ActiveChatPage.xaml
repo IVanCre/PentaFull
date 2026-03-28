@@ -2,39 +2,56 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Client.Pages"
+             xmlns:customUI="clr-namespace:Client.UIElements"
+             xmlns:models="clr-namespace:Client.Models"
              x:Class="Client.Pages.ActiveChatPage"
-             Title="{Binding ChatName}">
+>
 
-    <Grid RowDefinitions="*,Auto">
-    <CollectionView Grid.Row="0" ItemsSource="{Binding MessageList}">
-        <CollectionView.ItemTemplate>
-            <DataTemplate>
-                <Label Text="{Binding Text}"
-                       HorizontalOptions="Fill"
-                       HorizontalTextAlignment="{Binding Type}"
-                       VerticalOptions="CenterAndExpand"
-                       Margin="5"
-                       BackgroundColor="{StaticResource Gray100}"/>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+    <Shell.TitleView>
+        <VerticalStackLayout VerticalOptions="Center" Spacing="0">
+            <Label Text="{Binding ChatName}" 
+                   FontSize="18" 
+                   FontAttributes="Bold" 
+                   TextColor="{StaticResource Black}"
+                   HorizontalOptions="Start" />
 
-    <StackLayout Grid.Row="1">
-         <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,Auto" Margin="10">
-            <Editor Grid.Column="0" 
+            <!--тут можно впихнуть еще строки-->
+        </VerticalStackLayout>
+    </Shell.TitleView>
+
+    <Grid RowDefinitions="*,Auto" >
+        <RefreshView x:Name="HistoryRefresher"
+             Refreshing="OnHistoryLoading"
+             RefreshColor="{StaticResource PrimaryDark}">
+            <CollectionView 
+                Grid.Row="0" 
+                ItemsSource="{Binding MessageList}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:MessageInfo">
+                        <customUI:MessageInfoForm/>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+
+        <StackLayout Grid.Row="1">
+            <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,Auto" Margin="10">
+                <Editor Grid.Column="0" 
                     x:Name="MessageText"
                     VerticalOptions="End"
                     HorizontalOptions="FillAndExpand"
+                    Margin="3"
                     BackgroundColor="{StaticResource PrimaryDark}"/>
-            <Button Grid.Column="1"
+             
+                <Button Grid.Column="1"
                     x:Name="SendButton"
-                    Text="Send"
+                    Text=">>"
                     Clicked="OnSendMessage"
                     VerticalOptions="End"/>
-        </Grid>
-    </StackLayout>
+            </Grid>
+        </StackLayout>
 
-    <local:MembersManager x:Name="MembersManager"/><!--всплывающее окно для управления членами группы -->    
-        
-</Grid>
+        <local:MembersManager x:Name="MembersManager"/>
+    </Grid>
 </ContentPage>

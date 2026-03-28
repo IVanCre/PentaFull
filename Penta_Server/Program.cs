@@ -103,7 +103,7 @@ namespace Penta_Server
             services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
-            });
+            }).AddMessagePackProtocol();
         }
 
         private static void SetSecurity(IHostApplicationBuilder builder)

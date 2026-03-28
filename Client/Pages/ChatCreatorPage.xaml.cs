@@ -8,7 +8,7 @@ namespace Client.Pages
 	public partial class ChatCreatorPage : ContentPage
 	{
         private IClientFacade _clientFacade;
-        private IUINotificator _notifier;
+        private IDialogManager _notifier;
         private List<ContactInfo> _contactsList { get; set; } = new();
 
 
@@ -16,15 +16,21 @@ namespace Client.Pages
 		{
 			InitializeComponent();
             _clientFacade = App.Services.GetRequiredService<IClientFacade>();
-            _notifier = App.Services.GetRequiredService<IUINotificator>();
-        }
-        private async void OnFocused(object sender, FocusEventArgs e)
-        {
-            _contactsList = await _clientFacade.GetAllContactsAsync();//т.к. чаты могут быть созданы в длругом месте тоже
-            ContactList.ItemsSource = _contactsList;
-            DropdownBorder.IsVisible = _contactsList.Any();
+            _notifier = App.Services.GetRequiredService<IDialogManager>();
         }
 
+        private async void OnFocused(object sender, FocusEventArgs e)
+        {
+            if (!IsGroupBox.IsChecked)//список доступен только для приватного 
+            {
+                if (_contactsList.Count == 0)
+                {
+                    _contactsList = await _clientFacade.GetAllContactsAsync();//т.к. чаты могут быть созданы в длругом месте тоже
+                    ContactList.ItemsSource = _contactsList;
+                }
+                DropdownBorder.IsVisible = _contactsList.Any();
+            }
+        }
         private async void OnUnfocused(object sender, FocusEventArgs e)
         {
             // Задержка 200мс нужна, чтобы клик по элементу списка успел обработаться 
@@ -38,12 +44,17 @@ namespace Client.Pages
             {
                 ChatNameEntry.Text = selected.UserContactID;
                 DropdownBorder.IsVisible = false;
-
-                // Сбрасываем выделение, чтобы можно было выбрать тот же элемент снова
                 ContactList.SelectedItem = null;
             }
         }
 
+        private void OnCheckedChanged(object sender, EventArgs e)
+        {
+            if (IsGroupBox.IsChecked)
+                OnUnfocused(null, null);
+            else
+                OnFocused(null, null);
+        }
 
         private async void OnCreateChat(object sender, EventArgs e)
         {

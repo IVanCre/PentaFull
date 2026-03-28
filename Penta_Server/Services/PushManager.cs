@@ -29,9 +29,9 @@ namespace Penta_Server.Services
 
 
         // Метод отправки "тихого" сообщения (Data Message)
-        public async Task SendPushToUserDevices(int userID)
+        public async Task SendPushToUserDevices(int toUserID, int fromUserID)
         {
-            await SendPushToUserDevices(userID, "Новое сообщение", $"Нажмите, чтобы просмотреть. {DateTime.Now.ToString("HH:mm:ss")}");
+            await SendPushToUserDevices(toUserID, fromUserID.ToString(), $"Нажмите, чтобы просмотреть. {DateTime.Now.ToString("HH:mm:ss")}");
         }
 
         public async Task SendPushToUserDevices(int userID, string title, string msg)

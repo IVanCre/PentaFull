@@ -18,6 +18,8 @@ namespace Penta_ClientLib.Repository
         public int ToID { get; set; }
         public MessageType Type { get; set; }
         public byte[] Data { get; set; }
-        public DateTime UtcTimestamp { get; set; }
+
+        [Indexed(Name = "TimestampMilisec")]
+        public long TimestampMilisec { get; set; }//т.к. не всегда корректно работает с чистым datetime
     }
 }

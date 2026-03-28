@@ -1,6 +1,7 @@
 ﻿using AndroidAppLib = Android.App;
 using Firebase.Messaging;
 using Android.Runtime;
+using Penta_ClientLib.Interfaces;
 
 
 namespace Client.Platforms.Android.PushServices
@@ -11,8 +12,16 @@ namespace Client.Platforms.Android.PushServices
     [AndroidAppLib.IntentFilter(new[] { "com.google.firebase.MESSAGING_EVENT" })]
     public class MyFirebaseMessagingService : FirebaseMessagingService
     {
+        private IClientFacade _clientFacade;
+
+        public MyFirebaseMessagingService()
+        {
+            _clientFacade= App.Services.GetRequiredService<IClientFacade>();
+        }
+
+
         // Срабатывает при получении сообщения
-        public override void OnMessageReceived(RemoteMessage message)
+        public override async void OnMessageReceived(RemoteMessage message)
         {
             base.OnMessageReceived(message);
 
@@ -22,22 +31,26 @@ namespace Client.Platforms.Android.PushServices
                 string title = message.Data["title"];
                 string text = message.Data["message"];
 
-                ProcessInBackground(title, text);
+                int userID;
+                if (int.TryParse(title, out userID))//пробуем подставить имя отправителя из контактов
+                    title = await _clientFacade.FindUserPseudonimeByID(userID);
+                else
+                    title = "Неизвестный отправитель";
+
+
+                var _notifier = new NotificationHelper(AndroidAppLib.Application.Context);
+                _notifier.ShowNotification(title, text);//отолбражаем уведомление
             }
         }
-        private void ProcessInBackground(string title, string text)
-        {
-            var _notifier = new NotificationHelper(AndroidAppLib.Application.Context);
-            _notifier.ShowNotification(title, text);
-        }
 
-        // Срабатывает при обновлении токена (нужно отправить на ваш сервер)
-        public override void OnNewToken(string token)
+        
+        public override void OnNewToken(string token)//когда экосистема firebase сама обновляет у себя токен и присылает его нам
         {
             base.OnNewToken(token);
-            // Отправьте этот token на свой бэкенд, чтобы знать, куда слать пуши
-            Preferences.Set("fcm_token", token);
-            Console.WriteLine("Обновился токен устройства");
+
+            var _tokenSender =App.Services.GetRequiredService<DeviceTokenSender>();
+            if (_tokenSender != null)
+                _tokenSender.SendTokenToServer();
         }
     }
 }

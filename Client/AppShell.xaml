@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Client.Pages"
     BackgroundColor="{StaticResource SecondaryDarkText}"
-    FlyoutBackgroundColor="{StaticResource Gray600}">
+    FlyoutBackgroundColor="{StaticResource PrimaryDark}">
 
     <FlyoutItem Title=""  Route="LoadingPage">
         <ShellContent ContentTemplate="{DataTemplate local:LoadingPage}" Shell.NavBarIsVisible="False" Route="LoadingPage" />

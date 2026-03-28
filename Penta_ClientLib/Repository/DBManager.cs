@@ -16,9 +16,11 @@ namespace Penta_ClientLib.Repository
             SQLiteOpenFlags.SharedCache;// enable multi-threaded database access
         private string _dbFullPath;
         private SQLiteAsyncConnection _connection;
+        private ILogger _logger;
 
-        public DBManager()
+        public DBManager(ILogger logger)
         {
+            _logger = logger;
             _dbFullPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _dbFileName);//в винде: C:\Users\UsernameX\AppData\Roaming
             InitConnect();
 
@@ -50,20 +52,26 @@ namespace Penta_ClientLib.Repository
         public async Task SetValueByName<T>(string paramName, T value)
         {
             InitConnect();
-
-            var finded = await _connection.Table<SettingsEntity>().FirstOrDefaultAsync(x => x.Name == paramName);
-            if (finded != null)
+            try
             {
-                finded.Value = value.ToString();
-                await _connection.UpdateAsync(finded);
+                var finded = await _connection.Table<SettingsEntity>().FirstOrDefaultAsync(x => x.Name == paramName);
+                if (finded != null)
+                {
+                    finded.Value = value.ToString();
+                    await _connection.UpdateAsync(finded);
+                }
+                else
+                    await _connection.InsertAsync(
+                        new SettingsEntity()
+                        {
+                            Name = paramName,
+                            Value = value.ToString()
+                        });
             }
-            else
-                await _connection.InsertAsync(
-                    new SettingsEntity()
-                    {
-                        Name = paramName,
-                        Value = value.ToString()
-                    });
+            catch(Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error,$"DBManager exception: {e.Message}");
+            }
         }
         #endregion
 
@@ -72,15 +80,22 @@ namespace Penta_ClientLib.Repository
         public async Task<bool> AddContact(string userName, string connectID)
         {
             InitConnect();
+            try
+            {
+                var inserted = await _connection.InsertAsync(
+                    new ContactEntity()
+                    {
+                        ID = ContactConverter.ExtractUserID(connectID),
+                        UserName = userName,
+                    });
 
-            var inserted = await _connection.InsertAsync(
-                new ContactEntity()
-                {
-                    ID = ContactConverter.ExtractUserID(connectID),
-                    UserName = userName,
-                });
-
-            return inserted == 1;
+                return inserted == 1;
+            }
+            catch(Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }
         public async Task<string> GetContactIDByName(string userName)
         {
@@ -100,14 +115,13 @@ namespace Penta_ClientLib.Repository
             else
                 return -1;
         }
-        public async Task<string> GetUserNameByContactID(string contactID)
+        public async Task<string> GetUserNameByID(int userID)
         {
             InitConnect();
 
-            int userID = ContactConverter.ExtractUserID(contactID);
             var finded = await _connection.Table<ContactEntity>().FirstOrDefaultAsync(x => x.ID == userID);
             if (finded != null)
-                return finded.UserName;
+                return finded.UserName;//имя из контакта
             else
                 return string.Empty;
         }
@@ -123,12 +137,19 @@ namespace Penta_ClientLib.Repository
         public async Task<bool> DeleteByName(string userName)
         {
             InitConnect();
+            try
+            {
+                var deleted = await _connection.Table<ContactEntity>()
+                    .Where(c => c.UserName == userName)
+                    .DeleteAsync();
 
-            var deleted=await _connection.Table<ContactEntity>()
-                .Where(c => c.UserName == userName)
-                .DeleteAsync();
-
-            return deleted == 1;
+                return deleted == 1;
+            }
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }
 
         #endregion
@@ -138,34 +159,50 @@ namespace Penta_ClientLib.Repository
         private async Task<bool> CreateChat(int chatID, string chatName, ChatType chatType)
         {
             InitConnect();
-            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
-            if (finded == null)
+            try
             {
-                var added = await _connection.InsertAsync(
-                    new ChatEntity()
-                    {
-                        ID = chatID,
-                        Name = chatName,
-                        ChatType= chatType
-                    });
+                var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
+                if (finded == null)
+                {
+                    var added = await _connection.InsertAsync(
+                        new ChatEntity()
+                        {
+                            ID = chatID,
+                            Name = chatName,
+                            ChatType = chatType
+                        });
 
-                return added == 1;
+                    return added == 1;
+                }
+                else//значит чат уже есть
+                    return true;
             }
-            else//значит чат уже есть
-                return true;
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }        
         public async Task<bool> CreateGroupChat(int chatID, string chatName, bool requestFromAdminGroup)
         {
-            bool result = await CreateChat(chatID, chatName, ChatType.Group);
-            if(result && requestFromAdminGroup)
+            try
             {
-                await _connection.InsertAsync(
-                    new AmGroupAdminEntity()
-                    {
-                        ChatID = chatID,
-                    });
+                bool result = await CreateChat(chatID, chatName, ChatType.Group);
+                if (result && requestFromAdminGroup)
+                {
+                    await _connection.InsertAsync(
+                        new AmGroupAdminEntity()
+                        {
+                            ChatID = chatID,
+                        });
+                }
+                return result;
             }
-            return result;
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }
 
 
@@ -180,17 +217,47 @@ namespace Penta_ClientLib.Repository
         {
             int id = 0;
             InitConnect();
-
-            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.Name == chatName);
-            if (finded == null)
+            try
             {
-                id = GenerateLocalIDByTime();
-                if (!await CreateChat(id, chatName,ChatType.Private))
-                    id = 0;
-            }
-            else
-                id = finded.ID;//значит уже есть созданный
+                var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.Name == chatName);
+                if (finded == null)
+                {
+                    id = GenerateLocalIDByTime();
+                    if (!await CreateChat(id, chatName, ChatType.Private))
+                        id = 0;
+                }
+                else
+                    id = finded.ID;//значит уже есть созданный
 
+            }
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                id = 0;
+            }
+            return id;
+        }
+        public async Task<int> CreateReadOnlyChat(string chatName)
+        {
+            int id = 0;
+            InitConnect();
+            try
+            {
+                var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.Name == chatName);
+                if (finded == null)
+                {
+                    id = GenerateLocalIDByTime();
+                    if (!await CreateChat(id, chatName, ChatType.ReadOnly))
+                        id = 0;
+                }
+                else
+                    id = finded.ID;//значит уже есть созданный
+            }
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                id = 0;
+            }
             return id;
         }
 
@@ -208,52 +275,73 @@ namespace Penta_ClientLib.Repository
         public async Task<bool> DeleteChat(int chatID)
         {
             InitConnect();
-
-            await _connection.Table<MessageItemEntity>()
-                .Where(c => c.ChatID == chatID)
-                .DeleteAsync();
-
-            var deleted = await _connection.Table<ChatEntity>()
-                .Where(c => c.ID == chatID)
-                .DeleteAsync();
-
-            if(deleted==1)
-                await _connection.Table<AmGroupAdminEntity>()
+            try
+            {
+                await _connection.Table<MessageItemEntity>()
                     .Where(c => c.ChatID == chatID)
                     .DeleteAsync();
 
-            return deleted == 1;
+                var deleted = await _connection.Table<ChatEntity>()
+                    .Where(c => c.ID == chatID)
+                    .DeleteAsync();
+
+                if (deleted == 1)
+                    await _connection.Table<AmGroupAdminEntity>()
+                        .Where(c => c.ChatID == chatID)
+                        .DeleteAsync();
+
+                return deleted == 1;
+            }
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }
 
         public async Task<bool> TryAddUserToChat(int userid, int chatID)
         {
             InitConnect();
-
-            var findUserCopy = await _connection.Table<UserInChatEntity>().FirstOrDefaultAsync(x => x.UserId == userid && x.ChatId == chatID);
-            if (findUserCopy == null)
+            try
             {
-                var inserted = await _connection.InsertAsync(
-                     new UserInChatEntity()
-                     {
-                         UserId = userid,
-                         ChatId = chatID
-                     });
+                var findUserCopy = await _connection.Table<UserInChatEntity>().FirstOrDefaultAsync(x => x.UserId == userid && x.ChatId == chatID);
+                if (findUserCopy == null)
+                {
+                    var inserted = await _connection.InsertAsync(
+                         new UserInChatEntity()
+                         {
+                             UserId = userid,
+                             ChatId = chatID
+                         });
 
-                return inserted == 1;
+                    return inserted == 1;
+                }
+                else
+                    return false;//юзер уже есть
             }
-            else
-                return true;//юзер уже есть
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }
 
         public async Task<bool> RemoveUserFromChat(int userid, int chatID)
         {
             InitConnect();
+            try
+            {
+                var deleted = await _connection.Table<UserInChatEntity>()
+                    .Where(c => c.UserId == userid && c.ChatId == chatID)
+                    .DeleteAsync();
 
-            var deleted = await _connection.Table<UserInChatEntity>()
-                .Where(c => c.UserId == userid && c.ChatId==chatID)
-                .DeleteAsync();
-
-            return deleted == 1;
+                return deleted == 1;
+            }
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }
         public async Task<List<ChatInfo>> GetAllChats()
         {
@@ -277,9 +365,19 @@ namespace Penta_ClientLib.Repository
         
         public async Task SetChatHaveUnreaded(int chatID, bool haveUnreaded)//отмечаем состояние новых сообщений в чате
         {
-            var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
-            finded.HaveUnreaded = haveUnreaded;
-            await _connection.UpdateAsync(finded);
+            try
+            {
+                var finded = await _connection.Table<ChatEntity>().FirstOrDefaultAsync(x => x.ID == chatID);
+                if (finded != null)
+                {
+                    finded.HaveUnreaded = haveUnreaded;
+                    await _connection.UpdateAsync(finded);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+            }
         }
         #endregion
 
@@ -287,23 +385,31 @@ namespace Penta_ClientLib.Repository
         #region Messages
         public async Task<bool> SaveMessage(Message msg, bool isMessageFromServer)
         {
-            var result = await _connection.InsertAsync(
-                 new MessageItemEntity()
-                 {
-                     ID = msg.ID,
-                     FromID = msg.FromID,
-                     ChatID = msg.ChatID,
-                     ToID = msg.ToID,
-                     Type = msg.Type,
-                     Data = msg.Data,
-                     UtcTimestamp = DateTime.Now,
-                     IsSended = isMessageFromServer//если оно с сервера -значит оно успешно доставлено и маркер выключаем
-                 });
+            try
+            {
+                var result = await _connection.InsertAsync(
+                     new MessageItemEntity()
+                     {
+                         ID = msg.ID,
+                         FromID = msg.FromID,
+                         ChatID = msg.ChatID,
+                         ToID = msg.ToID,
+                         Type = msg.Type,
+                         Data = msg.Data,
+                         TimestampMilisec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                         IsSended = isMessageFromServer//если оно с сервера -значит оно успешно доставлено и маркер выключаем
+                     });
 
-            if (isMessageFromServer && result == 1)//сразщу помечаем, что в чате появилось новое-непрочитанное
-                await SetChatHaveUnreaded(msg.ChatID, true);
+                if (isMessageFromServer && result == 1)//сразщу помечаем, что в чате появилось новое-непрочитанное
+                    await SetChatHaveUnreaded(msg.ChatID, true);
 
-            return result == 1;
+                return result == 1;
+            }
+            catch (Exception e)
+            {
+                _logger.SaveMessage(LogEventType.Error, $"DBManager exception: {e.Message}");
+                return false;
+            }
         }
         public async Task<List<Message>> GetNonSended()
         {
@@ -318,7 +424,7 @@ namespace Penta_ClientLib.Repository
                         item.ToID,
                         item.Type,
                         item.Data,
-                        item.UtcTimestamp));
+                        new DateTime(item.TimestampMilisec).ToUniversalTime()));
 
             return result;
         }
@@ -336,12 +442,14 @@ namespace Penta_ClientLib.Repository
         }
 
 
-        public async Task<List<Message>> GetLastMessagesByChat(int chatID, int maxLenCount)
+        public async Task<List<Message>> GetLastMessagesByChat(int chatID, int maxLenCount, DateTimeOffset startTimestamp)
         {
             List<Message> result = new();
+
+            var t = startTimestamp.ToUnixTimeMilliseconds();
             var finded = await _connection.Table<MessageItemEntity>()
-                .Where(x=>x.ChatID==chatID)
-                .OrderBy(x=>x.UtcTimestamp)
+                .Where(x=>x.ChatID==chatID && x.TimestampMilisec< t)
+                .OrderByDescending(x=>x.TimestampMilisec)
                 .Take(maxLenCount)
                 .ToListAsync();
 
@@ -354,7 +462,7 @@ namespace Penta_ClientLib.Repository
                         item.ToID,
                         item.Type,
                         item.Data,
-                        item.UtcTimestamp));
+                        DateTimeOffset.FromUnixTimeMilliseconds(item.TimestampMilisec).UtcDateTime));
 
             await SetChatHaveUnreaded(chatID, false);//если запросили выборку - значит щас прочитают
 

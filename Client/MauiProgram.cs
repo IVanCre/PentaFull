@@ -12,7 +12,7 @@ namespace Client
                 builder = MauiApp.CreateBuilder();
             
             builder.Services.AddClientDependencies();
-            builder.Services.AddSingleton<IUINotificator,NotificationService>();
+            builder.Services.AddSingleton<IDialogManager,NotificationService>();
             builder.UseMauiApp<App>();
 
             return builder.Build();

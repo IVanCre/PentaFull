@@ -22,6 +22,8 @@ namespace Client.Platforms.Android
             //тут можно добавить специфичные платформо-зависимые сервисы
             builder.Services.AddSingleton<IUpdateManager, AndroidUpdateManager>();
             builder.Services.AddScoped<DeviceTokenSender>();
+            builder.Services.AddSingleton<ISoundManager, AndroidSoundManager>();
+            builder.Services.AddScoped<IPlatformConfigurator, AndroidConfigurator>();
 
             return MauiProgram.CreateMauiApp(builder);
         }

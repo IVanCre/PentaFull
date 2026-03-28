@@ -19,6 +19,6 @@ namespace Penta_Server.Services.Repositories.Models
 
         public MessageType Type { get; set; }//чтобы EF в бибилотеку исходного класа не тащить
         public long SharedDataID { get; set; }
-        public DateTime UtcTimestamp { get; set; }
+        public DateTimeOffset UtcTimestamp { get; set; }
     }
 }

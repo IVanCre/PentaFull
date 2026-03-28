@@ -11,7 +11,7 @@ namespace Client.Platforms.Android.PushServices
     public class NotificationHelper//отображает уведомления и позволяет тапать по ним
     {
         private readonly Context _context;
-        private const string ChannelId = "penta_msg_channel";
+        private const string ChannelId = "penta_msg_channel_v3";
         private static int _counterID = 0;//чтобы между экземплярами сохранялся
         private int smallIconID;
         private int largeIconID;

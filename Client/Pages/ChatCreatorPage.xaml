@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Client.Pages.ChatCreatorPage"
-             Title="ChatCreatorPage">
+             Title="Создание чата">
 
     <VerticalStackLayout>
         <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto" ColumnSpacing="10" RowSpacing="10">
@@ -13,7 +13,8 @@
                 VerticalOptions="Center"/>
             <CheckBox 
                 x:Name="IsGroupBox"
-                Grid.Row="0" Grid.Column="1" />
+                Grid.Row="0" Grid.Column="1"
+                CheckedChanged="OnCheckedChanged"/>
 
             <Label 
                 Grid.Row="1" Grid.Column="0"
@@ -25,14 +26,14 @@
                     <Entry 
                         x:Name="ChatNameEntry"
                         Placeholder="Введите или выберите имя..."
-                        BackgroundColor="{StaticResource PrimaryDark}"        
+                        BackgroundColor="{StaticResource PrimaryDark}"
                         Focused="OnFocused"
                         Unfocused="OnUnfocused"/>
 
                     <!-- Выпадающая панель с прокруткой -->
                     <Border x:Name="DropdownBorder"
                         IsVisible="False"
-                        HeightRequest="150" 
+                        
                         ZIndex="10"
                         StrokeThickness="1"
                         BackgroundColor="{StaticResource PrimaryDark}">
@@ -42,8 +43,8 @@
                             SelectionChanged="OnContactSelected">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Padding="5">
-                                        <Label Text="{Binding UserName}" VerticalOptions="Start" TextColor="Black"/>
+                                    <Grid Padding="10">
+                                        <Label Text="{Binding UserName}" HorizontalOptions="Start" TextColor="Black"/>
                                     </Grid>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
@@ -55,8 +56,9 @@
         
         <Button 
             Text="Создать" 
+            Margin="10"
             HorizontalOptions="FillAndExpand"
             Clicked="OnCreateChat" 
-            VerticalOptions="Center"/>
+            VerticalOptions="End"/>
     </VerticalStackLayout>
 </ContentPage>

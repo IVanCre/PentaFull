@@ -22,13 +22,22 @@ public partial class SettingsPage : ContentPage
 
 		_clientFacade = App.Services.GetService<IClientFacade>();
 		_appUpdater = App.Services.GetService<IUpdateManager>();
+
         AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 		_clientFacade.ConnectionToServerChanged += ConnectChanged;
+
 		ConnectChanged(_clientFacade.IsConnected());//сразу ставим текущее состо€ние
 		BindingContext = this;
 	}
 
-	private void ConnectChanged(bool state)
+	protected override void OnDisappearing()
+	{
+		base.OnDisappearing();
+        _clientFacade.ConnectionToServerChanged -= ConnectChanged;
+    }
+
+
+    private void ConnectChanged(bool state)
 	{
 		if (state)
 			ServerAvailable = "true";
@@ -42,4 +51,12 @@ public partial class SettingsPage : ContentPage
         await _appUpdater.TryUpdateClientAsync(ClientType.Android);
 	}
 
+
+	private void UseLoggerChanged(object sender, EventArgs e)
+	{
+		if(LoggerButon.IsChecked)
+			_clientFacade.UseSysLogger(true);//включает отслеживание и вывод системных ошибок. ѕодписка идет на странице LoadPage
+		else
+            _clientFacade.UseSysLogger(false);
+    }
 }

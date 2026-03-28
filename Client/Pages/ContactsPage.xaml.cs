@@ -11,14 +11,14 @@ namespace Client.Pages
 	{
         public ObservableCollection<ContactInfo> ContactsList { get; set; } = new();
         private IClientFacade _clientFacade;
-        private IUINotificator _actionMenuSelector;
+        private IDialogManager _actionMenuSelector;
 
         public ContactsPage()
 		{
 			InitializeComponent();
 
             _clientFacade = App.Services.GetRequiredService<IClientFacade>();
-            _actionMenuSelector = App.Services.GetRequiredService<IUINotificator>();
+            _actionMenuSelector = App.Services.GetRequiredService<IDialogManager>();
             BindingContext = this;
         }
         
