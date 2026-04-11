@@ -32,9 +32,6 @@ namespace Penta_ClientLib.Interfaces
         Task<string> GetRefreshToken();
         Task SetRefreshToken(string value);
 
-        Task<string> GetServerURL();
-        Task SetServerURL(string value);
-
         TimeSpan GetLifetimeSecondsLeft(string token);
     }
 
@@ -86,9 +83,6 @@ namespace Penta_ClientLib.Interfaces
 
         public Task<string> GetRefreshToken() => _db.GetValueByName<string>("refreshToken");
         public Task SetRefreshToken(string value)=> _db.SetValueByName("refreshToken", value);
-
-        public Task<string> GetServerURL() => _db.GetValueByName<string>("serverURL");
-        public Task SetServerURL(string value) => _db.SetValueByName("serverURL", value);
 
 
         /// <summary>

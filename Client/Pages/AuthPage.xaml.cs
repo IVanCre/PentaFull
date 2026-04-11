@@ -24,44 +24,36 @@ namespace Client.Pages
 
         private async void OnRegButtonClicked(object sender, EventArgs e)
 		{
-            if (await SaveServerAddress())
-            {
-                if (UsernameEntry.Text != string.Empty &&
-                PasswordEntry.Text != string.Empty)
-                {
-                    LockUIForAwait();
-                    var result = await _clientFacade.RegistrationAsync(UsernameEntry.Text, PasswordEntry.Text);
-                    UnlockUI();
-                    if (result.Item1)
-                    {
-                        _platformConfigurator?.FirstConfigurate();
+			if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
+			{
+                LockUIForAwait();
+				var result = await _clientFacade.RegistrationAsync(UsernameEntry.Text, PasswordEntry.Text);
+                UnlockUI();
+                if (result.Item1)
+				{
+                    _platformConfigurator?.FirstConfigurate();
 
-                        await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
-                    }
-                    else
-                        await _notifier.ShowMessage("Внимание", $"Ошибка регистрации на сервере:{result.Item2.Message}", "ок");
+                    await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
                 }
-                else
-                    await _notifier.ShowMessage("Внимание", "Введите логин и пароль", "ок");
-            }
+				else
+					await _notifier.ShowMessage("Внимание", $"Ошибка регистрации на сервере:{result.Item2.Message}", "ок");
+			}
+			else
+				await _notifier.ShowMessage("Внимание", "Введите логин и пароль", "ок");
 		}
         private async void OnLoginButtonClicked(object sender, EventArgs e)
         {
-            if (await SaveServerAddress())
+            if (UsernameEntry.Text != string.Empty && PasswordEntry.Text != string.Empty)
             {
-                if (UsernameEntry.Text != string.Empty &&
-                    PasswordEntry.Text != string.Empty)
+                LockUIForAwait();
+                var result = await _clientFacade.LoginAsync(UsernameEntry.Text, PasswordEntry.Text);
+                UnlockUI();
+                if (result.Item1)
                 {
-                    LockUIForAwait();
-                    var result = await _clientFacade.LoginAsync(UsernameEntry.Text, PasswordEntry.Text);
-                    UnlockUI();
-                    if (result.Item1)
-                    {
-                        await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
-                    }
-                    else
-                        await _notifier.ShowMessage("Внимание", $"Ошибка входа:{result.Item2.Message}", "ок");
+                    await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу Чатов
                 }
+                else
+                    await _notifier.ShowMessage("Внимание", $"Ошибка входа:{result.Item2.Message}", "ок");
             }
         }
 
@@ -80,23 +72,6 @@ namespace Client.Pages
             PasswordEntry.IsEnabled = true;
             RegButton.IsEnabled = true;
             LoginButton.IsEnabled = true;
-        }
-
-
-        private async Task<bool> SaveServerAddress()
-        {
-            if (!string.IsNullOrEmpty(Address.Text) && !string.IsNullOrEmpty(Port.Text))
-            {
-                int port = int.Parse(Port.Text);
-                if (await _clientFacade.SetServerAddress(Address.Text, port))
-                {
-                    Address.Text = string.Empty;
-                    Port.Text = string.Empty;
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }

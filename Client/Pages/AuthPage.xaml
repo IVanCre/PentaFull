@@ -9,20 +9,6 @@
         Spacing="15" 
         VerticalOptions="StartAndExpand" 
         BackgroundColor ="{StaticResource OffBlack}">
-
-        <Entry x:Name="Address" 
-               Placeholder="Адрес сервера"
-               TextColor="{StaticResource White}"
-               PlaceholderColor="{StaticResource PrimaryDark}"
-               HorizontalTextAlignment="Center"
-               Margin="0,20,0,0"/>
-        
-        <Entry x:Name="Port"
-               Placeholder="Порт сервера"
-               TextColor="{StaticResource White}"
-               PlaceholderColor="{StaticResource PrimaryDark}"
-               HorizontalTextAlignment="Center"/>
-
         <Entry x:Name="UsernameEntry"
                MaxLength="50"
                TextColor="{StaticResource White}"
