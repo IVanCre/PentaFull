@@ -16,7 +16,7 @@
             get
             {
                 if (TimestampData != default(DateTimeOffset))
-                    return TimestampData.ToLocalTime().ToString("dd.MM.YY HH:mm:ss");//отображение в нашем часовом поясе
+                    return TimestampData.ToLocalTime().ToString("dd.MM.yy HH:mm:ss");//отображение в нашем часовом поясе
                 else
                     return "??:??:??";
             }

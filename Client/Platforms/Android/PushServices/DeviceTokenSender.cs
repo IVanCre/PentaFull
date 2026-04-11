@@ -8,28 +8,32 @@ namespace Client.Platforms.Android.PushServices
     internal class DeviceTokenSender
     {
         private IWebClient _client;
+        private string _storedToken=string.Empty;
+
         public DeviceTokenSender(IWebClient client)
         {
             _client = client;
         }
 
-        public async void SendTokenToServer()
+        public async void UpdateToken()//тут мы его получили и сохранили в кэш
         {
             try
             {
                 var result = await FirebaseMessaging.Instance.GetToken();
                 if (result != null)
-                {
-                    var token = result.ToString();
-                    await _client.SendDeviceToken(token);
-                }
+                    _storedToken = result.ToString();
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
-                // Если упало здесь, значит Firebase не инициализирован 
-                // или нет Google Play Services на устройстве
-                Console.WriteLine($"[FCM] Критическая ошибка: {ex.Message}");
+                _storedToken = string.Empty;
             }
+        }
+        public async void SendTokenToServer()//а вот тут уже отсылаем токен, которрый получили
+        {
+            if (!string.IsNullOrEmpty(_storedToken))
+                await _client.SendDeviceToken(_storedToken);
+
+            _storedToken = string.Empty;
         }
 
     }

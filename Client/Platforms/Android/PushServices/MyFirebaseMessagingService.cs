@@ -50,7 +50,7 @@ namespace Client.Platforms.Android.PushServices
 
             var _tokenSender =App.Services.GetRequiredService<DeviceTokenSender>();
             if (_tokenSender != null)
-                _tokenSender.SendTokenToServer();
+                _tokenSender.UpdateToken();
         }
     }
 }
