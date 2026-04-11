@@ -86,7 +86,7 @@ namespace Penta_ClientLib
             remove => _logger.SysLogRecieved -= value;
         }
 
-
+        public Task<bool> SetServerAddress(string address, int port)=>_client.SetServerAddress(address, port);
         public Task<Tuple<bool, Exception>> RegistrationAsync(string login, string password)
         {
             if (string.IsNullOrEmpty(login))

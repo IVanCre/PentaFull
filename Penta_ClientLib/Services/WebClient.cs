@@ -15,8 +15,8 @@ namespace Penta_ClientLib.Services
     internal abstract class BaseClient
     {
         protected ISettingsProvider _settingsHolder;
-        protected int _waitRequestSeconds = 90;        
-        protected string _serverUrl = "https://192.168.1.35:9093";
+        protected int _waitRequestSeconds = 90;
+        protected string _serverUrl=string.Empty;
 
         protected BaseClient(ISettingsProvider settings)
         {
@@ -80,7 +80,7 @@ namespace Penta_ClientLib.Services
                 using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
                 {
                     httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
-                    var fullUrl = $"{_serverUrl}/User/RefreshToken";
+                    var fullUrl = $"{await GetServerUrl()}/User/RefreshToken";
                     httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _refreshJwtToken);//по токену сервак 
 
                     var response = await httpClient.GetAsync(fullUrl);
@@ -107,6 +107,13 @@ namespace Penta_ClientLib.Services
             await _settingsHolder.SetAccessToken(tokenPack[0]);
             await _settingsHolder.SetRefreshToken(tokenPack[1]);
         }
+
+        protected async Task<string> GetServerUrl()
+        {
+            if (string.IsNullOrEmpty(_serverUrl))
+                _serverUrl = await _settingsHolder.GetServerURL();//тянем сохраненный адрес из хранилища
+            return _serverUrl;
+        }
     }
 
 
@@ -122,19 +129,32 @@ namespace Penta_ClientLib.Services
         public WebClient(ISettingsProvider settings) : base(settings) { }
 
 
+        public async Task<bool> SetServerAddress(string address, int port)
+        {
+            if (!string.IsNullOrEmpty(address) && port > 0 && port < 65535)
+            {
+                DisconnectFromMessageHub();//отключаемся от текущего
+                _serverUrl = $"https://{address}:{port}";
+                await _settingsHolder.SetServerURL(_serverUrl);
+                return true;
+            }
+            else
+                return false;
+        }
+
+
         #region withoutJwt
         public async Task<Tuple<int, Exception>> TryEnterAsync(string login, string pass, bool isRegistration)
         {
             int userID = -1;
-
             using (var httpClient = new HttpClient(HandlerCustomCertCheck()))
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
                 string fullUrl = string.Empty;
                 if(isRegistration)
-                    fullUrl = $"{_serverUrl}/User/Registration?name={login}&pass={pass}";
+                    fullUrl = $"{await GetServerUrl()}/User/Registration?name={login}&pass={pass}";
                 else
-                    fullUrl = $"{_serverUrl}/User/Login?name={login}&pass={pass}";
+                    fullUrl = $"{await GetServerUrl()}/User/Login?name={login}&pass={pass}";
 
                 var response = await httpClient.PostAsync(fullUrl, null);
                 var serialized = await response.Content.ReadAsStringAsync();
@@ -189,7 +209,7 @@ namespace Penta_ClientLib.Services
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
 
-                var fullUrl = $"{_serverUrl}/Updates/GetNewestClientFileName?currentClientVersion={currentClientVersion}&type={type}";
+                var fullUrl = $"{await GetServerUrl()}/Updates/GetNewestClientFileName?currentClientVersion={currentClientVersion}&type={type}";
 
                 var response = await httpClient.GetAsync(fullUrl);
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -205,7 +225,7 @@ namespace Penta_ClientLib.Services
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
 
-                var fullUrl = $"{_serverUrl}/Updates/LoadFile?fileName={fileName}&type={type}";
+                var fullUrl = $"{await GetServerUrl()}/Updates/LoadFile?fileName={fileName}&type={type}";
 
                 var response = await httpClient.GetAsync(fullUrl);
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -226,7 +246,7 @@ namespace Penta_ClientLib.Services
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
                 httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);//по токену сервак 
 
-                var fullUrl = $"{_serverUrl}/PushRegistrator/SetDevice?tokenDevice={tokenDevice}";
+                var fullUrl = $"{await GetServerUrl()}/PushRegistrator/SetDevice?tokenDevice={tokenDevice}";
 
                 var response = await httpClient.PostAsync(fullUrl, null);
                 if (await TryRefreshToken(response.StatusCode))
@@ -248,7 +268,7 @@ namespace Penta_ClientLib.Services
             {
                 var accessToken = await _settingsHolder.GetAccessToken();
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
-                var fullUrl = $"{_serverUrl}/User/DeleteSelfAccount";
+                var fullUrl = $"{await GetServerUrl()}/User/DeleteSelfAccount";
                 httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);//по токену сервак 
 
                 var response = await httpClient.PostAsync(fullUrl, null);
@@ -296,7 +316,7 @@ namespace Penta_ClientLib.Services
             if (_messHabConnection == null)
             {
                  _messHabConnection = new HubConnectionBuilder()
-                    .WithUrl($"{_serverUrl}/exchanger", options =>
+                    .WithUrl($"{await GetServerUrl()}/exchanger", options =>
                     {
                         options.AccessTokenProvider = async () =>// Динамический провайдер: вызывается ПЕРЕД каждым (пере)подключением
                         {

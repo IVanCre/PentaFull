@@ -64,6 +64,17 @@ namespace Penta_ClientLib.Interfaces
         /// </summary>
         event SysLogRecieved SysLogRecieved;
 
+
+
+
+
+        /// <summary>
+        /// Задает Адрес и Порт для подключения к Серверу
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="port"></param>
+        Task<bool> SetServerAddress(string address, int port);
+
         /// <summary>
         /// Регистрация в системе(через сервер)
         /// </summary>
