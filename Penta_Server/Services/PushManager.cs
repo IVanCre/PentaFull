@@ -10,20 +10,28 @@ namespace Penta_Server.Services
     {
         private IDeviceTokenRepository _deviceTknHolder;
         private ILogWriter _logger;
+        private string _firebaseSDKFile = "penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json";
 
         public PushManager(
             IDeviceTokenRepository deviceTknHolder,
-            ILogWriter logger) 
+            ILogWriter logger)
         {
             _deviceTknHolder = deviceTknHolder;
             _logger = logger;
 
             if (FirebaseApp.DefaultInstance == null)
             {
-                FirebaseApp.Create(new AppOptions()
+                if (File.Exists(_firebaseSDKFile))
                 {
-                    Credential = GoogleCredential.FromFile("penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json")
-                });
+                    FirebaseApp.Create(new AppOptions()
+                    {
+                        Credential = GoogleCredential.FromFile("penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json")
+                    });
+                }
+                else
+                {
+                    _logger.SaveError("FirebaseSDKFile not found");
+                }
             }
         }
 
@@ -56,7 +64,14 @@ namespace Penta_Server.Services
                         }
                     };
 
-                    _ = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                    try
+                    {
+                        await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                    }
+                    catch(Exception e)
+                    {
+                        _logger.SaveError(e.Message);
+                    }
                 }
             }
         }

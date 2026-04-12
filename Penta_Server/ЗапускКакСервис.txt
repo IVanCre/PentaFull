@@ -1,0 +1,9 @@
+﻿
+жмем публикацию
+
+затем открываем powershell под админом
+потом вбиваем sc.exe create "Penta_Server" binPath= "E:\PetProjects\Pets\MessagaFull\PentaFull\Penta_Server\bin\Release\net8.0\publish\Penta_Server.exe" start= auto
+затем открываем Службы и уже внутри настраиваем указанный сервис
+
+если сервис уже существует, перед запуском надо остановить старую версию
+или удалить:   sc.exe delete "Penta_Server"

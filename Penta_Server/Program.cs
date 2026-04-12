@@ -18,13 +18,18 @@ namespace Penta_Server
 {
     public class Program
     {
-        private static int _pingSec = 5;
-
         public static void Main(string[] args)
         {
             try
             {
-                var builder = WebApplication.CreateBuilder(args);
+                var options = new WebApplicationOptions
+                {
+                    Args = args,
+                    ContentRootPath = AppContext.BaseDirectory// Это заставляет приложение использовать папку с .exe как рабочую
+                };
+                var builder = WebApplication.CreateBuilder(options);
+
+                builder.Host.UseWindowsService();
                 ConfigValidator.Check(builder.Configuration);//проверяем один раз перед запуском
 
                 AddServicesImplementations(builder.Services);
