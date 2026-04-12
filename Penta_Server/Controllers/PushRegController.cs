@@ -31,7 +31,7 @@ namespace Penta_Server.Controllers
 
             if (userID != -1)
             {
-                _logger?.SaveForDEBUG($"Юзер id={userID} добавил новое устройство для оповещений");
+                _logger?.SaveInfo($"Юзер id={userID} добавил новое устройство для оповещений");
                 return await _deviceTknRepo.SaveDeviceToken(userID,tokenDevice);
             }
             else

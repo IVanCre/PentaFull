@@ -30,7 +30,7 @@ namespace Penta_Server.Controllers
             var userID = await _userRepository.AddNewUserAsync(name, pass);
             if (userID != -1)
             {
-                _logger?.SaveForDEBUG($"Зарегистрирован новый юзер: {name}");
+                _logger?.SaveInfo($"Зарегистрирован новый юзер: {name}");
                 var result =_tokenMngr.CreateTokenPack(userID, name, pass);
                 return Ok(result); 
             }
@@ -53,7 +53,7 @@ namespace Penta_Server.Controllers
             var userID = await _userRepository.FindUserAsync(name, pass);
             if (userID != -1)
             {
-                _logger?.SaveForDEBUG($"Юзер успешно вошел в аккаунт в ручном режиме");
+                _logger?.SaveInfo($"Юзер успешно вошел в аккаунт в ручном режиме");
                 var result = _tokenMngr.CreateTokenPack(userID, name, pass);
                 return Ok(result);
             }
@@ -74,7 +74,7 @@ namespace Penta_Server.Controllers
             var tokenHash = _tokenMngr.GetTokenHash(token);
             var result =await _userRepository.DeleteUserByTokenAsync(tokenHash);
             if(result)
-                _logger?.SaveForDEBUG("Юзер удалил свой аккаунт");
+                _logger?.SaveInfo("Юзер удалил свой аккаунт");
         }
 
         [HttpGet("RefreshToken")]
@@ -83,7 +83,7 @@ namespace Penta_Server.Controllers
             string refreshToken = Request.Headers["Authorization"];
             var token = refreshToken.Replace("Bearer ", "");
 
-            _logger?.SaveForDEBUG($"Поступил запрос на обновление токена");
+            _logger?.SaveInfo($"Поступил запрос на обновление токена");
             return _tokenMngr.RefreshJwtToken(token);
         }
     }

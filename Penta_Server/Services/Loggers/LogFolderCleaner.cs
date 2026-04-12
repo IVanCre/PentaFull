@@ -16,7 +16,7 @@ namespace Penta_Server.Services.Loggers
             ILogWriter logger,
             IConfiguration config)
         {
-            LogFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
+            LogFolder = Path.Combine(AppContext.BaseDirectory, config["Logging:FolderName"]);
 
             _logWriter = logger;
             _minutesInterval = int.Parse(config["Logging:AutoDeleteIntervalMinutes"]);
@@ -39,7 +39,7 @@ namespace Penta_Server.Services.Loggers
                     if ((curDay.Date - new FileInfo(file).CreationTime.Date).TotalDays >= _maxDaysSave)
                     {
                         File.Delete(file);
-                        _logWriter?.SaveForDEBUG($"Logfile {file} auto deletetd");
+                        _logWriter?.SaveInfo($"Logfile {file} auto deletetd");
                     }
                 }
             }

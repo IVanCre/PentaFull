@@ -49,7 +49,7 @@ namespace Penta_Server.Services.SignalR
                 var client = _hubContext.Clients.Client(connectionID);
                 if (client != null)
                 {
-                    _logger?.SaveForDEBUG($"Пересылаем клиенту {connectionID} сообщение");
+                    _logger?.SaveInfo($"Пересылаем клиенту {connectionID} сообщение");
                     await client.SendAsync("RecieveMessage", msg);
                 }
             }

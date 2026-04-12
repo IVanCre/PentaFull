@@ -20,7 +20,7 @@ namespace Penta_Server.Controllers
         {
             try
             {
-                _logger.SaveForDEBUG($"Запрос новой версии клиента относительно версии: {currentClientVersion}");
+                _logger.SaveInfo($"Запрос новой версии клиента относительно версии: {currentClientVersion}");
                 return await _fileObserver.GetNewClientVersionFileNameAsync(currentClientVersion, type);
             }
             catch (Exception ex)

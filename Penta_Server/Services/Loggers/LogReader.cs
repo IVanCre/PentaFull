@@ -9,7 +9,7 @@ namespace Penta_Server.Services.Loggers
 
         public LogReader(IConfiguration config)
         {
-            LogFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
+            LogFolder = Path.Combine(AppContext.BaseDirectory, config["Logging:FolderName"]);
         }
 
         public IEnumerable<string> GetLogFileNames()

@@ -1,21 +1,54 @@
-﻿в powershell(под админом)
+﻿
 
-PS C:\Users\user> $ip = "192.168.1.35"
-PS C:\Users\user> $dnsName = "my-server.local"
-PS C:\Users\user> $cert = New-SelfSignedCertificate -DnsName $dnsName, $ip -CertStoreLocation Cert:\LocalMachine\My -KeyUsage DigitalSignature, KeyEncipherment -NotAfter (Get-Date).AddYears(1) -FriendlyName "MySelfSignedCertForIP"
-PS C:\Users\user> $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.FriendlyName -eq "MySelfSignedCertForIP" }
-PS C:\Users\user> $password = ConvertTo-SecureString -String "certPass" -Force -AsPlainText
-PS C:\Users\user> Export-PfxCertificate -Cert $cert -FilePath "E:\Certs\MySelfSignedCert.pfx" -Password $password
-
-после этого вручную файл сертификата установить в корневые-доверенные(двойной клик на сертификате и далее)
+Шаг 1: Создание сертификата
+Самый простой способ создать подходящий сертификат — использовать PowerShell.
+Откройте PowerShell от имени Администратора.
+Выполните команду:
+powershell
+$cert = New-SelfSignedCertificate -DnsName "192.168.1.35" -CertStoreLocation "Cert:\LocalMachine\My" -NotAfter (Get-Date).AddYears(5)
 
 
---это команда для извлечение именно сертификатной части :
+Здесь мы создаем сертификат и сразу помещаем его в хранилище Local Machine, чтобы он был доступен всем службам.
+Шаг 2: Добавление в доверенные
+Чтобы браузеры и система не ругались на "незащищенное соединение", сертификат нужно скопировать в «Доверенные корневые центры».
+Нажмите Win + R, введите certlm.msc (хранилище компьютера).
+Перейдите в Personal -> Certificates. Найдите ваш сертификат.
+Зажмите Ctrl и перетащите (скопируйте) сертификат в папку Trusted Root Certification Authorities -> Certificates.
 
-PS C:\Users\user> $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
-PS C:\Users\user> $cert.Import("E:\Certs\MySelfSignedCert.pfx", "certPass", 'Exportable,PersistKeySet')
-PS C:\Users\user> $cert.Export("Cert") | Set-Content -Encoding byte -Path "E:\Certs\MySelfSigned_CertPart.cer"
+2.1 зайди в свойства указанного сертификата, открой его и скопируй Отпечаток
 
--
+Шаг 3: Выдача прав доступа для Windows Service
+Это критический шаг. По умолчанию у сервиса (например, под учеткой LocalService или NetworkService) нет доступа к приватному ключу.
+В той же оснастке certlm.msc (Personal -> Certificates) нажмите правой кнопкой на сертификат.
+Выберите All Tasks -> Manage Private Keys.
+Нажмите Add и добавьте ту учетную запись, от которой будет работать ваш сервис (обычно это LOCAL SERVICE или NETWORK SERVICE).
+Дайте этой учетке права Read.
+
+Шаг 4: Настройка ASP.NET Core приложения
+Теперь нужно сказать Kestrel (серверу внутри ASP.NET), какой сертификат использовать.
+Лучше всего это сделать через appsettings.json.
+Вам понадобится Thumbprint (отпечаток) сертификата.
+Его можно найти в свойствах сертификата на вкладке "Details" или через PowerShell: Get-ChildItem Cert:\LocalMachine\My.
+Пример appsettings.json:
+json
+{
+  "Kestrel": {
+    "Endpoints": {
+      "Https": {
+        "Url": "https://*:5001",
+        "Certificate": {
+          "Location": "LocalMachine",
+          "Store": "My",
+          "Thumbprint": "ОТПЕЧАТОК-ИЗ-2.1-ПУНКТА", 
+          "AllowInvalid": true
+        }
+      }
+    }
+  }
+}
+
+
+
+
 
 admin_1991/validPass_917

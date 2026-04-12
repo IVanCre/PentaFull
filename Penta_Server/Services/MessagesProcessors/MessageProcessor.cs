@@ -63,14 +63,14 @@ namespace Penta_Server.Services.MessagesProcessors
 
         private async void CreateGroupChat(Message msg)
         {
-            _logger?.SaveForDEBUG("Получен запрос на создание чата");
+            _logger?.SaveInfo("Получен запрос на создание чата");
             var groupID = await _groupRepo.CreatGroupAsync(msg.FromID,msg.GetDataLikeString());
             if(groupID!=-1)
                 _messageSaver.Save(MessageFactory.CreateGroupChat_Response(groupID, msg), msg.ID);//сохраняем в БД(вдруг хаба нет или связь плохая)
         }
         private async void DeleteAccount(Message msg)
         {
-            _logger?.SaveForDEBUG($"Получен запрос на удаление аккаунта id={msg.FromID}");
+            _logger?.SaveInfo($"Получен запрос на удаление аккаунта id={msg.FromID}");
             var result = await _userRepo.DeleteUserByIDAsync(msg.FromID);
             if (result)
                 _messageSaver.Save(MessageFactory.DeleteAccountResponce(msg),msg.ID);
@@ -81,7 +81,7 @@ namespace Penta_Server.Services.MessagesProcessors
  #region Groups 
         private async void AddToGroupChatRequest(Message msg)
         {
-            _logger?.SaveForDEBUG("Запрос добавление юзера в группу");
+            _logger?.SaveInfo("Запрос добавление юзера в группу");
             var findedChat = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
             if (findedChat != null && findedChat.AdminGroupID==msg.FromID)//запрос от админа
             {
@@ -97,7 +97,7 @@ namespace Penta_Server.Services.MessagesProcessors
         }
         private async void RemoveUserFromGroupChatRequest(Message msg)
         {
-            _logger?.SaveForDEBUG($"Запрос удаления юзера id={msg.ToID} из группы id={msg.ChatID}");
+            _logger?.SaveInfo($"Запрос удаления юзера id={msg.ToID} из группы id={msg.ChatID}");
             var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
 
             if (findedGroup != null && (
@@ -115,7 +115,7 @@ namespace Penta_Server.Services.MessagesProcessors
         }
         private async void DeleteGroupChatRequest(Message msg)
         {
-            _logger?.SaveForDEBUG($"Получен запрос на удаление чата id={msg.ChatID}");
+            _logger?.SaveInfo($"Получен запрос на удаление чата id={msg.ChatID}");
             var findedGroup = await _groupRepo.GetGroupByIDAsync(msg.ChatID);
             if (findedGroup != null && findedGroup.AdminGroupID== msg.FromID)//только админ могет удалять
             {

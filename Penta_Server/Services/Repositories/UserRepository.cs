@@ -72,7 +72,7 @@ namespace Penta_Server.Services.Repositories
                     db.Database.ExecuteSqlRaw($"DELETE FROM Users WHERE ID=@param", param3);
                     await db.SaveChangesAsync();
 
-                    _logger?.SaveForDEBUG($"Пользователь {user.Name} удален");
+                    _logger?.SaveInfo($"Пользователь {user.Name} удален");
                     return true;
                 }
                 else

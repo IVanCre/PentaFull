@@ -28,4 +28,28 @@
     <ProjectReference Include="..\MessageLib\MessageLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+	  <!-- Исключает файл из процесса публикации -->
+	  <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+
+	  <!-- (Опционально) Исключает файл даже из папки сборки bin/Debug -->
+	  <Content Update="appsettings.Development.json" CopyToOutputDirectory="Never" />
+	  <Content Update="penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="pentaPassCert.pfx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

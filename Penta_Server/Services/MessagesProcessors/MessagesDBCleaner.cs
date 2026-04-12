@@ -33,7 +33,7 @@ namespace Penta_Server.Services.MessagesProcessors
             using (DB db= new DB(connStr))
             {
                 int deleted = 0;//тут можно заюзать нормальную логику
-               _logger?.SaveForDEBUG($"Вызвана очистка БД. Удалено строк: {deleted}");
+               _logger?.SaveInfo($"Вызвана очистка БД. Удалено строк: {deleted}");
             }
         }
 

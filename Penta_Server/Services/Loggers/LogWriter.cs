@@ -13,7 +13,7 @@ namespace Penta_Server.Services.Loggers
 
         public LogWriter(IConfiguration config)
         {
-            LogFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), config["Logging:FolderName"]);
+            LogFolder = Path.Combine(AppContext.BaseDirectory, config["Logging:FolderName"]);
             if (!Directory.Exists(LogFolder))
                 Directory.CreateDirectory(LogFolder);
         }
@@ -25,21 +25,13 @@ namespace Penta_Server.Services.Loggers
             AddToSave($"ERROR: {DateTime.Now} {text}");
             Console.ForegroundColor = ConsoleColor.White;
         }
+
         public void SaveInfo(string text)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"INFO : {DateTime.Now} {text}");
-            AddToSave($"INFO : {DateTime.Now} {text}");
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-        public void SaveForDEBUG(string text)
-        {
-#if DEBUG
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"DEBUG: {DateTime.Now} {text}");
-            AddToSave($"DEBUG: {DateTime.Now} {text}");
+            Console.WriteLine($"INFO: {DateTime.Now} {text}");
+            AddToSave($"INFO: {DateTime.Now} {text}");
             Console.ForegroundColor = ConsoleColor.White;
-#endif
         }
         public void SaveWarning(string text)
         {

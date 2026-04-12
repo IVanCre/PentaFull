@@ -10,7 +10,7 @@ namespace Penta_Server.Services
     {
         private IDeviceTokenRepository _deviceTknHolder;
         private ILogWriter _logger;
-        private string _firebaseSDKFile = "penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json";
+        private string _firebaseSDKFile = Path.Combine(AppContext.BaseDirectory,"penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json");
 
         public PushManager(
             IDeviceTokenRepository deviceTknHolder,
@@ -25,7 +25,7 @@ namespace Penta_Server.Services
                 {
                     FirebaseApp.Create(new AppOptions()
                     {
-                        Credential = GoogleCredential.FromFile("penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json")
+                        Credential = GoogleCredential.FromFile(_firebaseSDKFile)
                     });
                 }
                 else
@@ -47,7 +47,7 @@ namespace Penta_Server.Services
             var findedDevices = await _deviceTknHolder.GetTokenDeviceByID(userID);
             if (findedDevices != null && findedDevices.Count > 0)
             {
-                _logger?.SaveForDEBUG($"Пересылаем клиенту id={userID} пуш-уведомление ");
+                _logger?.SaveInfo($"Пересылаем клиенту id={userID} пуш-уведомление ");
                 foreach (var deviceToken in findedDevices)//веерная рассылка на все известные устройства
                 {
                     var message = new Message()
@@ -70,7 +70,7 @@ namespace Penta_Server.Services
                     }
                     catch(Exception e)
                     {
-                        _logger.SaveError(e.Message);
+                        _logger.SaveError($"Ошибка при отправке Push: {e.Message}");
                     }
                 }
             }

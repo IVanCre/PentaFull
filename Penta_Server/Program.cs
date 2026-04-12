@@ -13,6 +13,8 @@ using Penta_Server.Services.MessagesProcessors;
 using Penta_Server.Utilits;
 using Penta_Server.Services.Loggers;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+
 
 namespace Penta_Server
 {
@@ -22,18 +24,19 @@ namespace Penta_Server
         {
             try
             {
-                var options = new WebApplicationOptions
+                var builder = WebApplication.CreateBuilder(new WebApplicationOptions
                 {
                     Args = args,
-                    ContentRootPath = AppContext.BaseDirectory// Это заставляет приложение использовать папку с .exe как рабочую
-                };
-                var builder = WebApplication.CreateBuilder(options);
-
-                builder.Host.UseWindowsService();
+                    ContentRootPath = AppContext.BaseDirectory
+                });
                 ConfigValidator.Check(builder.Configuration);//проверяем один раз перед запуском
 
+
+                ConfigureKestrel(builder);
+                builder.Host.UseWindowsService();
                 AddServicesImplementations(builder.Services);
                 SetSecurity(builder);
+
 
                 var app = builder.Build();
                 app.UseAuthentication();
@@ -51,6 +54,7 @@ namespace Penta_Server
             catch (Exception ex)//чтобы контроллировать сам пуск
             {
                 OverheadLogger.LogError(ex.Message);
+                throw ex;
             }
         }
 
@@ -143,12 +147,41 @@ namespace Penta_Server
                         });
         }
 
+        private static void ConfigureKestrel(WebApplicationBuilder builder)//это чтобы с сертификатом работать напрямую, без танцев с реестром
+        {
+            builder.WebHost.ConfigureKestrel((context, serverOptions) =>
+            {
+                // 1. Позволяем Kestrel автоматически загрузить все эндпоинты из секции "Kestrel"
+                serverOptions.Configure(context.Configuration.GetSection("Kestrel"));
+
+                // 2. Для ВСЕХ HTTPS эндпоинтов (включая наш "Https") 
+                // переопределяем способ загрузки сертификата, добавляя MachineKeySet
+                serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                {
+                    var certSection = context.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate");
+                    var path = certSection.GetValue<string>("Path");
+                    var password = certSection.GetValue<string>("Password");
+
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        var certPath = Path.Combine(AppContext.BaseDirectory, path);
+
+                        // Загружаем сертификат правильно для Windows-службы
+                        httpsOptions.ServerCertificate = new X509Certificate2(
+                            certPath,
+                            password,
+                            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.EphemeralKeySet);
+                    }
+                });
+            });
+        }
         private static void StartServices(IServiceProvider sprovider)
         {
             var logger = sprovider.GetRequiredService<ILogWriter>();
             logger.SaveInfo($"<---start-new-work---v.{Assembly.GetExecutingAssembly().GetName().Version.ToString()}--->");//чтобы по логам можно было понять когда стартовал\схлопнулся
 
             var config = sprovider.GetRequiredService<IConfiguration>();
+
             using (DB db= new DB(config["WorkDB:ConnString"]))
             {
                db.Database.Migrate();

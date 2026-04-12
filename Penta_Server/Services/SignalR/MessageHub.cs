@@ -30,21 +30,21 @@ namespace Penta_Server.Services.SignalR
             if (!string.IsNullOrEmpty(userMaskedID))
             {
                 var userID_int = int.Parse(userMaskedID);
-                _logger?.SaveForDEBUG($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
+                _logger?.SaveInfo($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
                 _connRepo.Add(userID_int, Context.ConnectionId);
 
                 await base.OnConnectedAsync();
                 await _clientNotifier?.SendAllNonSended(userID_int, Context.ConnectionId);//сразу отдаем накопившиеся сообщения
             }
             else
-                _logger?.SaveForDEBUG($"Отказ в подключении юзеру к хабу");
+                _logger?.SaveInfo($"Отказ в подключении юзеру к хабу");
         }
 
         public override async Task OnDisconnectedAsync(Exception? exep)//отключение клиента
         {
 
             var userID = Context.User.Claims.FirstOrDefault(x => x.Type == "userID")?.Value;
-            _logger?.SaveForDEBUG($"Пользователь {userID} отключился ");
+            _logger?.SaveInfo($"Пользователь {userID} отключился ");
 
             _connRepo.RemoveByUserID(int.Parse(userID));
 
@@ -59,11 +59,11 @@ namespace Penta_Server.Services.SignalR
             try
             {
                 _clientNotifier.MessageSended(messageID);
-                _logger?.SaveForDEBUG($"Клиент подтвердил получение сообщения id={messageID}");
+                _logger?.SaveInfo($"Клиент подтвердил получение сообщения id={messageID}");
             }
             catch (Exception ex)
             {
-                _logger?.SaveForDEBUG($"Ошибка подтверждения получения сообщения: {ex.Message}");
+                _logger?.SaveInfo($"Ошибка подтверждения получения сообщения: {ex.Message}");
             }
         }
 

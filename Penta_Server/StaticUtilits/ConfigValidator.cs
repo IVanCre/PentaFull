@@ -4,11 +4,23 @@
     {
         public static void Check(IConfiguration config)
         {
+            CheckFirebaseFile();
+            CheckCertificateFile();
             CheckUrls(config);
             CheckLogs(config);
             CheckJwt(config);
             CheckWorkDB(config);
             CheckDBCleaner(config);
+        }
+        private static void CheckFirebaseFile()
+        {
+            if (!File.Exists(Path.Combine(AppContext.BaseDirectory, "penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json")))
+                throw new FileLoadException("Firebase SDK file not found");
+        }
+        private static void CheckCertificateFile()
+        {
+            if (!File.Exists(Path.Combine(AppContext.BaseDirectory, "pentaPassCert.pfx")))
+                throw new FileLoadException("Certificate file not found");
         }
 
         private static void CheckUrls(IConfiguration config)
