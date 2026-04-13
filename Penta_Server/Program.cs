@@ -85,8 +85,9 @@ namespace Penta_Server
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme//тут настраиваем описание ui-формочки
                 {
                     Description =
-                        "Для корректной авторизации на этой странице, получите свой токен(черз запрос Login) и \r\n\r\n" +
-                        "вставьте его в поле ввода, предварительно добавив в начале 'Bearer '. \r\n\r\n" +
+                        "Для корректной авторизации на этой странице,\r\n\r\n" +
+                        "1.получите свой токен(черз запрос Login) и \r\n\r\n" +
+                        "вставьте его(первый из двух) в поле ввода, предварительно добавив в начале 'Bearer '. \r\n\r\n" +
                         "Пример: Bearer 1sdfkhgsdkfl\r\n\r\n",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
@@ -147,7 +148,9 @@ namespace Penta_Server
                         });
         }
 
-        private static void ConfigureKestrel(WebApplicationBuilder builder)//это чтобы с сертификатом работать напрямую, без танцев с реестром
+        //используем свой сертификат и работаем с ним локально
+        //без поиска в хранилище хоста,танцев и бубнов
+        private static void ConfigureKestrel(WebApplicationBuilder builder)
         {
             builder.WebHost.ConfigureKestrel((context, serverOptions) =>
             {

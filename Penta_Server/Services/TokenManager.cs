@@ -111,10 +111,12 @@ namespace Penta_Server.Services
             using (DB db = new DB(_config["WorkDB:ConnString"]))
             {
                 var calcHash = GetTokenHash(accessToken);
-                var finded =db.Tokens.FirstOrDefault(x => x.AccessHash == calcHash);
-                if (finded != null)
+                var findedTokenRow =db.Tokens
+                    .Include(t => t.User)
+                    .FirstOrDefault(x => x.AccessHash == calcHash);
+                if (findedTokenRow != null)
                 {
-                    var findedUser = db.Users.FirstOrDefault(x => x.ID == finded.ID);
+                    var findedUser = db.Users.FirstOrDefault(x => x.ID == findedTokenRow.User.ID);//по хэшу токена ищем юзера-хозяина токена
                     if (findedUser != null)
                         return findedUser.ID;
                 }

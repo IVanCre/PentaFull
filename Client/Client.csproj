@@ -42,8 +42,8 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 	  <AndroidKeyStore>False</AndroidKeyStore>
-	  <RunAOTCompilation>True</RunAOTCompilation>
-	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+	  <RunAOTCompilation>False</RunAOTCompilation>
+	  <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
 	  <DebugSymbols>True</DebugSymbols>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
 	  <ApplicationDisplayVersion>1.4</ApplicationDisplayVersion>
@@ -52,7 +52,7 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 	  <AndroidKeyStore>False</AndroidKeyStore>
-	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <RunAOTCompilation>False</RunAOTCompilation>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
 	  <ApplicationDisplayVersion>1.4</ApplicationDisplayVersion>
