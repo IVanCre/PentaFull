@@ -47,9 +47,8 @@
 
         <Button 
             Grid.Row="1"
-            Text="Новый чат"
-            BackgroundColor="{StaticResource PrimaryDark}"
-            TextColor="{StaticResource Black}"
+            Text="Создать чат"
+            TextColor="{StaticResource White}"
             HorizontalOptions="FillAndExpand"
             VerticalOptions="End"
             Margin="10"

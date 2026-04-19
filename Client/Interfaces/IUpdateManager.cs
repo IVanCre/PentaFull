@@ -9,6 +9,6 @@ namespace Client.Interfaces
         /// </summary>
         /// <param name="clientType"></param>
         /// <returns></returns>
-        Task TryUpdateClientAsync(ClientType clientType);
+        Task<Exception> TryUpdateClientAsync(ClientType clientType);
     }
 }

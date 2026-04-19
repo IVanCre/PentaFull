@@ -424,7 +424,8 @@ namespace Penta_ClientLib.Repository
                         item.ToID,
                         item.Type,
                         item.Data,
-                        new DateTime(item.TimestampMilisec).ToUniversalTime()));
+                        new DateTime(item.TimestampMilisec).ToUniversalTime(),
+                        item.IsSended));
 
             return result;
         }
@@ -462,7 +463,8 @@ namespace Penta_ClientLib.Repository
                         item.ToID,
                         item.Type,
                         item.Data,
-                        DateTimeOffset.FromUnixTimeMilliseconds(item.TimestampMilisec).UtcDateTime));
+                        DateTimeOffset.FromUnixTimeMilliseconds(item.TimestampMilisec).UtcDateTime,
+                        item.IsSended));
 
             await SetChatHaveUnreaded(chatID, false);//если запросили выборку - значит щас прочитают
 

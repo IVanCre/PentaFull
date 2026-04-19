@@ -2,13 +2,13 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Client.Pages.ContactCreatorPage"
-             Title="ContactCreatorPage">
+             Title="Создание контакта">
     
     <VerticalStackLayout>
         <Grid Margin="10" RowDefinitions="Auto,Auto" ColumnDefinitions="Auto, *">
             <Label 
                 Grid.Row="0" Grid.Column="0"
-                Text="Name:" 
+                Text="Имя:" 
                 VerticalOptions="Center"/>
             <Editor 
                 Grid.Row="0" Grid.Column="1" 
@@ -28,9 +28,9 @@
         </Grid>
 
         <Button 
-            Text="Create" 
+            Text="Создать" 
             HorizontalOptions="FillAndExpand"
-            Clicked="OnCreateContact" 
+            Clicked="OnCreateContact"
             VerticalOptions="Center"/>
     </VerticalStackLayout>
 </ContentPage>

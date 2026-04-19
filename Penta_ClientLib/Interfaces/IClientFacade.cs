@@ -13,6 +13,7 @@ namespace Penta_ClientLib.Interfaces
     public delegate void InvitedToChat(Message msg);
     public delegate void AccountDeleted();
     public delegate void ConnectionStateChanged(bool connected);
+    public delegate void RecieverConnectedChanged(int chatID, int userID, bool state);
 
     /// <summary>
     /// Единая точка доступа к функциональности Клиента
@@ -60,9 +61,19 @@ namespace Penta_ClientLib.Interfaces
         event ConnectionStateChanged ConnectionToServerChanged;
 
         /// <summary>
+        /// Вызывается, когда Сервер присылает состояние подключения конкретного юзера.
+        /// </summary>
+        event RecieverConnectedChanged RecieverConnectedChanged;
+
+        /// <summary>
         /// Отслеживание системных-отладочных логов
         /// </summary>
         event SysLogRecieved SysLogRecieved;
+
+        /// <summary>
+        /// Уведомляет что сообщение успешно передано на сервер
+        /// </summary>
+        event MessageSended MessageSendedOnServer;
 
         /// <summary>
         /// Регистрация в системе(через сервер)
@@ -169,9 +180,12 @@ namespace Penta_ClientLib.Interfaces
         /// <summary>
         /// Отправка сообщения в групповой чат
         /// </summary>
-        /// <param name="mesage">само сообщение</param>
+        /// <param name="chatID"></param>
+        /// <param name="type"></param>
+        /// <param name="data"></param>
+        /// <param name="messageID"></param>
         /// <returns></returns>
-        Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data);
+        Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data, long? messageID);
 
         /// <summary>
         /// Отправка сообщения в приватный чат
@@ -180,11 +194,11 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="type"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID, string userConnectID, MessageType type, byte[] data);//это для клиентов,которые не имеют хранения контактов
+        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID, string userConnectID, MessageType type, byte[] data, long? messageID);//это для клиентов,которые не имеют хранения контактов
         /// <summary>
         /// Отправка сообщения в приватный чат
         /// </summary>
-        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data);
+        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data, long? messageID);
 
         /// <summary>
         /// Удаление аккаунта на сервере
@@ -249,6 +263,20 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="canUse"></param>
         /// <returns></returns>
         void UseSysLogger(bool canUse);
+
+
+        /// <summary>
+        /// Запрос на начало отслеживания состояния подключения указанного юзера к серверу
+        /// </summary>
+        /// <param name="chatID"></param>
+        /// <param name="observerUserID"></param>
+        void StartObserveUserConnection(int chatID ,int observerUserID);
+        /// <summary>
+        /// Запрос на окончание отслеживания состояния подключения указанного юзера к серверу
+        /// </summary>
+        /// <param name="chatID"></param>
+        /// <param name="observerUserID"></param>
+        void EndObserveUserConnection(int chatID, int observerUserID);
 
 
         /// <summary>

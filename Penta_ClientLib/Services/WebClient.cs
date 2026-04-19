@@ -274,6 +274,7 @@ namespace Penta_ClientLib.Services
                 if (_messHabConnection != null && _messHabConnection.State == HubConnectionState.Connected)
                 {
                     await _messHabConnection.InvokeAsync("SendToServer", message);
+                    message.IsSendedToServer = true;
                     MessageSended?.Invoke(message.ID);//чтобы БД смогла отметить отправленные
                     return true;
                 }

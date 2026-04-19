@@ -17,7 +17,7 @@ namespace Penta_ClientLib.Services
         public event ChatUserListChanged UserRemoved;
         public event NewMessageInChat MessageAddedToChat;
         public event AccountDeleted AccountDeleted;
-
+        public event RecieverConnectedChanged UserConnectionChanged;
 
         public MessageReciever(
             IWebClient messListener,
@@ -44,6 +44,7 @@ namespace Penta_ClientLib.Services
                 case MessageType.CreateGroupResponce:           await CreateGroupChatResponce(msg);break;
                 case MessageType.DeleteGroupResponce:           await DeleteGroupResponce(msg);break;
                 case MessageType.DeleteSelfAccountResponce:     AccountDeleted?.Invoke();break;
+                case MessageType.UserInSystemState:             UserInSystemChanged(msg);break;  
 
                 //указанные сообщения сохранятся
                 case MessageType.SystemNotify:                  await ProcessSystemNotify(msg); break;
@@ -54,6 +55,12 @@ namespace Penta_ClientLib.Services
             }
         }
 
+        private void UserInSystemChanged(Message msg)
+        { 
+            var state = msg.GetDataLikeBool();
+            if (state != null)
+                UserConnectionChanged?.Invoke(msg.ChatID, msg.FromID,state.Value);
+        }
 
         private async Task UserAddedToGroupChat(Message msg)//нас добавили в группу и нам кинули уведомление
         {
@@ -97,6 +104,7 @@ namespace Penta_ClientLib.Services
 
         private async Task ProcessMessageWithData(Message msg)
         {
+            msg.IsSendedToServer = true;
             if (msg.ChatID == -1)//личное сообщение
             {
                 int chatID = 0;
@@ -118,8 +126,10 @@ namespace Penta_ClientLib.Services
                             msg.ToID,
                             msg.Type,
                             msg.Data,
-                            msg.UtcTimestamp),
+                            msg.UtcTimestamp,
+                            msg.IsSendedToServer),
                         true))
+
                         MessageAddedToChat?.Invoke(chatID, msg);
                 }
                 else//нет чата с указанным connectID
@@ -138,7 +148,8 @@ namespace Penta_ClientLib.Services
                                 msg.ToID,
                                 msg.Type,
                                 msg.Data,
-                                msg.UtcTimestamp),
+                                msg.UtcTimestamp,
+                                msg.IsSendedToServer),
                             true))
                             MessageAddedToChat?.Invoke(chatID, msg);
                     }
@@ -158,6 +169,7 @@ namespace Penta_ClientLib.Services
 
         private async Task ProcessSystemNotify(Message msg)//для системных уведомлений
         {
+            msg.IsSendedToServer = true;
             var chatID = await _chatHolder.GetChatIDByName("Системные оповещения");
             if (chatID == 0)
             {
@@ -174,7 +186,9 @@ namespace Penta_ClientLib.Services
                     msg.ToID,
                     msg.Type,
                     msg.Data,
-                    msg.UtcTimestamp),true))
+                    msg.UtcTimestamp,
+                    msg.IsSendedToServer),
+                true))
                 MessageAddedToChat?.Invoke(chatID, msg);
         }
     }

@@ -11,8 +11,9 @@ namespace Client.Platforms.Android.UpdateServices
     {
         private IWebClient _client = client;
 
-        public async Task TryUpdateClientAsync(ClientType type)
+        public async Task<Exception> TryUpdateClientAsync(ClientType type)
         {
+            Exception error = null;
             try
             {
                 var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -24,8 +25,13 @@ namespace Client.Platforms.Android.UpdateServices
                     if (!string.IsNullOrEmpty(loadedFile))
                         InstallNewVersion(loadedFile);
                 }
+                else
+                    throw new Exception("File not found on server");
             }
-            catch (Exception ex) { }
+            catch (Exception ex) 
+            { error = ex; }
+
+            return error;
         }
 
 
@@ -41,6 +47,8 @@ namespace Client.Platforms.Android.UpdateServices
                 using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 await data.CopyToAsync(fileStream);
             }
+            else
+                throw new Exception($"File {fileName} not loaded");
 
             return localPath;
         }

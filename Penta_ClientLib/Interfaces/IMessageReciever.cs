@@ -8,5 +8,6 @@
         event ChatUserListChanged UserRemoved;        
         event NewMessageInChat MessageAddedToChat;        
         event AccountDeleted AccountDeleted;
+        event RecieverConnectedChanged UserConnectionChanged;
     }
 }

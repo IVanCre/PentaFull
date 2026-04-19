@@ -11,6 +11,7 @@ namespace Penta_ClientLib.Services
         private IWebClient _webClient;
         private ISettingsProvider _settingsHolder;
         private IMessageHolder _messHolder;
+        private int? _currentUserID;
 
         public ChatManager(
             IChatHolder chatProvider,
@@ -28,8 +29,10 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                var currUserID = await _settingsHolder.GetUserID();
-                var msg = MessageFactory.CreateGroupChat_Request(currUserID, chatName); 
+                if(_currentUserID==null)
+                    _currentUserID = await _settingsHolder.GetUserID();
+
+                var msg = MessageFactory.CreateGroupChat_Request(_currentUserID.Value, chatName); 
                 await _messHolder.SaveMessage(msg,false);
 
                 var sended= await _webClient.SendMessage(msg);
@@ -46,9 +49,11 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                var currUserID = await _settingsHolder.GetUserID();
+                if (_currentUserID == null)
+                    _currentUserID = await _settingsHolder.GetUserID();
+
                 int userID = ContactConverter.ExtractUserID(userConnectIDForAdd);
-                var msg = MessageFactory.AddUserToGroupChat_Request(currUserID, chatID,userID);
+                var msg = MessageFactory.CreateAddUserToGroupChat_Request(_currentUserID.Value, chatID,userID);
                 await _messHolder.SaveMessage(msg,false);
 
                 var sended = await _webClient.SendMessage(msg);
@@ -65,9 +70,11 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                var currUserID = await _settingsHolder.GetUserID();
+                if (_currentUserID == null)
+                    _currentUserID = await _settingsHolder.GetUserID();
+
                 int userID =ContactConverter.ExtractUserID(userConnectID);
-                var msg = MessageFactory.DeleteUserFromGroupChat_Request(currUserID, userID, chatID);
+                var msg = MessageFactory.CreateDeleteUserFromGroupChat_Request(_currentUserID.Value, userID, chatID);
                 await _messHolder.SaveMessage(msg,false);
 
                 var sended = await _webClient.SendMessage(msg);
@@ -83,8 +90,10 @@ namespace Penta_ClientLib.Services
 
             try
             {
-                var currUserID = await _settingsHolder.GetUserID();
-                var msg = MessageFactory.DeleteUserFromGroupChat_Request(currUserID, currUserID, chatID);
+                if (_currentUserID == null)
+                    _currentUserID = await _settingsHolder.GetUserID();
+
+                var msg = MessageFactory.CreateDeleteUserFromGroupChat_Request(_currentUserID.Value, _currentUserID.Value, chatID);
                 await _messHolder.SaveMessage(msg,false);
 
                 var sended = await _webClient.SendMessage(msg);
@@ -101,8 +110,10 @@ namespace Penta_ClientLib.Services
         {
             try
             {
-                var currUserID = await _settingsHolder.GetUserID();
-                var msg =MessageFactory.DeleteGroupChat_Request(currUserID, chatID);
+                if (_currentUserID == null)
+                    _currentUserID = await _settingsHolder.GetUserID();
+
+                var msg =MessageFactory.CreateDeleteGroupChat_Request(_currentUserID.Value, chatID);
                 await _messHolder.SaveMessage(msg,false);
 
                 var sended = await _webClient.SendMessage(msg);
@@ -115,15 +126,17 @@ namespace Penta_ClientLib.Services
         }
 
 
-        public async Task<Tuple<bool, Exception>> AddMessageToChat(int chatID, int recieverID, MessageType type, byte[] data)
+        public async Task<Tuple<bool, Exception>> AddMessageToChat(int chatID, int recieverID, MessageType type, byte[] data, long? messageID)
         {
             try
             {
                 Message msg;
-                var currUserID = await _settingsHolder.GetUserID();
+                if (_currentUserID == null)
+                    _currentUserID = await _settingsHolder.GetUserID();
+
                 if (chatID < 0)//значит это приватный чат
                 {
-                    msg = MessageFactory.UserToUser(currUserID, recieverID, type, data);
+                    msg = MessageFactory.CreateUserToUser(_currentUserID.Value, recieverID, type, data, messageID);
                     await _messHolder.SaveMessage(//сохраняем копию, у которой указа локальный идентификатор чата(чтоб знать от какого чата это сообщение)
                         new Message(
                             msg.ID,
@@ -132,12 +145,13 @@ namespace Penta_ClientLib.Services
                             msg.ToID,
                             msg.Type,
                             msg.Data,
-                            msg.UtcTimestamp),
-                        false);
+                            msg.UtcTimestamp,
+                            false),
+                            false);
                 }
                 else
                 {
-                    msg = MessageFactory.UserToGroupChat(currUserID, chatID, type, data);
+                    msg = MessageFactory.CreateUserToGroupChat(_currentUserID.Value, chatID, type, data, messageID);
                     await _messHolder.SaveMessage(msg,false);
                 }
 

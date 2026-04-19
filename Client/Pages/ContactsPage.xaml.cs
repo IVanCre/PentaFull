@@ -27,16 +27,18 @@ namespace Client.Pages
             base.OnAppearing();
 
             if (string.IsNullOrEmpty(MyContactIDLabel.Text))
-                MyContactIDLabel.Text ="Your ContactID: "+ await _clientFacade.GetMyContactID();
+            {
+                MyContactIDLabel.Text = "Ваш ContactID: " + await _clientFacade.GetMyContactID();
 
-            var result =await _clientFacade.GetAllContactsAsync();//т.к. чаты могут быть созданы в длругом месте тоже
+                var result = await _clientFacade.GetAllContactsAsync();//т.к. чаты могут быть созданы в длругом месте тоже
 
-            MainThread.BeginInvokeOnMainThread(() =>
-            {            
-                ContactsList?.Clear();//сносим старое
-                foreach (var contact in result)
-                    ContactsList.Add(contact);
-            });
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    ContactsList?.Clear();//сносим старое
+                    foreach (var contact in result)
+                        ContactsList.Add(contact);
+                });
+            }
         }
 
         private async void OnLongClick(object sender, EventArgs e)

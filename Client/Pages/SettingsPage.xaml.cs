@@ -10,7 +10,8 @@ public partial class SettingsPage : ContentPage
 {
 	private IClientFacade _clientFacade;
 	private IUpdateManager _appUpdater;
-	public string AppVersion { get; private set; } = "Unknown";
+    private IDialogManager _notifier;
+    public string AppVersion { get; private set; } = "Unknown";
 	public string ServerAvailable { get; private set; } = "Unknown";
 	public string NewVersion { get; private set; } = "Unknown";
 
@@ -19,21 +20,25 @@ public partial class SettingsPage : ContentPage
 	public SettingsPage()
 	{
 		InitializeComponent();
-
-		_clientFacade = App.Services.GetService<IClientFacade>();
-		_appUpdater = App.Services.GetService<IUpdateManager>();
-
-        AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-		_clientFacade.ConnectionToServerChanged += ConnectChanged;
-
-		ConnectChanged(_clientFacade.IsConnected());//сразу ставим текущее состояние
-		BindingContext = this;
 	}
 
-	protected override void OnDisappearing()
-	{
-		base.OnDisappearing();
-        _clientFacade.ConnectionToServerChanged -= ConnectChanged;
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (_clientFacade == null)
+        {
+            _clientFacade = App.Services.GetService<IClientFacade>();
+            _appUpdater = App.Services.GetService<IUpdateManager>();
+
+            AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            _clientFacade.ConnectionToServerChanged += ConnectChanged;
+
+            _notifier = App.Services.GetRequiredService<IDialogManager>();
+
+            ConnectChanged(_clientFacade.IsConnected());//сразу ставим текущее состояние
+            BindingContext = this;
+        }
     }
 
 
@@ -46,13 +51,22 @@ public partial class SettingsPage : ContentPage
 
 		OnPropertyChanged(nameof(ServerAvailable));
 	}
+
 	private async void DownloadClick(object sender, EventArgs e)
 	{
-        await _appUpdater.TryUpdateClientAsync(ClientType.Android);
-	}
+        LoaderSpin.IsRunning = true;
+        UpdateBtn.IsEnabled = false;
+
+        var result = await _appUpdater.TryUpdateClientAsync(ClientType.Android);
+		if(result!=null)//какие-то проблемы
+            await _notifier.ShowMessage("Внимание", $"Ошибка при обновлении:{result.Message}", "ок");
+
+        LoaderSpin.IsRunning = false;
+        UpdateBtn.IsEnabled = true;
+    }
 
 
-	private void UseLoggerChanged(object sender, EventArgs e)
+    private void UseLoggerChanged(object sender, EventArgs e)
 	{
 		if(LoggerButon.IsChecked)
 			_clientFacade.UseSysLogger(true);//включает отслеживание и вывод системных ошибок. Подписка идет на странице LoadPage

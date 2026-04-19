@@ -17,7 +17,7 @@ namespace Penta_ClientLib.Services
             try
             {
                 var userID = await _settings.GetUserID();
-                var result = await _webClient.SendMessage(MessageFactory.DeleteAccountRequest(userID));
+                var result = await _webClient.SendMessage(MessageFactory.CreateDeleteAccountRequest(userID));
 
                 return Tuple.Create<bool, Exception>(result, null);
             }

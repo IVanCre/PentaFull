@@ -17,14 +17,20 @@
 
         <Grid ColumnDefinitions="*, Auto">
             <Label Text="Новая версия" VerticalOptions="Center"/>
-            <Button Text="Установить" Clicked="DownloadClick" HorizontalOptions="End" />
+            <Button x:Name="UpdateBtn" Text="Установить" Clicked="DownloadClick" HorizontalOptions="End" />
         </Grid>
 
         <Grid ColumnDefinitions="*, Auto">
             <Label Text="Показывать сис.логи" VerticalOptions="Center" />
             <CheckBox x:Name="LoggerButon" HorizontalOptions="End" CheckedChanged="UseLoggerChanged"/>
         </Grid>
-
+        
+        <ActivityIndicator 
+            x:Name="LoaderSpin"
+            IsRunning="False" 
+            Color="MediumPurple"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center" />
 
     </VerticalStackLayout>
 </ContentPage>

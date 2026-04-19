@@ -6,40 +6,44 @@ namespace MessageLib
     {
         public static Message CreateGroupChat_Request(int senderUserID, string chatName)
         {
+
             return new Message(
-                    Message.GenerateIDByTime(),
+                    Message.GenerateLocalIDByTime(),
                     senderUserID,
                     -1,
                     -1,
                     MessageType.CreateGroupRequest,
                     MessageUtils.TextToBytes(chatName),
-                    DateTimeOffset.UtcNow);
+                    DateTimeOffset.UtcNow,
+                    false);
         }
         public static Message CreateGroupChat_Response(int chatID,Message request)
         {
            return new Message(//генерируем ответ для юзера, который прислал запрос
-                    Message.GenerateIDByTime(),
+                    Message.GenerateLocalIDByTime(),
                     -1,
                     chatID,//его определяет сервер при создании у себя
                     request.FromID,
                     MessageType.CreateGroupResponce,
                     request.Data,
-                    DateTimeOffset.UtcNow);//имя тоже возвращаем(если успешно)
+                    DateTimeOffset.UtcNow,
+                    false);//имя тоже возвращаем(если успешно)
         }
 
 
-        public static Message DeleteGroupChat_Request(int senderUserID, int chatID) 
+        public static Message CreateDeleteGroupChat_Request(int senderUserID, int chatID) 
         {
             return new Message(
-                    Message.GenerateIDByTime(),
+                    Message.GenerateLocalIDByTime(),
                     senderUserID,
                     chatID,
                     -1,
                     MessageType.DeleteGroupRequest,
                     null,
-                    DateTimeOffset.UtcNow);
+                    DateTimeOffset.UtcNow,
+                    false);
         }
-        public static Message DeleteGroupChat_Response(Message request, int userRecieverID)
+        public static Message CreateDeleteGroupChat_Response(Message request, int userRecieverID)
         {
             return new Message(
                          request.ID,
@@ -48,24 +52,26 @@ namespace MessageLib
                          userRecieverID,
                          MessageType.DeleteGroupResponce,
                          null,
-                         DateTimeOffset.UtcNow);
+                         DateTimeOffset.UtcNow,
+                         false);
         }
 
 
         //1.userSender->server
-        public static Message AddUserToGroupChat_Request(int senderUserID, int chatID, int userToAddedID)
+        public static Message CreateAddUserToGroupChat_Request(int senderUserID, int chatID, int userToAddedID)
         {
             return new Message(
-                    Message.GenerateIDByTime(),
+                    Message.GenerateLocalIDByTime(),
                     senderUserID,//кто добавляет
                     chatID,//куда добавляет
                     userToAddedID,//кого добавляют
                     MessageType.AddToGroupRequest,
                     null,
-                    DateTimeOffset.UtcNow);
+                    DateTimeOffset.UtcNow,
+                    false);
         }
         //2.1server->all users (for each in groupChat)
-        public static Message AddUserToGroupChat_Response(Message request,int recieverUserID)
+        public static Message CreateAddUserToGroupChat_Response(Message request,int recieverUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
                              request.ID,
@@ -74,37 +80,40 @@ namespace MessageLib
                              recieverUserID,//кто получит это сообщение
                              MessageType.AddUserToGroupResponse,
                              null,
-                             DateTimeOffset.UtcNow);
+                             DateTimeOffset.UtcNow,
+                             false);
         }
         //2.2 server->recieverUserID
-        public static Message UserAddedToGroupChat_ServerResponse(int recieverUserID,int chatID, string chatName)
+        public static Message CreateUserAddedToGroupChat_ServerResponse(int recieverUserID,int chatID, string chatName)
         {
             return new Message(//создаем новое сообщения для добавленного юзера
-                 Message.GenerateIDByTime(),
+                 Message.GenerateLocalIDByTime(),
                  -1,
                  chatID,//куда добавляют
                  recieverUserID,//кого добавляют
                  MessageType.UserAddedToGroupResponse,
                  MessageUtils.TextToBytes(chatName),//имя чата
-                 DateTimeOffset.UtcNow);
+                 DateTimeOffset.UtcNow,
+                 false);
         }
 
 
 
         //1.userSended->server
-        public static Message DeleteUserFromGroupChat_Request(int senderUserID,int userForDeleteID,int chatID)
+        public static Message CreateDeleteUserFromGroupChat_Request(int senderUserID,int userForDeleteID,int chatID)
         {
             return new Message(
-                Message.GenerateIDByTime(),
+                Message.GenerateLocalIDByTime(),
                 senderUserID,
                 chatID,
                 userForDeleteID,
                 MessageType.RemoveUserFromGroupRequest,
                 null,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                false);
         }
         //2.server->all users
-        public static Message DeleteUserFromGroupChat_Response(Message request, int recieverUserID)
+        public static Message CreateDeleteUserFromGroupChat_Response(Message request, int recieverUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
                  request.ID,
@@ -113,7 +122,8 @@ namespace MessageLib
                  recieverUserID,
                  MessageType.RemoveUserFromGroupResponce,
                  MessageUtils.IntToBytes(request.ToID),
-                 DateTimeOffset.UtcNow);
+                 DateTimeOffset.UtcNow,
+                 false);
         }
 
         public static Message CreateResponseForGroupMember(Message request, int recieverUserID)
@@ -125,65 +135,109 @@ namespace MessageLib
                 recieverUserID,
                 request.Type,
                 request.Data,
-                request.UtcTimestamp);
+                request.UtcTimestamp,
+                false);
         }
 
-        public static Message UserToUser(int senderUserID,int recieverUserID, MessageType type, byte[] data)
+        public static Message CreateUserToUser(int senderUserID,int recieverUserID, MessageType type, byte[] data, long? messageID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateIDByTime(),
+                messageID==null ? Message.GenerateLocalIDByTime(): messageID.Value, //внешний айдишник может быть передан из связанной сущности
                 senderUserID,
                 -1,
                 recieverUserID,
                 type,
                 data,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                false);
         }
-        public static Message UserToGroupChat(int senderUserID, int chatID, MessageType type, byte[] data)
+        public static Message CreateUserToGroupChat(int senderUserID, int chatID, MessageType type, byte[] data, long? messageID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateIDByTime(),
+                messageID == null ? Message.GenerateLocalIDByTime() : messageID.Value,
                 senderUserID,
                 chatID,
                 -1,
                 type,
                 data,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                false);
         }
 
-        public static Message DeleteAccountRequest(int senderUserID)
+        public static Message CreateDeleteAccountRequest(int senderUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateIDByTime(),
+                Message.GenerateLocalIDByTime(),
                 senderUserID,
                 -1,
                 -1,
                 MessageType.DeleteSelfAccountRequest,
                 null,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                false);
         }
-        public static Message DeleteAccountResponce(Message request)
+        public static Message CreateDeleteAccountResponce(Message request)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateIDByTime(),
+                Message.GenerateLocalIDByTime(),
                 request.FromID,
                 -1,
                 request.FromID,
                 MessageType.DeleteSelfAccountRequest,
                 null,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                false);
         }
 
         public static Message CreateNotify(int recieverID, string message)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateIDByTime(),
+                Message.GenerateLocalIDByTime(),
                 -1,
                 -1,
                 recieverID,
                 MessageType.SystemNotify,
                 MessageUtils.TextToBytes(message),
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                false);
+        }
+
+
+        public static Message StartObserveUserInSystem(int senderID,int chatID, int observerUserID)
+        {
+            return new Message(//создаем новое сообщения для всех кто в группе
+                Message.GenerateLocalIDByTime(),
+                senderID,
+                chatID,
+                observerUserID,
+                MessageType.StartObservRecieverConnect,
+                null,
+                DateTimeOffset.UtcNow,
+                false);
+        }
+        public static Message UserInSystemState(int chatID,int observerUserID, int recieverID, bool state)
+        {
+            return new Message(//создаем новое сообщения для всех кто в группе
+                Message.GenerateLocalIDByTime(),
+                observerUserID,//кого отслеживаем
+                chatID,//какой чат отслеживает
+                recieverID,//кто отслеживает
+                MessageType.UserInSystemState,
+                MessageUtils.BoolToBytes(state),
+                DateTimeOffset.UtcNow,
+                false);
+        }
+        public static Message EndObserveUserInSystem(int senderID, int chatID, int observerUserID)
+        {
+            return new Message(//создаем новое сообщения для всех кто в группе
+                Message.GenerateLocalIDByTime(),
+                senderID,
+                chatID,
+                observerUserID,
+                MessageType.EndObservRecieverConnect,
+                null,
+                DateTimeOffset.UtcNow,
+                false);
         }
     }
 }

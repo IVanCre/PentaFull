@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection.Metadata.Ecma335;
+using System.Text;
 
 
 namespace MessageLib
@@ -14,6 +15,12 @@ namespace MessageLib
             return BitConverter.GetBytes(value);
         }
 
+        public static byte[] BoolToBytes(bool val)
+        {
+            return BitConverter.GetBytes(val);
+        }
+
+
 
         public static string GetDataLikeString(this Message msg)
         {
@@ -26,6 +33,13 @@ namespace MessageLib
         {
             if (msg.Data != null && msg.Data.Length > 0)
                 return BitConverter.ToInt32(msg.Data, 0);
+            else
+                return null;//чтобы понять что парсинг отвалился
+        }
+        public static bool? GetDataLikeBool(this Message msg)
+        {
+            if (msg.Data != null && msg.Data.Length > 0)
+                return BitConverter.ToBoolean(msg.Data, 0);
             else
                 return null;//чтобы понять что парсинг отвалился
         }

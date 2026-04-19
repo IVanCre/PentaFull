@@ -55,7 +55,7 @@
         </Grid>
         
         <Button 
-            Text="Создать" 
+            Text="Создать новый" 
             Margin="10"
             HorizontalOptions="FillAndExpand"
             Clicked="OnCreateChat" 

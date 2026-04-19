@@ -73,7 +73,7 @@ namespace Penta_Server.Services.Repositories
                     db.Messages.Add(createdEntity);
                     db.SaveChanges();
 
-                    msg.SetNewID(createdEntity.ID);//меняем на серверный идентификатор
+                    msg.SetServerID(createdEntity.ID);//меняем на серверный идентификатор(чтобы локальные айцдишникис  клиентов не конфликтовали на сервере)
                 }
             }
         }
@@ -107,7 +107,8 @@ namespace Penta_Server.Services.Repositories
                                 f.ToUserID,
                                 f.Type,
                                 data,
-                                f.UtcTimestamp));
+                                f.UtcTimestamp,
+                                false));
                         }
                     }
                 }

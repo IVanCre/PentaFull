@@ -26,9 +26,10 @@
                    FontSize="16" 
                    TextColor="Black"/>
 
-            <Label Grid.Row="2"
+            <Label Grid.Row="2" Grid.Column="0"
                    x:Name="TimestampLabel"
-                   Text="{Binding Timestamp}" 
+                   Text="{Binding Timestamp}"
+                   IsVisible="{Binding IsSended}"
                    FontSize="10" 
                    TextColor="DimGray"/>
         </Grid>

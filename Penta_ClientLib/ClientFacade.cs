@@ -15,7 +15,7 @@ namespace Penta_ClientLib
         private IMessageHolder _messHolder;
         private IContactHolder _contactHolder;
         private IMessageReciever _messReciever;
-        private IWebClient _client;
+        private IWebClient _webClient;
         private ILogger _logger;
 
         public ClientFacade(
@@ -34,11 +34,11 @@ namespace Penta_ClientLib
             _messHolder = messHolder;
             _contactHolder = contactHolder;
             _messReciever = messReciever;
-            _client = client;
+            _webClient = client;
             _logger = logger;
 
-            _client.ConnectionStateChanged += SendNonSended;
-            _client.MessageSended +=(messageID) => _messHolder.MarkMessageLikeSended(messageID);
+            _webClient.ConnectionStateChanged += SendNonSended;
+            _webClient.MessageSended +=(messageID) => _messHolder.MarkMessageLikeSended(messageID);
         }
 
 
@@ -52,7 +52,14 @@ namespace Penta_ClientLib
             add=> _messReciever.ChatDeleted += value;
             remove => _messReciever.ChatDeleted -= value;
         }
+
         public event ContactChanged ContactChanged;
+
+        public event RecieverConnectedChanged RecieverConnectedChanged
+        {
+            add=>_messReciever.UserConnectionChanged += value;
+            remove=>_messReciever.UserConnectionChanged -= value;
+        }
 
         public event ChatUserListChanged UserAdded
         {
@@ -69,17 +76,23 @@ namespace Penta_ClientLib
             add => _messReciever.MessageAddedToChat += value;
             remove=> _messReciever.MessageAddedToChat -= value; 
         }
-
         public event AccountDeleted AccountDeleted
         {
             add => _messReciever.AccountDeleted += value;
             remove => _messReciever.AccountDeleted -= value;
         }
+
+        public event MessageSended MessageSendedOnServer
+        {
+            add => _webClient.MessageSended += value;
+            remove => _webClient.MessageSended -= value;
+        }
         public event ConnectionStateChanged ConnectionToServerChanged
         {
-            add => _client.ConnectionStateChanged += value;
-            remove => _client.ConnectionStateChanged -= value;
+            add => _webClient.ConnectionStateChanged += value;
+            remove => _webClient.ConnectionStateChanged -= value;
         }
+
         public event SysLogRecieved SysLogRecieved
         {
             add=> _logger.SysLogRecieved += value;
@@ -107,8 +120,8 @@ namespace Penta_ClientLib
         }
 
 
-        public Task<bool> ConnectToServerAsync()=>_client.ConnectToMessageHub();
-        public bool IsConnected() => _client.IsConnected();
+        public Task<bool> ConnectToServerAsync()=>_webClient.ConnectToMessageHub();
+        public bool IsConnected() => _webClient.IsConnected();
 
         public Task<Tuple<bool, Exception>> DeleteAccountAsync()=>_accManager.DeleteAccount();
 
@@ -121,22 +134,22 @@ namespace Penta_ClientLib
         }
 
 
-        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,string userContactID, MessageType type, byte[] data)
+        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,string userContactID, MessageType type, byte[] data, long? messageID)
         {
             if(!ContactConverter.ContactIdValid(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
 
             int recieverUserID = ContactConverter.ExtractUserID(userContactID);
-            return  _chatManager.AddMessageToChat(chatID, recieverUserID, type, data);
+            return  _chatManager.AddMessageToChat(chatID, recieverUserID, type, data, messageID);
         }
-        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data)
+        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data, long? messageID)
         {
             if (userID==-1)
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
 
-            return _chatManager.AddMessageToChat(chatID, userID, type, data);
+            return _chatManager.AddMessageToChat(chatID, userID, type, data, messageID);
         }
-        public Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data) => _chatManager.AddMessageToChat(chatID,-1,  type, data);
+        public Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data, long? messageID) => _chatManager.AddMessageToChat(chatID,-1,  type, data, messageID);
         public Task<Tuple<bool, Exception>> CreateGroupChatAsync(string chatName)
         {
             if (string.IsNullOrEmpty(chatName))
@@ -232,7 +245,7 @@ namespace Penta_ClientLib
                 {
                     var finded = await _messHolder.GetNonSended();
                     foreach (var msg in finded)
-                        await _client.SendMessage(msg);
+                        await _webClient.SendMessage(msg);
                 }
                 catch (Exception ex) { }
             }
@@ -244,9 +257,19 @@ namespace Penta_ClientLib
 
         public void DisposeClient()
         {
-            _client?.Dispose();
+            _webClient?.Dispose();
         }
 
+        public async void StartObserveUserConnection(int chatID, int observerUserID)
+        {
+            int currentUserID = await _settingsProvider.GetUserID();
+            _ =await _webClient?.SendMessage(MessageFactory.StartObserveUserInSystem(currentUserID, chatID,observerUserID));
+        }
 
+        public async void EndObserveUserConnection(int chatID, int observerUserID)
+        {
+            int currentUserID = await _settingsProvider.GetUserID();
+            _ =await _webClient?.SendMessage(MessageFactory.EndObserveUserInSystem(currentUserID,chatID, observerUserID));
+        }
     }
 }

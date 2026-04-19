@@ -29,8 +29,12 @@
         DeleteSelfAccountResponce=58,
 
         UserAddedToGroupResponse=59,//для уведомления юзера в какую группу ЕГО добавили
+
+        StartObservRecieverConnect=60,//начать присылать изменения по факту нахождения в сети конкретного получателя
+        UserInSystemState=61,//текущее состояние юзера - подключен или нет
+        EndObservRecieverConnect = 62,//закончить присылать изменения по факту нахождения в сети конкретного получателя
 #endregion
 
-        SystemNotify=60//для оповещения всех юзеров 
+        SystemNotify =100//для оповещения всех юзеров 
     }
 }

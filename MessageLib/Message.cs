@@ -14,6 +14,7 @@ namespace MessageLib
         public MessageType Type { get; private set; }
         public byte[] Data { get; private set; }
         public DateTimeOffset UtcTimestamp { get; private set; }
+        public bool IsSendedToServer { get; set; }
 
         [JsonConstructor]
         public Message(
@@ -23,7 +24,8 @@ namespace MessageLib
            int ToID,
            MessageType Type,
            byte[] Data,
-           DateTimeOffset UtcTimestamp)
+           DateTimeOffset UtcTimestamp,
+           bool IsSendedToServer)
         {
             this.ID = ID;
             this.FromID = FromID;
@@ -32,16 +34,20 @@ namespace MessageLib
             this.Type = Type;
             this.Data = Data;
             this.UtcTimestamp = UtcTimestamp;
+            this.IsSendedToServer = IsSendedToServer;
         }
 
-        public void SetNewID(long newID)
+        public void SetServerID(long newID)//используется сервером для переопределения значения, которое пришло от клиента
         {
-            this.ID = newID;
-        }
-        public static long GenerateIDByTime()//при высокой интенсивности, могут выскакивать повторы))
-        {
-            return (long)(DateTime.Now- DateTime.Parse("01.01.2025")).TotalMilliseconds * -1;//*-1 позволит разграничивать локальные сообщения и от сервера в локальной БД
+            if(newID>0)//пеоложительные у сервера
+                this.ID = newID;
         }
 
+//при высокой интенсивности, могут выскакивать повторы))
+// на сервере заменяются на собственные ID -т.к. на сервак может прийти 2 сообщения с одинаковым ID от 2 клиентов одновременно
+        public static long GenerateLocalIDByTime()
+        {
+            return (long)(DateTime.Now- DateTime.Parse("01.01.2026")).TotalMilliseconds * -1;//*-1 позволит разграничивать локальные сообщения и от сервера в локальной БД
+        }
     }
 }

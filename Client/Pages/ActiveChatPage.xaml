@@ -15,6 +15,11 @@
                    TextColor="{StaticResource Black}"
                    HorizontalOptions="Start" />
 
+            <Label x:Name="ConnectionStateText"
+                   IsVisible="{Binding CanShowConnectionState}"
+                   FontSize="10"
+                   TextColor="White"
+                   HorizontalOptions="Start"/>
             <!--тут можно впихнуть еще строки-->
         </VerticalStackLayout>
     </Shell.TitleView>
@@ -23,7 +28,8 @@
         <RefreshView x:Name="HistoryRefresher"
              Refreshing="OnHistoryLoading"
              RefreshColor="{StaticResource PrimaryDark}">
-            <CollectionView 
+            <CollectionView
+                x:Name="MessagesListView"
                 Grid.Row="0" 
                 ItemsSource="{Binding MessageList}">
                 <CollectionView.ItemTemplate>

@@ -5,6 +5,7 @@ using Penta_ClientLib.Interfaces;
 using System.Collections.ObjectModel;
 using Client.UIElements;
 using MessageLib;
+using Client.Platforms.Android.PushServices;
 
 
 namespace Client.Pages
@@ -19,6 +20,9 @@ namespace Client.Pages
         public ChatsPage()
         {
             InitializeComponent();
+
+            NotificationHelper.SkipAllNotifications();
+            BindingContext = this;
         }
 
 
@@ -26,48 +30,46 @@ namespace Client.Pages
         {
             base.OnAppearing();
 
-            _clientFacade = App.Services.GetRequiredService<IClientFacade>();
-            _actionMenuSelector = App.Services.GetRequiredService<IDialogManager>();
-            _clientFacade.MessageAddedToChat += ShowNewMessageInChat;
-            _clientFacade.CreatedNewChat += ChatCreated;
-            _clientFacade.ContactChanged += TryUpdateChatName;
-
-            var findedChats = await _clientFacade.GetAllChatsInfoAsync();
-            var findedContacts = await _clientFacade.GetAllContactsAsync();
-            ContactInfo identityContact;
-
-            MainThread.BeginInvokeOnMainThread(() =>
+            if (_clientFacade == null)
             {
-                ChatsList?.Clear();
-                foreach (var chatInfo in findedChats)
+                _clientFacade = App.Services.GetRequiredService<IClientFacade>();
+                _actionMenuSelector = App.Services.GetRequiredService<IDialogManager>();
+                _clientFacade.MessageAddedToChat += ShowNewMessageInChat;
+                _clientFacade.CreatedNewChat += ChatCreated;
+                _clientFacade.ContactChanged += TryUpdateChatName;
+            }
+
+            //при каждом отображении мы пересоздаем список чатов, т.к. чат создается в другом месте и перенаправляется сюда
+            var findedChats = await _clientFacade.GetAllChatsInfoAsync();
+            if (findedChats.Count != ChatsList.Count)
+            {
+                var findedContacts = await _clientFacade.GetAllContactsAsync();
+                ContactInfo identityContact;
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
-                    if (identityContact != null)
-                        ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.ChatType,chatInfo.HaveUnreadedMessages));//прописываем имя юзера из контакта
-                    else
-                        ChatsList.Add(chatInfo);//оставляем как есть
-                }
-            });
-            BindingContext = this;
-        }
-        protected override void OnDisappearing()
-        {
-            base.OnDisappearing();
-            _clientFacade.MessageAddedToChat -= ShowNewMessageInChat;
-            _clientFacade.CreatedNewChat -= ChatCreated;
-            _clientFacade.ContactChanged -= TryUpdateChatName;
+                    ChatsList?.Clear();
+                    foreach (var chatInfo in findedChats)
+                    {
+                        identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
+                        if (identityContact != null)
+                            ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.ChatType, chatInfo.HaveUnreadedMessages));//прописываем имя юзера из контакта
+                        else
+                            ChatsList.Add(chatInfo);//оставляем как есть
+                    }
+                });
+            }
         }
 
         private async void OnShortClick(object sender, EventArgs e)
         {
             LoaderSpin.IsRunning = true;
             var button = sender as LongButton;
-var backClr = button.BackgroundColor;
-button.BackgroundColor = Color.Parse("LightGray");
+            var backClr = button.BackgroundColor;
+            button.BackgroundColor = Color.Parse("LightGray");
             var chat = (ChatInfo)button?.BindingContext;
 
             await Navigation.PushAsync(new ActiveChatPage(chat));//сразу переходим в переписку чата
-button.BackgroundColor = backClr;
+            button.BackgroundColor = backClr;
             LoaderSpin.IsRunning = false;
         }
         private async void OnLongClick(object sender, EventArgs e)
@@ -75,17 +77,17 @@ button.BackgroundColor = backClr;
             var button = sender as LongButton;
             var chat = (ChatInfo)button?.BindingContext;
 
-var backClr = button.BackgroundColor;
-button.BackgroundColor = Color.Parse("LightGray");
-            if (await _actionMenuSelector.ShowConfirmDialog("","Удалить чат?","Да","Нет"))
+            var backClr = button.BackgroundColor;
+            button.BackgroundColor = Color.Parse("LightGray");
+            if (await _actionMenuSelector.ShowConfirmDialog("", "Удалить чат?", "Да", "Нет"))
             {
                 MainThread.BeginInvokeOnMainThread(() => ChatsList.Remove(chat));
-                if(chat.ChatType== ChatType.Group)
+                if (chat.ChatType == ChatType.Group)
                     await _clientFacade.DeleteGroupChatAsync(chat.ID);
                 else
                     await _clientFacade.DeletePrivateChatAsync(chat.ID);
             }
-button.BackgroundColor = backClr;
+            button.BackgroundColor = backClr;
         }
 
         private void TryUpdateChatName(string oldName, string newName)

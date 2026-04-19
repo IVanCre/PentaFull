@@ -94,7 +94,7 @@ namespace Penta_Server.Services
 
             var finded =sorted.FirstOrDefault(x => x.Item2[0] >  oldClientVersion[0] ||
                                                    x.Item2[0] == oldClientVersion[0] && x.Item2[1] > oldClientVersion[1] ||
-                                                   x.Item2[0] == oldClientVersion[0] && x.Item2[1] == oldClientVersion[1] && x.Item2[3] > oldClientVersion[3]);//версия билда не проверяется
+                                                   x.Item2[0] == oldClientVersion[0] && x.Item2[1] == oldClientVersion[1] && x.Item2[2] > oldClientVersion[2]);//версия билда не проверяется
             if (finded != null)
                 return Path.GetFileName(finded.Item1);//возвращаем только имя файла и ничего более
             else

@@ -44,9 +44,8 @@
         
         <Button 
             Grid.Row="2"
-            Text="Добавить" 
-            BackgroundColor="{StaticResource PrimaryDark}"
-            TextColor="{StaticResource Black}"
+            Text="Добавить контакт" 
+            TextColor="{StaticResource White}"
             HorizontalOptions="FillAndExpand"
             VerticalOptions="End"
             Margin="10"

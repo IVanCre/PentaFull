@@ -18,13 +18,13 @@ namespace Client.Pages
 	{
 		public CustomObservableCollection<MessageInfo> MessageList { get; set; }
 		public string ChatName => _chatInfo.ChatName;
+		public bool CanShowConnectionState = false;//используется в приватном чате
 
 		private ChatInfo _chatInfo;
 		private int _recieverUserID = -1;//используется,только если это приватный чат
-		private int _currentUserID;//идентификатор юзера
+		private int? _currentUserID;//идентификатор юзера
 		private Dictionary<int, string> _cashedNames = new();//чтоб не бегать в БД на каждый пук
 		private IClientFacade _clientFacade;
-		private IDialogManager _notifier;
 		private ISettingsProvider _settingsHolder;
         private bool _isHistoryLoading = false;//идет ли подгрузка старых сообщений
         private int _messToLoadCount = 5;//количество сообщений для загрузки\подгрузки
@@ -36,37 +36,46 @@ namespace Client.Pages
 
 			MessageList = new();
 			_chatInfo = chat;
-		}
+            this.Unloaded += OnPageUnloaded;
+        }
 
-		protected override void OnAppearing()
+		protected override async void OnAppearing()//при ЛЮБОМ отображении страницы(старт\после сна)
 		{
 			base.OnAppearing();
 
-			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
-			_notifier = App.Services.GetRequiredService<IDialogManager>();
-			_settingsHolder = App.Services.GetRequiredService<ISettingsProvider>();
+			if (_clientFacade == null)//первичное отображение страницы
+			{
+				_clientFacade = App.Services.GetRequiredService<IClientFacade>();
+				_clientFacade.MessageAddedToChat += TryAddIncomingMessageToChat;
+				_clientFacade.ChatDeleted += ChatDeleted;
+				_clientFacade.MessageSendedOnServer += MakrMessageLikeSended;
+				_clientFacade.RecieverConnectedChanged += RecieverConnectionChanged;//чтобы понимать когда получатель приватного чата в сети
+				_settingsHolder = App.Services.GetRequiredService<ISettingsProvider>();
 
-			_clientFacade.MessageAddedToChat += TryAddIncomingMessageToChat;
-			_clientFacade.ChatDeleted += ChatDeleted;
-			ConfigurateByType();
+				ConfigurateByType();
+				LoadLastMessagesAsync();
 
-            if (BindingContext == null)
-                BindingContext = this;
+				if (IsThisChatIsPrivate())
+				{
+					ConnectionStateText.Text = "отключен";
+                    CanShowConnectionState = true;
 
-            LoadLastMessagesAsync();//чтобы сразу запустилась подгрузка
+					_recieverUserID = await _clientFacade.GetRecieverIDFromChatAsync(_chatInfo.ChatName);
+					_clientFacade.StartObserveUserConnection(_chatInfo.ID, _recieverUserID);//просим присылать изменения подключения  получателя
+				}
+			}
+  
+            BindingContext = this;
 		}
-
-        protected override void OnDisappearing()
+        private void OnPageUnloaded(object sender, EventArgs e)
         {
-            base.OnDisappearing();
-
+            this.Unloaded -= OnPageUnloaded;
             _clientFacade.MessageAddedToChat -= TryAddIncomingMessageToChat;
             _clientFacade.ChatDeleted -= ChatDeleted;
-			if(_chatInfo.ChatType== ChatType.Group)
-			{
-                _clientFacade.UserAdded -= UserAdded;
-                _clientFacade.UserRemoved -= UserRemoved;
-            }
+            _clientFacade.MessageSendedOnServer -= MakrMessageLikeSended;
+            _clientFacade.RecieverConnectedChanged -= RecieverConnectionChanged;
+
+            _clientFacade.EndObserveUserConnection(_chatInfo.ID, _recieverUserID);
         }
 
         #region первичная инициализация
@@ -111,16 +120,18 @@ namespace Client.Pages
 			if (!_isHistoryLoading)
 			{
 				_isHistoryLoading = true;
-				DateTimeOffset timestampToStart = (MessageList.Count > 0) ? MessageList[0].TimestampData : DateTimeOffset.UtcNow;
 				HistoryRefresher.IsRefreshing = true;
 
 				_ = Task.Factory.StartNew(async () =>
 			   {
+				   if(_currentUserID==null)
+                       _currentUserID = await _settingsHolder.GetUserID();
+
+                   DateTimeOffset timestampToStart = (MessageList.Count > 0) ? MessageList[0].TimestampData : DateTimeOffset.UtcNow;
 				   var buffer = new List<MessageInfo>();
 				   var findedMessages = await _clientFacade.GetOldMessagesByChatAsync(_chatInfo.ID, _messToLoadCount, timestampToStart);
 				   if (findedMessages.Count() > 0)
 				   {
-					   _currentUserID = await _settingsHolder.GetUserID();
 					   foreach (var mess in findedMessages)
 					   {
 						   var sender = await GetUserName(mess.FromID);
@@ -131,6 +142,8 @@ namespace Client.Pages
 								   SenderName = sender,
 								   Text = mess.GetDataLikeString(),
 								   TimestampData = mess.UtcTimestamp,
+								   ID = mess.ID,
+								   IsSended= mess.IsSendedToServer
 							   });
 					   }
 				   }
@@ -150,50 +163,75 @@ namespace Client.Pages
         private void OnHistoryLoading(object sender, EventArgs e)=>LoadLastMessagesAsync();
 
 
-#region изменение коллекции
+
         private async void TryAddIncomingMessageToChat(int chatID, Message msg)
 		{
 			if (chatID == _chatInfo.ID ||//групповой чат
 				chatID == -1 && _recieverUserID == msg.FromID)//чат не указан, значит смотрим отправителя
 			{
 				var sender = await GetUserName(msg.FromID);
-                AddNewMesageToList(Direction.Input, sender, msg.GetDataLikeString(), msg.UtcTimestamp);
-			}
+                var added =AddNewMesageToList(Direction.Input, sender, msg.GetDataLikeString(), msg.UtcTimestamp);
+				added.IsSended = true;
+            }
 		}
-		private async void OnSendMessage(object sender, EventArgs e)        //Пока работаем только с текстом!
+		private async void OnSendMessage(object sender, EventArgs e) 
 		{
 			var input = MessageText.Text;
-			var senderName =await GetUserName(_currentUserID);//чтобы имена определялись в единой точке
-			AddNewMesageToList(Direction.Output,senderName, input, DateTime.Now);
+			var senderName =await GetUserName(_currentUserID.Value);//чтобы имена определялись в единой точке
+			var msg =AddNewMesageToList(Direction.Output,senderName, input, DateTime.Now);
+
 			MessageText.Text = "";
 
-			Tuple<bool, Exception> result = default;
-			if (_chatInfo.ID > 0)//значит групповой чат
-			{
-				result = await _clientFacade.SendMessageToGroupChatAsync(_chatInfo.ID, MessageType.Text, MessageUtils.TextToBytes(input));
-			}
-			else//значит приватный чат
-			{
-				_recieverUserID = await _clientFacade.GetRecieverIDFromChatAsync(_chatInfo.ChatName);
-				result = await _clientFacade.SendMessageToUserAsync(_chatInfo.ID, _recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input));
-			}
-
-			if (!result.Item1)
-				await _notifier.ShowMessage("Ошибка", $"Сообщение НЕ ОТПРАВЛЕНО:{result.Item2?.Message}", "ок");
-		}
-#endregion
-
-        private void AddNewMesageToList(Direction msgDirection,string sender, string text, DateTimeOffset timestamp)
-		{
-            MessageList.Add(
-				new MessageInfo(){ 
-					Type = msgDirection,
-					SenderName = sender,
-					Text = text,
-					TimestampData=timestamp,
-				});
+			if (IsThisChatIsPrivate())//значит приватный чат
+				await _clientFacade.SendMessageToUserAsync(_chatInfo.ID, _recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input), msg.ID);
+			else//значит групповой чат
+				await _clientFacade.SendMessageToGroupChatAsync(_chatInfo.ID, MessageType.Text, MessageUtils.TextToBytes(input), msg.ID);
         }
-		private async Task<string> GetUserName(int userID)
+
+        private MessageInfo AddNewMesageToList(Direction msgDirection,string sender, string text, DateTimeOffset timestamp)
+		{
+			var msg = new MessageInfo() {
+				ID = Message.GenerateLocalIDByTime(),
+				Type = msgDirection,
+				SenderName = sender,
+				Text = text,
+				IsSended = msgDirection == Direction.Input,//входящие всегда доставлены))))
+				TimestampData = timestamp,
+			};
+
+            MessageList.Add(msg);
+
+			AutoScrollToBottom();
+
+			return msg;
+        }
+		private void AutoScrollToBottom()//вызываем прокрутку к новому сообщению
+		{
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                var lastItem = MessageList.LastOrDefault();
+                if (lastItem != null)
+                    MessagesListView.ScrollTo(lastItem, position: ScrollToPosition.End, animate: true);
+            });
+        }
+
+		private void MakrMessageLikeSended(long messageID)
+		{
+			var finded = MessageList.FirstOrDefault(x => x.ID == messageID);
+			if(finded!=null)
+				finded.IsSended = true;
+		}
+
+		private void RecieverConnectionChanged(int chatID, int userID, bool state)
+		{
+			if (chatID == _chatInfo.ID && _recieverUserID == userID)//значит это наш получатель
+				Dispatcher.Dispatch(() =>
+				{
+					ConnectionStateText.Text = state == true ? "подключен" : "отключен";
+				});
+		}
+
+        private async Task<string> GetUserName(int userID)
 		{
 			if (userID == _currentUserID)
 				return "я";
@@ -208,6 +246,10 @@ namespace Client.Pages
 			}	
         }
 
+		private bool IsThisChatIsPrivate()
+		{
+			return _chatInfo.ID < 0;
+		}
 
 #region несохраняемые уведомления
         private void UserAdded(int chatID, int userID)

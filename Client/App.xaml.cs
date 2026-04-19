@@ -22,7 +22,6 @@ namespace Client
         protected override void OnStart()
         {
             base.OnStart();
-            NotificationHelper.SkipAllNotifications();
         }
 
         protected override void OnSleep()//передаем состояние системы

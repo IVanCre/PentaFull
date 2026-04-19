@@ -42,7 +42,8 @@ namespace Penta_Server.Controllers
                     -1,
                     MessageType.SystemNotify,
                     MessageUtils.TextToBytes(text),
-                    DateTimeOffset.UtcNow));
+                    DateTimeOffset.UtcNow,
+                    false));
         }
 
 

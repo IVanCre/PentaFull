@@ -8,9 +8,12 @@ namespace Penta_Server.Services.SignalR
     {
         private ConcurrentDictionary<int, string> _connections = new();
 
+        public event UserConnectionStateChanged UserConnectionStateChanged;
+
         public void Add(int userID, string connectionID)
         {
-            _connections.TryAdd(userID, connectionID);
+            if (_connections.TryAdd(userID, connectionID))
+                UserConnectionStateChanged?.Invoke(userID,true);
         }
 
         public string GetConnectionID(int userID)
@@ -22,7 +25,8 @@ namespace Penta_Server.Services.SignalR
 
         public void RemoveByUserID(int userID)
         {
-            _connections.Remove(userID, out string val);     
+            if(_connections.Remove(userID, out string val))
+                UserConnectionStateChanged?.Invoke(userID, false);
         }
     }
 }

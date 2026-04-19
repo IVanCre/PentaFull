@@ -17,13 +17,15 @@ namespace Penta_Server.Services.MessagesProcessors
         private IClientNotifier _clientNotifier;
         private IUserRepository _userRepo;
         private ILogWriter _logger;
+        private IUsersConnectionObserver _connObserver;
 
         public MessageProcessor(
             IGroupChatRepository groupRepo,
             IClientNotifier clientNotifier,
             IUserRepository userRepo,
             IMessageSaver messSaver,
-            ILogWriter logger)
+            ILogWriter logger,
+            IUsersConnectionObserver connObserver)
         {
             _messageSaver = messSaver;
             _messageSaver.MessageSaved += ProcessSavedMessage;//т.е. сообщение сохраняется, а потом мы отправляем ответ-результат
@@ -31,6 +33,7 @@ namespace Penta_Server.Services.MessagesProcessors
             _clientNotifier = clientNotifier;
             _userRepo = userRepo;
             _logger = logger;
+            _connObserver = connObserver;
         }
 
         //в этом методе поступившие сообщения обрабатываются и ставятся в очередь на сохранение 
@@ -39,8 +42,10 @@ namespace Penta_Server.Services.MessagesProcessors
             switch (msg.Type)
             {
                 //системные-одиночный ответ
-                case MessageType.CreateGroupRequest:        CreateGroupChat(msg); break;
-                case MessageType.DeleteSelfAccountRequest:  DeleteAccount(msg); break;
+                case MessageType.CreateGroupRequest:            CreateGroupChat(msg); break;
+                case MessageType.DeleteSelfAccountRequest:      DeleteAccount(msg); break;
+                case MessageType.StartObservRecieverConnect:    StartSendUserConnectionState(msg);break;
+                case MessageType.EndObservRecieverConnect:      EndSendUserConnectionState(msg); break;
 
                 //системные-групповой ответ
                 case MessageType.AddToGroupRequest:             AddToGroupChatRequest(msg); break;
@@ -73,7 +78,7 @@ namespace Penta_Server.Services.MessagesProcessors
             _logger?.SaveInfo($"Получен запрос на удаление аккаунта id={msg.FromID}");
             var result = await _userRepo.DeleteUserByIDAsync(msg.FromID);
             if (result)
-                _messageSaver.Save(MessageFactory.DeleteAccountResponce(msg),msg.ID);
+                _messageSaver.Save(MessageFactory.CreateDeleteAccountResponce(msg),msg.ID);
         }
 
 
@@ -87,11 +92,11 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 if (await _groupRepo.AddUserToGroupAsync(msg.ToID, findedChat.ID))//после этого сущность findedChat имеет еще старый список
                 {
-                    _messageSaver.Save(MessageFactory.UserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name), msg.ID);//для добавляемого юзера
+                    _messageSaver.Save(MessageFactory.CreateUserAddedToGroupChat_ServerResponse(msg.ToID, findedChat.ID,findedChat.Name), msg.ID);//для добавляемого юзера
 
                     var sharedMarker = msg.ID;
                     foreach (var recieverID in findedChat.UserIDsInGroup())
-                        _messageSaver.Save(MessageFactory.AddUserToGroupChat_Response(msg, recieverID),sharedMarker);
+                        _messageSaver.Save(MessageFactory.CreateAddUserToGroupChat_Response(msg, recieverID),sharedMarker);
                 }
             }
         }
@@ -109,7 +114,7 @@ namespace Penta_Server.Services.MessagesProcessors
                     var userInGroup = findedGroup.UserIDsInGroup();
                     var sharedMarker = msg.ID;
                     foreach (var recieverID in userInGroup)
-                        _messageSaver.Save(MessageFactory.DeleteUserFromGroupChat_Response(msg, recieverID),sharedMarker, userInGroup.Length);
+                        _messageSaver.Save(MessageFactory.CreateDeleteUserFromGroupChat_Response(msg, recieverID),sharedMarker, userInGroup.Length);
                 }
             }
         }
@@ -121,7 +126,7 @@ namespace Penta_Server.Services.MessagesProcessors
             {
                 var sharedMarker = msg.ID;
                 foreach (var recieverID in findedGroup.UserIDsInGroup())
-                    _messageSaver.Save(MessageFactory.DeleteGroupChat_Response(msg, recieverID),sharedMarker);
+                    _messageSaver.Save(MessageFactory.CreateDeleteGroupChat_Response(msg, recieverID),sharedMarker);
 
                 _ = _groupRepo.DeleteGroup(msg.FromID, msg.ChatID);
             }
@@ -155,11 +160,22 @@ namespace Penta_Server.Services.MessagesProcessors
         #endregion
 
 
-
         //в этом методе берется последнее сохраненное сообщение из очереди сохраненных
         private void ProcessSavedMessage(Message savedMsg)
         {
             _ = _clientNotifier.SendToUser(savedMsg);
         }
+
+
+#region UserConnectionObserver
+        private void StartSendUserConnectionState(Message msg)
+        {
+            _connObserver.AddToObserve(msg.ChatID, msg.FromID, msg.ToID);//тут уже сам сервис будет отслеживать и увеодмлять получателя
+        }
+        private void EndSendUserConnectionState(Message msg)
+        {
+            _connObserver.DeleteFromObserve(msg.ChatID,msg.FromID,msg.ToID);
+        }
+        #endregion
     }
 }
