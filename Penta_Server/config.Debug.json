@@ -2,7 +2,7 @@
   "Kestrel": {
     "Endpoints": {
       "Https": {
-        "Url": "https://192.168.1.35:9093",
+        "Url": "https://192.168.1.35:9095",
         "Certificate": {
           "Path": "pentaPassCert.pfx",
           "Password": "pentaPass"
@@ -32,7 +32,7 @@
   },
 
   "WorkDB": {
-    "ConnString": "Data Source=WIN-NORJF4CL9B8\\SQLEXPRESS;Database=MessagerRelease;User Id=sa_home;Password=Wen76Coda;TrustServerCertificate=True;"
+    "ConnString": "Data Source=WIN-NORJF4CL9B8\\SQLEXPRESS;Database=MessagerDebug;User Id=sa_home;Password=Wen76Coda;TrustServerCertificate=True;"   
   },
 
   "DBCleaner": {
@@ -40,5 +40,5 @@
     "MessageLifePeriodDays": "7"
   },
 
-  "ClientBuildsFolder": "E:\\PetProjects\\Pets\\MessagaFull\\Client_Releases",
+  "ClientBuildsFolder": "E:\\PetProjects\\Pets\\MessagaFull\\Client_Releases"
 }

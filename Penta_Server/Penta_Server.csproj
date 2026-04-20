@@ -29,14 +29,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="appsettings.json">
+    <Content Update="config.Debug.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
 	  <!-- Исключает файл из процесса публикации -->
-	  <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+	  <Content Update="config.Debug.Development.json" CopyToPublishDirectory="Never" />
 
 	  <!-- (Опционально) Исключает файл даже из папки сборки bin/Debug -->
-	  <Content Update="appsettings.Development.json" CopyToOutputDirectory="Never" />
+	  <Content Update="config.Debug.Development.json" CopyToOutputDirectory="Never" />
+	  <Content Update="config.Release.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
 	  <Content Update="penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Content>

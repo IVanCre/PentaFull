@@ -15,8 +15,12 @@ namespace Penta_ClientLib.Services
     internal abstract class BaseClient
     {
         protected ISettingsProvider _settingsHolder;
-        protected int _waitRequestSeconds = 90;        
+        protected int _waitRequestSeconds = 90;
+#if DEBUG
+        protected string _serverUrl = "https://192.168.1.35:9095";
+#else
         protected string _serverUrl = "https://109.194.42.95:9093";
+#endif
 
         protected BaseClient(ISettingsProvider settings)
         {

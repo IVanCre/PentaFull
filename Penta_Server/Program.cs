@@ -29,8 +29,8 @@ namespace Penta_Server
                     Args = args,
                     ContentRootPath = AppContext.BaseDirectory
                 });
+                SetConfigFileByEnv(builder);
                 ConfigValidator.Check(builder.Configuration);//проверяем один раз перед запуском
-
 
                 ConfigureKestrel(builder);
                 builder.Host.UseWindowsService();
@@ -56,6 +56,16 @@ namespace Penta_Server
                 OverheadLogger.LogError(ex.Message);
                 throw ex;
             }
+        }
+
+        private static void SetConfigFileByEnv(WebApplicationBuilder builder)
+        {
+#if DEBUG
+            string fileName = "config.Debug.json";
+#else
+            string fileName = "config.Release.json";
+#endif
+            builder.Configuration.AddJsonFile(fileName, optional: false);
         }
 
         private static void AddServicesImplementations(IServiceCollection services)

@@ -2,7 +2,7 @@
 2.жмем публикацию
 
 3.затем открываем powershell под админом
-4.потом вбиваем sc.exe create "Penta_Server" binPath= "E:\PetProjects\Pets\MessagaFull\PentaFull\Penta_Server\bin\Release\net8.0\Penta_Server.exe" obj= "NT AUTHORITY\NetworkService" start= auto
+4.потом вбиваем sc.exe create "Penta_Server" binPath= "тут_полный_путь\Penta_Server.exe" obj= "NT AUTHORITY\NetworkService" start= auto
 
 5.затем открываем Службы и уже внутри настраиваем указанный сервис (вход с системной Учеткой)
 

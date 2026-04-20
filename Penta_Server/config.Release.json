@@ -1,0 +1,44 @@
+{
+  "Kestrel": {
+    "Endpoints": {
+      "Https": {
+        "Url": "https://192.168.1.35:9093",
+        "Certificate": {
+          "Path": "pentaPassCert.pfx",
+          "Password": "pentaPass"
+        }
+      }
+    }
+  },
+
+
+  "AllowedHosts": "*",
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    },
+    "AutoDeleteIntervalMinutes": "60",
+    "MaxDayToHold": "14",
+    "FolderName": "Logs"
+  },
+
+  "Jwt": {
+    "Key": "VeryСекретныйKeyДолженBeДлинным_2025",
+    "Issuer": "MyAuthServer",
+    "Audience": "MyAuthClient",
+    "LifeTimeMinutes": "15"
+  },
+
+  "WorkDB": {
+    "ConnString": "Data Source=WIN-NORJF4CL9B8\\SQLEXPRESS;Database=MessagerRelease;User Id=sa_home;Password=Wen76Coda;TrustServerCertificate=True;"
+  },
+
+  "DBCleaner": {
+    "AutoCleanPeriodMinutes": "15",
+    "MessageLifePeriodDays": "7"
+  },
+
+  "ClientBuildsFolder": "E:\\PetProjects\\Pets\\MessagaFull\\Client_Releases"
+}

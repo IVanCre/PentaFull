@@ -41,23 +41,20 @@ namespace Client.Pages
 
             //при каждом отображении мы пересоздаем список чатов, т.к. чат создается в другом месте и перенаправляется сюда
             var findedChats = await _clientFacade.GetAllChatsInfoAsync();
-            if (findedChats.Count != ChatsList.Count)
+            var findedContacts = await _clientFacade.GetAllContactsAsync();
+            ContactInfo identityContact;
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                var findedContacts = await _clientFacade.GetAllContactsAsync();
-                ContactInfo identityContact;
-                MainThread.BeginInvokeOnMainThread(() =>
+                ChatsList?.Clear();
+                foreach (var chatInfo in findedChats)
                 {
-                    ChatsList?.Clear();
-                    foreach (var chatInfo in findedChats)
-                    {
-                        identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
-                        if (identityContact != null)
-                            ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.ChatType, chatInfo.HaveUnreadedMessages));//прописываем имя юзера из контакта
-                        else
-                            ChatsList.Add(chatInfo);//оставляем как есть
-                    }
-                });
-            }
+                    identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
+                    if (identityContact != null)
+                        ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.ChatType, chatInfo.HaveUnreadedMessages));//прописываем имя юзера из контакта
+                    else
+                        ChatsList.Add(chatInfo);//оставляем как есть
+                }
+            });
         }
 
         private async void OnShortClick(object sender, EventArgs e)
