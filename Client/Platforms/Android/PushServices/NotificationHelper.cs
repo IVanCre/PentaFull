@@ -6,15 +6,17 @@ using Android.Graphics;
 
 
 
+
 namespace Client.Platforms.Android.PushServices
 {
     public class NotificationHelper//отображает уведомления и позволяет тапать по ним
     {
         private readonly Context _context;
-        private const string ChannelId = "penta_msg_channel_v3";
+        private const string _channelId = "penta_msg_channel_v3";
         private static int _counterID = 0;//чтобы между экземплярами сохранялся
         private int smallIconID;
         private int largeIconID;
+        private string _groupKey = "messages";//позволяет объединять сообщение в стек
 
         public NotificationHelper(Context context)
         {
@@ -29,12 +31,27 @@ namespace Client.Platforms.Android.PushServices
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                var channel = new NotificationChannel(ChannelId, "PentaChannel", NotificationImportance.High);
+                var channel = new NotificationChannel(_channelId, "PentaChannel", NotificationImportance.High);
                 channel.LockscreenVisibility = NotificationVisibility.Public;
 
                 var manager = (NotificationManager)_context.GetSystemService(Context.NotificationService);
                 manager.CreateNotificationChannel(channel);
             }
+        }
+
+        public void ShowNotifyStack()//спрессовывает сообщения в обобщенное(стек)
+        {
+            var summary = new NotificationCompat.Builder(_context, _channelId)
+                .SetContentTitle("Новые сообщения")
+                .SetSmallIcon(smallIconID) // Иконка(типа системной) в левом верхнем углу экрана
+                .SetLargeIcon(BitmapFactory.DecodeResource(_context.Resources, largeIconID))//иконка в уведомлении
+                .SetGroup(_groupKey)
+                .SetGroupSummary(true) // Ключевой флаг
+                .SetAutoCancel(true)
+                .Build();
+
+            var notificationManager = NotificationManagerCompat.From(_context);
+            notificationManager.Notify(0, summary);
         }
 
         /// <summary>
@@ -72,8 +89,9 @@ namespace Client.Platforms.Android.PushServices
             intent.SetFlags(ActivityFlags.ReorderToFront | ActivityFlags.NewTask);
             var pendingIntent = PendingIntent.GetActivity(_context, 0, intent, PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable);
 
-            var builder = new NotificationCompat.Builder(_context, ChannelId)
+            var builder = new NotificationCompat.Builder(_context, _channelId)
                 .SetContentTitle(title)
+                .SetGroup(_groupKey)
                 .SetContentText(text)
                 .SetSmallIcon(smallIconID) // Иконка(типа системной) в левом верхнем углу экрана
                 .SetLargeIcon(BitmapFactory.DecodeResource(_context.Resources, largeIconID))//иконка в уведомлении

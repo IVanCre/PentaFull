@@ -33,6 +33,9 @@ namespace Penta_ClientLib.Interfaces
         Task SetRefreshToken(string value);
 
         TimeSpan GetLifetimeSecondsLeft(string token);
+
+        Task<long> GetTimestampOfLastServerConnect();
+        void SetTimestampOfLastServerConnect();
     }
 
 
@@ -110,6 +113,16 @@ namespace Penta_ClientLib.Interfaces
             }
 
             return TimeSpan.Zero;
+        }
+
+
+        public Task<long> GetTimestampOfLastServerConnect()
+        {
+            return _db.GetValueByName<long>("lastConnectToServer");
+        }
+        public void SetTimestampOfLastServerConnect()
+        {
+            _db.SetValueByName<long>("lastConnectToServer",DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         }
     }
 }

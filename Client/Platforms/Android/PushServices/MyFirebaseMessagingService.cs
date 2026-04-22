@@ -30,16 +30,24 @@ namespace Client.Platforms.Android.PushServices
             {
                 string title = message.Data["title"];
                 string text = message.Data["message"];
+                long timestampMilisec = long.Parse(message.Data["timestamp_msec"]);//время отправки пуша
 
-                int userID;
-                if (int.TryParse(title, out userID))//пробуем подставить имя отправителя из контактов
-                    title = await _clientFacade.FindUserPseudonimeByID(userID);
-                else
-                    title = "Неизвестный отправитель";
+                var timestampOfLastConnect = await _clientFacade.GetTimestampOfLastConnectToServer();
+//значит юзер подключался к серваку раньше, чем был отправлен пуш
+//и следовательно, не видел это новое сообщение, которое сгенерировало этот пуш
+                if (timestampOfLastConnect < timestampMilisec)
+                {
+                    int userID;
+                    if (int.TryParse(title, out userID))//пробуем подставить имя отправителя из контактов
+                        title = await _clientFacade.FindUserPseudonimeByID(userID);
+                    else
+                        title = "Неизвестный отправитель";
 
-
-                var _notifier = new NotificationHelper(AndroidAppLib.Application.Context);
-                _notifier.ShowNotification(title, text);//отолбражаем уведомление
+                    var _notifier = new NotificationHelper(AndroidAppLib.Application.Context);
+                    _notifier.ShowNotification(title, text);//отолбражаем уведомление
+                    _notifier.ShowNotifyStack();//сразу генерирм стек для сообщений
+                }
+                //else -значит юзер зашел раньше, чем получил пуш и следовательно уже сам увидел новое сообщение
             }
         }
 

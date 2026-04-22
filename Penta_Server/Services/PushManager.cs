@@ -56,7 +56,8 @@ namespace Penta_Server.Services
                         Data = new Dictionary<string, string>()                // Поля Data — это то, что ваш Worker обработает в фоне
                         {
                             { "title",title },
-                            { "message", msg }
+                            { "message", msg },
+                            { "timestamp_msec",DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString()}//когда сообщение отправлено с сервера
                         },
                         Android = new AndroidConfig()                // Важно для Android: высокий приоритет, чтобы "разбудить" устройство
                         {

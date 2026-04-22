@@ -5,7 +5,7 @@ using Penta_Server.Interfaces;
 
 namespace Penta_Server.Controllers
 {
-    [Route("Updates")]
+    [Route("ClientBuilds")]
     [ApiController]
     public class UpdatesController(
         IClientFileObserver fileObserver,
@@ -54,7 +54,16 @@ namespace Penta_Server.Controllers
                 _logger.SaveError($"Ошибка при попытке отдать файл клиенту: {ex.Message}");
                 return NotFound();
             }
- 
+        }
+
+
+        [HttpGet("DownloadAndroidClient")]
+        public async Task<IActionResult> DownloadNewestClient()
+        {
+            string filePath = await _fileObserver.GetNewClientVersionFileNameAsync( ClientType.Android);
+            var fileName=Path.GetFileName(filePath);
+
+            return PhysicalFile(filePath, "application/vnd.android.package-archive", fileName);
         }
     }
 }

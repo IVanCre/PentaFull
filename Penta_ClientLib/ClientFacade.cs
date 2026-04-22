@@ -271,5 +271,7 @@ namespace Penta_ClientLib
             int currentUserID = await _settingsProvider.GetUserID();
             _ =await _webClient?.SendMessage(MessageFactory.EndObserveUserInSystem(currentUserID,chatID, observerUserID));
         }
+
+        public Task<long> GetTimestampOfLastConnectToServer() => _settingsProvider.GetTimestampOfLastServerConnect();
     }
 }

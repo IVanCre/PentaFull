@@ -271,6 +271,7 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="chatID"></param>
         /// <param name="observerUserID"></param>
         void StartObserveUserConnection(int chatID ,int observerUserID);
+
         /// <summary>
         /// Запрос на окончание отслеживания состояния подключения указанного юзера к серверу
         /// </summary>
@@ -278,6 +279,11 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="observerUserID"></param>
         void EndObserveUserConnection(int chatID, int observerUserID);
 
+        /// <summary>
+        /// Метка времени, когда этот клиент последний раз подключался к серверу
+        /// </summary>
+        /// <returns></returns>
+        Task<long> GetTimestampOfLastConnectToServer();
 
         /// <summary>
         /// вызывает закрытие всех ресурсов клиента.

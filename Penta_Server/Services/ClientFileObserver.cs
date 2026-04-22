@@ -37,7 +37,14 @@ namespace Penta_Server.Services
             else
                 return string.Empty;
         }
-
+        public async Task<string> GetNewClientVersionFileNameAsync(ClientType type)
+        {
+            var finded = await GetAllVersionsAsync(type);
+            if (finded != null && finded.Count > 0)
+                return finded[0].Item1;
+            else
+                return string.Empty;
+        }
 
         private int[] ParseVersion(string inputVersion)
         {
@@ -81,18 +88,17 @@ namespace Penta_Server.Services
                         allVersions.Add(Tuple.Create(fileName, parsedVersion));
                     }
                 }
-                return allVersions;
+                return allVersions//сортируем по убыванию версий
+                                .OrderByDescending(arr => arr.Item2[0])
+                                .ThenByDescending(arr => arr.Item2[1])
+                                .ThenByDescending(arr => arr.Item2[2])
+                                .ToList();
             });
         }
         private string GetNewestClientFileName(List<Tuple<string, int[]>> allVersions, int[] oldClientVersion)
         {
-            var sorted = allVersions//сортируем по убыванию версий
-                        .OrderByDescending(arr => arr.Item2[0])
-                        .ThenByDescending(arr => arr.Item2[1])
-                        .ThenByDescending(arr => arr.Item2[2])
-                        .ToList();
-
-            var finded =sorted.FirstOrDefault(x => x.Item2[0] >  oldClientVersion[0] ||
+            //т.е. смотрим более новый билд.
+            var finded =allVersions.FirstOrDefault(x => x.Item2[0] >  oldClientVersion[0] ||
                                                    x.Item2[0] == oldClientVersion[0] && x.Item2[1] > oldClientVersion[1] ||
                                                    x.Item2[0] == oldClientVersion[0] && x.Item2[1] == oldClientVersion[1] && x.Item2[2] > oldClientVersion[2]);//версия билда не проверяется
             if (finded != null)

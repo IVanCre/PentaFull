@@ -35,27 +35,10 @@ namespace Penta_ClientLib.Services
             {
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errorType) =>
                 {
-                    //игнорим любые ошибки -проверяем сам факт данных сертификата
-                    bool serverCertIsValid = true;
-                    //string validPublicKey =
-                    //    "MIIBCgKCAQEAoNb1K6RGwpivdQpzSyIRozPANl1hcUL" +
-                    //    "Zqneh9ljARZ+I9uHwIAszqceE3UcRRhvQTxWBW4Z1Hh" +
-                    //    "Cm/fI+BpzTC8XP4JkFv8P8gmEgFUet77wRNvVoFS12J" +
-                    //    "Fl2Cu5JCETMM5V3mhGUOA44d5piAph6vEPcQIIocmrD" +
-                    //    "mBXqHhnKVckqIp1+Y1biXcmbHDOZ6ZNGJs+aIC8TNKI" +
-                    //    "nc9jn0kxPnfzgVPbmI86NB87xAG/PuEPvhYLiIO6rwa" +
-                    //    "eGxKXDKuVk6qbGNdqilwvjlSONKAKFCMvYvSn7iNYSe" +
-                    //    "bOzrwhRB5sCZkfE1ZuClGQMAp0qfW5NjkVwcqAEMHUH" +
-                    //    "AEadgNw0KQIDAQAB";
-
-                    //var serverCert = new X509Certificate2(cert);
-                    //string serverPubKey = Convert.ToBase64String(serverCert.PublicKey.EncodedKeyValue.RawData);
-                    //if (serverPubKey != validPublicKey)
-                    //    throw new Exception("Публичный ключ серверного сертификата невалиден!");
-                    //else
-                    //    serverCertIsValid = true;
-
-                    return serverCertIsValid;
+                    if (cert.Thumbprint == "277F397DE2217E2A8842671BBDE47EBCFF27407B")//powershell-> Get-PfxCertificate -FilePath путь-к-файлу
+                        return true;
+                    else
+                        return false;
                 }
             };
         }
@@ -193,7 +176,7 @@ namespace Penta_ClientLib.Services
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
 
-                var fullUrl = $"{_serverUrl}/Updates/GetNewestClientFileName?currentClientVersion={currentClientVersion}&type={type}";
+                var fullUrl = $"{_serverUrl}/ClientBuilds/GetNewestClientFileName?currentClientVersion={currentClientVersion}&type={type}";
 
                 var response = await httpClient.GetAsync(fullUrl);
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -209,7 +192,7 @@ namespace Penta_ClientLib.Services
             {
                 httpClient.Timeout = TimeSpan.FromSeconds(_waitRequestSeconds);
 
-                var fullUrl = $"{_serverUrl}/Updates/LoadFile?fileName={fileName}&type={type}";
+                var fullUrl = $"{_serverUrl}/ClientBuilds/LoadFile?fileName={fileName}&type={type}";
 
                 var response = await httpClient.GetAsync(fullUrl);
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -327,6 +310,7 @@ namespace Penta_ClientLib.Services
                 {
                     ConnectionStateChanged?.Invoke(false);//отключились
                     await InicializeConnect();// Сюда попадаем, если переподключение не удалось (например, нет сети)
+                    _settingsHolder.SetTimestampOfLastServerConnect();
                 };
                 _messHabConnection.Reconnecting += async (ex) =>//идет переподключение
                 {
@@ -362,7 +346,10 @@ namespace Penta_ClientLib.Services
                 await _messHabConnection.StartAsync();
 
                 if (_messHabConnection.State == HubConnectionState.Connected)
+                {
                     ConnectionStateChanged?.Invoke(true);
+                    _settingsHolder.SetTimestampOfLastServerConnect();//на всякий случай, вдуг при отклдючении не успеет
+                }
             }
         }
 
@@ -372,6 +359,7 @@ namespace Penta_ClientLib.Services
         {
             if (_messHabConnection != null)
             {
+                _settingsHolder.SetTimestampOfLastServerConnect();
                 await _messHabConnection.StopAsync();
                 await _messHabConnection.DisposeAsync();
                 _messHabConnection = null;

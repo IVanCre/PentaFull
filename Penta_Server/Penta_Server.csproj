@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
 	<SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
-	<Version>1.5</Version>
+	<Version>1.5.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,10 +49,6 @@
     <None Update="pentaPassCert.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>
