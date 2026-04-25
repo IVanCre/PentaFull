@@ -17,5 +17,8 @@ namespace Penta_ClientLib.Interfaces
 
         Task<List<Message>> GetNonSended();
         Task<bool> MarkMessageLikeSended(long msgID);
+
+        Task<int> GetAllMessagesCount();
+        Task DeleteOld(int maxDaysHold);
     }
 }

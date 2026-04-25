@@ -16,7 +16,6 @@ namespace Client.Platforms.Android.PushServices
         private static int _counterID = 0;//чтобы между экземплярами сохранялся
         private int smallIconID;
         private int largeIconID;
-        private string _groupKey = "messages";//позволяет объединять сообщение в стек
 
         public NotificationHelper(Context context)
         {
@@ -37,21 +36,6 @@ namespace Client.Platforms.Android.PushServices
                 var manager = (NotificationManager)_context.GetSystemService(Context.NotificationService);
                 manager.CreateNotificationChannel(channel);
             }
-        }
-
-        public void ShowNotifyStack()//спрессовывает сообщения в обобщенное(стек)
-        {
-            var summary = new NotificationCompat.Builder(_context, _channelId)
-                .SetContentTitle("Новые сообщения")
-                .SetSmallIcon(smallIconID) // Иконка(типа системной) в левом верхнем углу экрана
-                .SetLargeIcon(BitmapFactory.DecodeResource(_context.Resources, largeIconID))//иконка в уведомлении
-                .SetGroup(_groupKey)
-                .SetGroupSummary(true) // Ключевой флаг
-                .SetAutoCancel(true)
-                .Build();
-
-            var notificationManager = NotificationManagerCompat.From(_context);
-            notificationManager.Notify(0, summary);
         }
 
         /// <summary>
@@ -91,7 +75,6 @@ namespace Client.Platforms.Android.PushServices
 
             var builder = new NotificationCompat.Builder(_context, _channelId)
                 .SetContentTitle(title)
-                .SetGroup(_groupKey)
                 .SetContentText(text)
                 .SetSmallIcon(smallIconID) // Иконка(типа системной) в левом верхнем углу экрана
                 .SetLargeIcon(BitmapFactory.DecodeResource(_context.Resources, largeIconID))//иконка в уведомлении

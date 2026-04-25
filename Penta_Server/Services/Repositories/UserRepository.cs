@@ -1,9 +1,7 @@
 ﻿using Penta_Server.Interfaces;
 using Penta_Server.Services.Repositories.Models;
 using Penta_Server.StaticUtilits;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace Penta_Server.Services.Repositories
 {
@@ -23,7 +21,14 @@ namespace Penta_Server.Services.Repositories
                 var user =db.Users.FirstOrDefault(x => x.Name == name && x.MaskedPassword == maskedPass);
                 if (user == null)
                 {
-                    var addedUser = db.Users.Add(new UserEntity() { Name = name,MaskedPassword= maskedPass });
+                    var addedUser = db.Users.Add(
+                        new UserEntity() 
+                        { 
+                            Name = name,
+                            MaskedPassword= maskedPass,
+                            RegistrationDate = DateTime.UtcNow,
+                            LastConnectDate = DateTime.UtcNow,
+                        });
                     await db.SaveChangesAsync();
                     return addedUser.Entity.ID;
                 }
@@ -31,6 +36,19 @@ namespace Penta_Server.Services.Repositories
                     return -1;
             }
         }
+        public async void SetUserLastConnectDate(int userID)
+        {
+            using (DB db = new DB(_connStr))
+            {
+                var user = db.Users.FirstOrDefault(x => x.ID == userID);
+                if (user != null)
+                {
+                    user.LastConnectDate = DateTime.UtcNow;
+                    await db.SaveChangesAsync();
+                }
+            }
+        }
+
         public async Task<int> FindUserAsync(string name, string password)
         {
             using (DB db = new DB(_connStr))
@@ -60,17 +78,18 @@ namespace Penta_Server.Services.Repositories
 
                 if (user != null)
                 {
-                    SqlParameter param1 = new SqlParameter("@param", user.ID);
-                    db.Database.ExecuteSqlRaw($"DELETE FROM Messages WHERE ToUserID=@param",param1);//del messages
-                    await db.SaveChangesAsync();
+                    await db.Messages
+                        .Select(x=>x.ID==user.ID)
+                        .ExecuteDeleteAsync();
 
-                    SqlParameter param2 = new SqlParameter("@param", user.ID);
-                    db.Database.ExecuteSqlRaw($"DELETE FROM Tokens WHERE UserID=@param", param2);
-                    await db.SaveChangesAsync();
+                    await db.Tokens
+                        .Include (x=>x.User)
+                        .Select(x => x.User.ID == user.ID)
+                        .ExecuteDeleteAsync();
 
-                    SqlParameter param3 = new SqlParameter("@param", user.ID);//не хочу париться с настройкой каскадного удаления
-                    db.Database.ExecuteSqlRaw($"DELETE FROM Users WHERE ID=@param", param3);
-                    await db.SaveChangesAsync();
+                    await db.Users
+                        .Select(x => x.ID == user.ID)
+                        .ExecuteDeleteAsync();
 
                     _logger?.SaveInfo($"Пользователь {user.Name} удален");
                     return true;
@@ -84,11 +103,21 @@ namespace Penta_Server.Services.Repositories
         {
             using (DB db= new DB(_connStr))
             {
-                await db.Database.ExecuteSqlRawAsync($"DELETE FROM Messages WHERE ToUserID={userID}");
-                var deleted = await db.Database.ExecuteSqlAsync($"DELETE FROM Tokens WHERE UserID={userID}");
+                await db.Messages
+                    .Select(x => x.ToUserID == userID)
+                    .ExecuteDeleteAsync();
+
+                var deleted = await db.Tokens
+                        .Include(x => x.User)
+                        .Select(x => x.User.ID == userID)
+                        .ExecuteDeleteAsync();
+
                 if (deleted == 1)
                 {
-                    deleted = await db.Database.ExecuteSqlAsync($"DELETE FROM Users WHERE ID={userID}");
+                    deleted = await db.Users
+                        .Select(x => x.ID == userID)
+                        .ExecuteDeleteAsync();
+
                     if (deleted == 1)
                         return true;
                 }
@@ -97,12 +126,28 @@ namespace Penta_Server.Services.Repositories
             return false;
         }
 
-        public async Task<List<int>> GetAllUsers()
+        public async Task<List<int>> GetAllUsersID()
         {
             using (DB db=new DB(_connStr))
             {
-                return await db.Users.Select(x => x.ID).ToListAsync();
+                return await db.Users
+                    .Where(x=> x.Name!="admin_1991")
+                    .Select(x => x.ID)
+                    .ToListAsync();
             }
         }
+
+        public async Task<List<string>> GetAllUsersNames()
+        {
+            using (DB db = new DB(_connStr))
+            {
+                return await db.Users
+                    .Where(x => x.Name != "admin_1991")
+                    .Select(x => x.Name)
+                    .ToListAsync();
+            }
+        }
+
+
     }
 }

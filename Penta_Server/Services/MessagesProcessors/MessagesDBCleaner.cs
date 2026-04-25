@@ -1,4 +1,5 @@
-﻿using Penta_Server.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Penta_Server.Interfaces;
 using Penta_Server.Services.Repositories;
 using SysTimer =System.Timers.Timer;
 
@@ -13,12 +14,14 @@ namespace Penta_Server.Services.MessagesProcessors
         private int minutesTimeout;
         private ILogWriter _logger;
         private string connStr;
+        private int _daysToHold;
 
         public MessagesDBCleaner(
             ILogWriter logger,
             IConfiguration config)
         {
             minutesTimeout = Convert.ToInt32(config["DBCleaner:AutoCleanPeriodMinutes"]);
+            _daysToHold = Convert.ToInt32(config["DBCleaner:MessageLifePeriodDays"]);
             _cleaner = new SysTimer(60_000 * minutesTimeout);
             _cleaner.Elapsed += Timer_Elapsed;
             _cleaner.AutoReset = true; // повторять
@@ -28,14 +31,58 @@ namespace Penta_Server.Services.MessagesProcessors
             connStr = config["WorkDB:ConnString"];
         }
 
-        private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private async void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             using (DB db= new DB(connStr))
             {
-                int deleted = 0;//тут можно заюзать нормальную логику
-               _logger?.SaveInfo($"Вызвана очистка БД. Удалено строк: {deleted}");
+                var ids = await db.Messages
+                    .Where(x => x.UtcTimestamp < DateTime.UtcNow.AddDays(_daysToHold))
+                    .Select(x => new { x.ID, x.SharedDataID })
+                    .ToListAsync();
+
+                var messageIds = ids.Select(x => x.ID).ToList();
+                var sharedDataIds = ids.Select(x => x.SharedDataID).Distinct().ToList();
+
+                // 2. Удаляем в правильном порядке
+                using var transaction = await db.Database.BeginTransactionAsync();
+                try
+                {
+                    // Сначала сообщения (зависимая сущность)
+                    int del_1= await db.Messages
+                        .Where(m => messageIds.Contains(m.ID))
+                        .ExecuteDeleteAsync();
+
+                    // Затем общие данные (основная сущность)
+                    int del_2 =await db.SharedDatas
+                        .Where(s => sharedDataIds.Contains(s.ID))
+                        .ExecuteDeleteAsync();
+
+                    await transaction.CommitAsync();
+
+                    _logger?.SaveInfo($"Вызвана очистка БД. Удалено сообщений={del_1}. Удалено данных={del_2}");
+                }
+                catch(Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.SaveError($"Ошибка при очистке БД от сообщений: {ex.Message}");
+                }
             }
         }
+
+        public async void ClearAll()
+        {
+            using (DB db = new DB(connStr))
+            {
+                await db.Messages
+                    .Where(x => x.ID > -1)
+                    .ExecuteDeleteAsync();
+
+                await db.SharedDatas
+                    .Where(x => x.ID > -1)
+                    .ExecuteDeleteAsync();
+            }
+        }
+
 
         public void Start()
         {

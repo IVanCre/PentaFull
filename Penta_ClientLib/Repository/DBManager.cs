@@ -442,6 +442,20 @@ namespace Penta_ClientLib.Repository
                 return false;
         }
 
+        public async Task<int> GetAllMessagesCount()
+        {
+            return await _connection.Table<MessageItemEntity>().CountAsync();
+        }
+        public async Task DeleteOld(int maxDaysHold)
+        {
+            if (maxDaysHold > 1)
+            {
+                var lastSaveDate = DateTimeOffset.UtcNow.AddDays(-1 * maxDaysHold).ToUnixTimeMilliseconds();
+                await _connection.Table<MessageItemEntity>()
+                    .Where(x => x.TimestampMilisec < lastSaveDate)
+                    .DeleteAsync();
+            }
+        }
 
         public async Task<List<Message>> GetLastMessagesByChat(int chatID, int maxLenCount, DateTimeOffset startTimestamp)
         {

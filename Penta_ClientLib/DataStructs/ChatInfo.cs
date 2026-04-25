@@ -1,4 +1,7 @@
-﻿namespace Penta_ClientLib.DataStructs
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace Penta_ClientLib.DataStructs
 {
     internal static class ImageResourceProvider
     {
@@ -12,12 +15,41 @@
         int id,
         string name,
         ChatType type,
-        bool haveUnreaded)
+        bool haveUnreaded) : INotifyPropertyChanged
     {
         public  int ID { get; private set; } =id;
-        public string ChatName { get; private set; } = name;
+
+        private string _chatName = name;
+        public string ChatName
+        {
+            get => _chatName;
+            set
+            {
+                if (_chatName != value)
+                {
+                    _chatName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public ChatType ChatType { get; private set; }= type;
+
+        private bool _haveUnreaded = haveUnreaded;
+        public bool HaveUnreadedMessages
+        {
+            get => _haveUnreaded;
+            set
+            {
+                if (_haveUnreaded != value)
+                {
+                    _haveUnreaded = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+
         public string ImageSourceName//имя картинки, которую надо использовать для чата конкретного типа
         {
             get
@@ -31,8 +63,7 @@
                 return string.Empty;
             }
         }
-  
-        public bool HaveUnreadedMessages { get; set; }=haveUnreaded;
+
         public string NotifySourceName//имя картинки, которую надо использовать для отображения новоого сообщения
         {
             get
@@ -43,5 +74,11 @@
                     return string.Empty;
             }
         }
+
+        
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+
     }
 }

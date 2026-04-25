@@ -172,5 +172,6 @@ namespace Penta_ClientLib.Services
 
         public Task<bool> AmCreatedThisGroupChat(int chatID)=>_chatHolder.AmCreatedThisGroupChat(chatID);
 
+        public Task MarkChatLikeReaded(int chatID)=>_chatHolder.SetChatHaveUnreaded(chatID, false);
     }
 }

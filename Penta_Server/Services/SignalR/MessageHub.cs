@@ -17,24 +17,27 @@ namespace Penta_Server.Services.SignalR
         ILogWriter logger,
         IMessageProcessor messProcessor,
         IClientNotifier clientNotifier,
-        IConnectionsRepository connRepo) : Hub
+        IConnectionsRepository connRepo,
+        IUserRepository userRepo) : Hub
     {
         private IConnectionsRepository _connRepo = connRepo;//чтобы отслеживать ассоциацию пользователя и его подключение
         private ILogWriter _logger = logger;
         private IMessageProcessor _messageProc = messProcessor;
         private IClientNotifier _clientNotifier = clientNotifier;
+        private IUserRepository _userRepo = userRepo;
 
         public override async Task OnConnectedAsync()//подключение клиента
         {
             var userMaskedID = Context.User.Claims.FirstOrDefault(x => x.Type == "userID")?.Value;//Проверяем сущность, котору сами добавили в токене
             if (!string.IsNullOrEmpty(userMaskedID))
             {
-                var userID_int = int.Parse(userMaskedID);
-                _logger?.SaveInfo($"Пользователь {userID_int} подключился к хабу с ConnectionId: {Context.ConnectionId}");
-                _connRepo.Add(userID_int, Context.ConnectionId);
+                var userID = int.Parse(userMaskedID);
+                _logger?.SaveInfo($"Пользователь {userID} подключился к хабу с ConnectionId: {Context.ConnectionId}");
+                _connRepo.Add(userID, Context.ConnectionId);
+                _userRepo.SetUserLastConnectDate(userID);
 
                 await base.OnConnectedAsync();
-                await _clientNotifier?.SendAllNonSended(userID_int, Context.ConnectionId);//сразу отдаем накопившиеся сообщения
+                await _clientNotifier?.SendAllNonSended(userID, Context.ConnectionId);//сразу отдаем накопившиеся сообщения
             }
             else
                 _logger?.SaveInfo($"Отказ в подключении юзеру к хабу");
@@ -42,11 +45,12 @@ namespace Penta_Server.Services.SignalR
 
         public override async Task OnDisconnectedAsync(Exception? exep)//отключение клиента
         {
-
             var userID = Context.User.Claims.FirstOrDefault(x => x.Type == "userID")?.Value;
             _logger?.SaveInfo($"Пользователь {userID} отключился ");
 
-            _connRepo.RemoveByUserID(int.Parse(userID));
+            var parsed = int.Parse(userID);
+            _connRepo.RemoveByUserID(parsed);
+            _userRepo.SetUserLastConnectDate(parsed);
 
             await base.OnDisconnectedAsync(null);
 

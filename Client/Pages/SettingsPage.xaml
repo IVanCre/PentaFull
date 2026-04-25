@@ -6,30 +6,35 @@
 
     <VerticalStackLayout Margin="20" Spacing="15">
         <Grid ColumnDefinitions="*, Auto">
-            <Label Text="Текущая версия клиента" VerticalOptions="Center"/>
+            <Label Text="Текущая версия клиента:" VerticalOptions="Center"/>
             <Label Grid.Column="1" Text="{Binding AppVersion}" FontAttributes="Bold"/>
         </Grid>
 
         <Grid ColumnDefinitions="*, Auto">
-            <Label Text="Связь с сервером" VerticalOptions="Center"/>
+            <Label Text="Связь с сервером:" VerticalOptions="Center"/>
             <Label Grid.Column="1" Text="{Binding ServerAvailable}" FontAttributes="Bold"/>
         </Grid>
-
-
-        <Button x:Name="UpdateBtn" Text="Установить новую версию" Clicked="DownloadClick" HorizontalOptions="Center" />
-
+        
         <Grid ColumnDefinitions="*, Auto">
-            <Label Text="Показывать сис.логи" VerticalOptions="Center" />
-            <CheckBox x:Name="LoggerButon" HorizontalOptions="End" CheckedChanged="UseLoggerChanged"/>
+            <Label Text="Всего сообщений:" VerticalOptions="Center"/>
+            <Label Grid.Column="1" Text="{Binding AllMessageCount}" FontAttributes="Bold"/>
         </Grid>
 
+        <Button 
+            x:Name="UpdateBtn" 
+            Text="Установить новую версию" 
+            Clicked="DownloadClick" 
+            HorizontalOptions="Center"
+            Margin="0,20,0,0"/>
 
         <Label 
             Text="ссылка на скачивание android-клиента:"
-            HorizontalOptions="Center"/>
+            HorizontalOptions="Center"
+            Margin="0,20,0,0"/>
         <Image
             Source="qr_download_client.png"
-            HorizontalOptions="Center" Margin="0,-15,0,0"/>
+            HorizontalOptions="Center" 
+            Margin="0,-15,0,0"/>
 
         <ActivityIndicator 
             x:Name="LoaderSpin"

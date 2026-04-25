@@ -286,6 +286,26 @@ namespace Penta_ClientLib.Interfaces
         Task<long> GetTimestampOfLastConnectToServer();
 
         /// <summary>
+        /// Помечаем чат как не имеющий непрочитанных сообщений
+        /// </summary>
+        /// <param name="chatID"></param>
+        void MarkChatLikeReaded(int chatID);
+
+        /// <summary>
+        /// Возвращает общее количество сообщений во всех чатах
+        /// </summary>
+        /// <returns></returns>
+        Task<int> GetAllMessagesCount();
+
+        /// <summary>
+        /// Запускает удаление сообщений, которые были созданы позже, чем Х дней назад
+        /// </summary>
+        /// <param name="maxDaysHold"></param>
+        /// <returns></returns>
+        Task DeleteOldMessages(int maxDaysHold);
+
+
+        /// <summary>
         /// вызывает закрытие всех ресурсов клиента.
         /// Вызывать перед завершением приложения
         /// </summary>

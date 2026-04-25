@@ -150,11 +150,18 @@ namespace Penta_Server.Services.MessagesProcessors
         }
         private async void NotifyAll(Message msg)
         {
-            var allUsers = await _userRepo.GetAllUsers();
-            var sharedMarker = msg.ID;
+            var allUsers = await _userRepo.GetAllUsersID();
+            long sharedMarker = -1;
             foreach (var recieverID in allUsers)
             {
-                _messageSaver.Save(MessageFactory.CreateNotify(recieverID, msg.GetDataLikeString()),sharedMarker, allUsers.Count);
+                var finalMsg = MessageFactory.CreateNotify(recieverID, msg.GetDataLikeString());
+                if (sharedMarker == -1)
+                    sharedMarker = finalMsg.ID;
+
+                _messageSaver.Save(
+                    finalMsg,
+                    sharedMarker,
+                    allUsers.Count);
             }
         }
         #endregion

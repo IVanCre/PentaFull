@@ -29,7 +29,7 @@
 		<ApplicationId>com.companyname.penta</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.5.4</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>1.6.1</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
@@ -38,25 +38,25 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-		<Version>1.5.4</Version>
+		<Version>1.6.1</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 	  <AndroidKeyStore>False</AndroidKeyStore>
-	  <RunAOTCompilation>False</RunAOTCompilation>
-	  <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	  <DebugSymbols>True</DebugSymbols>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
-	  <ApplicationDisplayVersion>1.5.4</ApplicationDisplayVersion>
+	  <ApplicationDisplayVersion>1.6.1</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>	
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 	  <AndroidKeyStore>False</AndroidKeyStore>
-	  <RunAOTCompilation>False</RunAOTCompilation>
+	  <RunAOTCompilation>True</RunAOTCompilation>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
-	  <ApplicationDisplayVersion>1.5.4</ApplicationDisplayVersion>
+	  <ApplicationDisplayVersion>1.6.1</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <DebugSymbols>True</DebugSymbols>		
 	</PropertyGroup>
@@ -91,6 +91,7 @@
 	  <None Remove="Resources\Images\hands.svg" />
 	  <None Remove="Resources\Images\message.png" />
 	  <None Remove="Resources\Images\notify_chat.png" />
+	  <None Remove="Resources\Images\qr_download_client.png" />
 	</ItemGroup>
 
 	

@@ -2,7 +2,7 @@
 
 namespace Penta_Server.Services
 {
-    public class ClientFileObserver(IConfiguration config) : IClientFileObserver
+    public class ClientBuildsObserver(IConfiguration config) : IClientFileObserver
     {
         private IConfiguration _config = config;
         private int _versionSize = 4;//число цифр в версии major.minor.build.revision

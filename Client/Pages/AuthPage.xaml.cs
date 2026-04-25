@@ -20,6 +20,10 @@ namespace Client.Pages
 			_clientFacade = App.Services.GetRequiredService<IClientFacade>();
 			_notifier = App.Services.GetRequiredService<IDialogManager>();
             _platformConfigurator= App.Services.GetRequiredService<IPlatformConfigurator>();
+
+            var itemToRemove = Shell.Current.Items.FirstOrDefault(x => x.Route == "LoadingPage");//удаляем заглушку
+            if (itemToRemove != null)
+                Shell.Current.Items.Remove(itemToRemove);
         }
 
 

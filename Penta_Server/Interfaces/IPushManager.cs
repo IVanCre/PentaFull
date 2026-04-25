@@ -2,7 +2,7 @@
 {
     public interface IPushManager
     {
-        Task SendPushToUserDevices(int userID, string title, string text);
+        Task SendPushToUserDevices(int toUserID, int fromUserID, string text);
         Task SendPushToUserDevices(int toUserID, int fromuserID);
     }
 }

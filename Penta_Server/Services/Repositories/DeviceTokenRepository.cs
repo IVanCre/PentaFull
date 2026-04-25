@@ -22,7 +22,10 @@ namespace Penta_Server.Services.Repositories
         {
             using (DB db = new DB(connStr))
             {
-                var deleted = await db.Database.ExecuteSqlRawAsync($"DELETE FROM UsersDevices WHERE UserID={userID} AND TokenDevice={tokenDevice}");
+                var deleted = await db.UsersDevices
+                    .Select(x => x.UserID == userID && x.DeviceToken == tokenDevice)
+                    .ExecuteDeleteAsync(); 
+
                 return deleted == 1;
             }
         }

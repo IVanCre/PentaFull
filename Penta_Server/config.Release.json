@@ -7,6 +7,13 @@
           "Path": "pentaPassCert.pfx",
           "Password": "pentaPass"
         }
+      },
+      "Https_local": {
+        "Url": "https://localhost:9093",
+        "Certificate": {
+          "Path": "pentaPassCert.pfx",
+          "Password": "pentaPass"
+        }
       }
     }
   },

@@ -3,19 +3,25 @@ using Microsoft.AspNetCore.Mvc;
 using MessageLib;
 using Microsoft.AspNetCore.Authorization;
 using Penta_Server.StaticUtilits;
+using Penta_Server.Services.MessagesProcessors;
+using System.ComponentModel;
 
 
 namespace Penta_Server.Controllers
 {
     [Route("Admin")]
     [ApiController]
+#if RELEASE//задрало уже токены вбивать))
     [Authorize(Roles = RoleNames.Admin)]
+#endif
     public class AdminController(
         ILogReader logReader,
-        IMessageProcessor messProc) : ControllerBase
+        IMessageProcessor messProc,
+        MessagesDBCleaner cleaner) : ControllerBase
     {
         private ILogReader _logReader = logReader;
         private IMessageProcessor _messProc = messProc;
+        private MessagesDBCleaner _messCleaner = cleaner;
 
 
 
@@ -45,6 +51,20 @@ namespace Penta_Server.Controllers
                     DateTimeOffset.UtcNow,
                     false));
         }
+
+        [HttpPost("DeleteMessages")]
+        public void DeleteAllMessages()
+        {
+            _messCleaner.ClearAll();
+        }
+
+        [HttpGet("GetUserList")]
+        public async Task<List<string>> GetAllUsers(IUserRepository userRepo)
+        {
+            return await userRepo.GetAllUsersNames();
+        }
+
+
 
 
 

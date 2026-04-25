@@ -21,6 +21,7 @@ namespace Client.Pages
             base.OnAppearing();
 
             var _clientFacade = App.Services.GetRequiredService<IClientFacade>();
+            await _clientFacade.DeleteOldMessages(14);//пока с дефолтом
             ConfigureServices(_clientFacade);
             await TryAutoLogin(_clientFacade);
         }

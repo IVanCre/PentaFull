@@ -23,6 +23,10 @@ namespace Client.Pages
 
             NotificationHelper.SkipAllNotifications();
             BindingContext = this;
+
+            var itemToRemove = Shell.Current.Items.FirstOrDefault(x => x.Route == "LoadingPage");//удаляем заглушку
+            if (itemToRemove != null)
+                Shell.Current.Items.Remove(itemToRemove);
         }
 
 
@@ -39,22 +43,25 @@ namespace Client.Pages
                 _clientFacade.ContactChanged += TryUpdateChatName;
             }
 
-            //при каждом отображении мы пересоздаем список чатов, т.к. чат создается в другом месте и перенаправляется сюда
             var findedChats = await _clientFacade.GetAllChatsInfoAsync();
-            var findedContacts = await _clientFacade.GetAllContactsAsync();
-            ContactInfo identityContact;
-            MainThread.BeginInvokeOnMainThread(() =>
+            if(findedChats.Count!= ChatsList.Count)
             {
-                ChatsList?.Clear();
-                foreach (var chatInfo in findedChats)
+                ContactInfo identityContact;
+                var findedContacts = await _clientFacade.GetAllContactsAsync();
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
-                    if (identityContact != null)
-                        ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.ChatType, chatInfo.HaveUnreadedMessages));//прописываем имя юзера из контакта
-                    else
-                        ChatsList.Add(chatInfo);//оставляем как есть
-                }
-            });
+                    ChatsList.Clear();//так быстрее
+                    foreach (var chatInfo in findedChats)
+                    {
+                        identityContact = findedContacts.FirstOrDefault(x => x.UserContactID == chatInfo.ChatName);
+                        if (identityContact != null)
+                            ChatsList.Add(new ChatInfo(chatInfo.ID, identityContact.UserName, chatInfo.ChatType, chatInfo.HaveUnreadedMessages));//прописываем имя юзера из контакта
+                        else
+                            ChatsList.Add(chatInfo);//оставляем как есть
+                    }
+                });
+            }
+
         }
 
         private async void OnShortClick(object sender, EventArgs e)
@@ -93,10 +100,7 @@ namespace Client.Pages
             {
                 var finded = ChatsList.FirstOrDefault(x => x.ChatName == oldName);
                 if (finded != null)
-                {
-                    ChatsList.Remove(finded);
-                    ChatsList.Add(new ChatInfo(finded.ID, newName, finded.ChatType,finded.HaveUnreadedMessages));//чтобы перерисовку вызвать
-                }
+                    finded.ChatName = newName;
             });
         }
 

@@ -64,11 +64,17 @@ namespace Client.Pages
 					_clientFacade.StartObserveUserConnection(_chatInfo.ID, _recieverUserID);//просим присылать изменения подключения  получателя
 				}
 			}
-  
             BindingContext = this;
 		}
+
         private void OnPageUnloaded(object sender, EventArgs e)
         {
+			if (_chatInfo.HaveUnreadedMessages)
+			{
+				_chatInfo.HaveUnreadedMessages = false;
+				_clientFacade.MarkChatLikeReaded(_chatInfo.ID);
+			}
+
             this.Unloaded -= OnPageUnloaded;
             _clientFacade.MessageAddedToChat -= TryAddIncomingMessageToChat;
             _clientFacade.ChatDeleted -= ChatDeleted;

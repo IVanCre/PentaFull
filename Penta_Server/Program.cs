@@ -42,8 +42,11 @@ namespace Penta_Server
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.MapControllers();
+
+                ProtectSwaggerUI(app);
                 app.UseSwagger();
                 app.UseSwaggerUI();
+
                 app.UseHttpsRedirection();
                 app.MapHub<MessageHub>("/exchanger");
 
@@ -86,11 +89,12 @@ namespace Penta_Server
             services.AddSingleton<IMessageProcessor, MessageProcessor>();
             services.AddSingleton<IClientNotifier, ClientNotifier>();
             services.AddSingleton<IPushManager, PushManager>();
-            services.AddSingleton<IClientFileObserver, ClientFileObserver>();
+            services.AddSingleton<IClientFileObserver, ClientBuildsObserver>();
             services.AddSingleton<IUsersConnectionObserver, UsersConnectionObserver>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();
+
             services.AddSwaggerGen(options =>//настраиваем возможность ввода токена на странице сваггера
             {
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme//тут настраиваем описание ui-формочки
@@ -157,6 +161,23 @@ namespace Penta_Server
                                 },
                             };
                         });
+        }
+
+        private static void ProtectSwaggerUI(WebApplication app)//т.е. разрешаем работу с мордой только с локального
+        {
+            app.Use((context, next) =>
+            {
+                if (context.Request.Path.StartsWithSegments("/swagger"))
+                {
+                    var hostName = context.Request.Host.Host;
+                    if (hostName != "localhost")
+                    {
+                        context.Response.StatusCode = 403;
+                        return Task.CompletedTask;
+                    }
+                }
+                return next();
+            });
         }
 
         //используем свой сертификат и работаем с ним локально

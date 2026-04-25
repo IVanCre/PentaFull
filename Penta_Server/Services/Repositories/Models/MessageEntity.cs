@@ -8,6 +8,7 @@ namespace Penta_Server.Services.Repositories.Models
     [Index("ID",IsUnique=true)]
     [Index("ToUserID","IsSended")]
     [Index("Type")]
+    [Index("UtcTimestamp")]
     public class MessageEntity
     {
         public long ID { get; set; }

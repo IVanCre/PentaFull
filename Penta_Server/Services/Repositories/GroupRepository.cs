@@ -38,7 +38,10 @@ namespace Penta_Server.Services.Repositories
                 var finded = db.Groups.FirstOrDefault(x => x.AdminGroupID==masterUserID && x.ID== chatID);
                 if (finded!=null)
                 {
-                    var result= await db.Database.ExecuteSqlRawAsync($"DELETE FROM Groups WHERE ID={finded.ID}");
+                    var result= await db.Groups
+                        .Select(x=>x.ID==finded.ID)
+                        .ExecuteDeleteAsync();
+
                     return result == 1;
                 }
             }

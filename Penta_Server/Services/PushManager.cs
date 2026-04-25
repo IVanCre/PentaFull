@@ -39,15 +39,15 @@ namespace Penta_Server.Services
         // Метод отправки "тихого" сообщения (Data Message)
         public async Task SendPushToUserDevices(int toUserID, int fromUserID)
         {
-            await SendPushToUserDevices(toUserID, fromUserID.ToString(), $"Нажмите, чтобы просмотреть. {DateTime.Now.ToString("HH:mm:ss")}");
+            await SendPushToUserDevices(toUserID, fromUserID, $"Новое сообщение.Нажмите для просмотра. {DateTime.Now.ToString("HH:mm:ss")}");
         }
 
-        public async Task SendPushToUserDevices(int userID, string title, string msg)
+        public async Task SendPushToUserDevices(int toUserID, int fromUserID,  string msg)
         {
-            var findedDevices = await _deviceTknHolder.GetTokenDeviceByID(userID);
+            var findedDevices = await _deviceTknHolder.GetTokenDeviceByID(toUserID);
             if (findedDevices != null && findedDevices.Count > 0)
             {
-                _logger?.SaveInfo($"Пересылаем клиенту id={userID} пуш-уведомление ");
+                _logger?.SaveInfo($"Пересылаем клиенту id={toUserID} пуш-уведомление ");
                 foreach (var deviceToken in findedDevices)//веерная рассылка на все известные устройства
                 {
                     var message = new Message()
@@ -55,7 +55,7 @@ namespace Penta_Server.Services
                         Token = deviceToken,
                         Data = new Dictionary<string, string>()                // Поля Data — это то, что ваш Worker обработает в фоне
                         {
-                            { "title",title },
+                            { "fromUserID", fromUserID.ToString()},
                             { "message", msg },
                             { "timestamp_msec",DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString()}//когда сообщение отправлено с сервера
                         },

@@ -14,15 +14,16 @@ public partial class SettingsPage : ContentPage
     public string AppVersion { get; private set; } = "Unknown";
 	public string ServerAvailable { get; private set; } = "Unknown";
 	public string NewVersion { get; private set; } = "Unknown";
+    public int AllMessageCount { get; private set; } = 0;
 
 
 
-	public SettingsPage()
+    public SettingsPage()
 	{
 		InitializeComponent();
 	}
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
@@ -30,6 +31,7 @@ public partial class SettingsPage : ContentPage
         {
             _clientFacade = App.Services.GetService<IClientFacade>();
             _appUpdater = App.Services.GetService<IUpdateManager>();
+            AllMessageCount= await _clientFacade.GetAllMessagesCount();
 
             AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             _clientFacade.ConnectionToServerChanged += ConnectChanged;
@@ -45,9 +47,9 @@ public partial class SettingsPage : ContentPage
     private void ConnectChanged(bool state)
 	{
 		if (state)
-			ServerAvailable = "true";
+			ServerAvailable = "есть";
 		else
-			ServerAvailable = "false";
+			ServerAvailable = "отсутствует";
 
 		OnPropertyChanged(nameof(ServerAvailable));
 	}
@@ -63,14 +65,5 @@ public partial class SettingsPage : ContentPage
 
         LoaderSpin.IsRunning = false;
         UpdateBtn.IsEnabled = true;
-    }
-
-
-    private void UseLoggerChanged(object sender, EventArgs e)
-	{
-		if(LoggerButon.IsChecked)
-			_clientFacade.UseSysLogger(true);//включает отслеживание и вывод системных ошибок. Подписка идет на странице LoadPage
-		else
-            _clientFacade.UseSysLogger(false);
     }
 }

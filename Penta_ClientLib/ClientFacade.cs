@@ -236,6 +236,11 @@ namespace Penta_ClientLib
 
         public Task<List<Message>> GetOldMessagesByChatAsync(int chatID, int maxLastMessageCount,DateTimeOffset startTimestamp)=>
             _messHolder.GetLastMessagesByChat(chatID, maxLastMessageCount, startTimestamp);
+        
+        public Task<int> GetAllMessagesCount()=>_messHolder.GetAllMessagesCount();
+        
+        public Task DeleteOldMessages(int maxDaysHold) => _messHolder.DeleteOld(maxDaysHold);
+
 
         private async void SendNonSended(bool connectionToServer)
         {
@@ -273,5 +278,12 @@ namespace Penta_ClientLib
         }
 
         public Task<long> GetTimestampOfLastConnectToServer() => _settingsProvider.GetTimestampOfLastServerConnect();
+
+        public void MarkChatLikeReaded(int chatID)
+        {
+            _=_chatManager.MarkChatLikeReaded(chatID);
+        }
+
+
     }
 }

@@ -19,6 +19,22 @@ public partial class ContactCreatorPage : ContentPage
         _uiContacts= uiContacts;
     }
 
+    public ContactCreatorPage(ContactInfo contactInfo)//для просмотра\редактирования контакта
+    {
+        InitializeComponent();
+        Title = "Просмотр контакта";
+
+        UserName.Text = contactInfo.UserName;
+        UserName.IsEnabled = false;
+        UserName.TextColor = Color.FromArgb("#000000");
+
+        ContactID.Text= contactInfo.UserContactID;
+        ContactID.IsEnabled = false;
+        ContactID.TextColor = Color.FromArgb("#000000");
+
+        createBtn.IsVisible = false;
+    }
+
     private async void OnCreateContact(object sender, EventArgs e)
     {
         var userName = UserName.Text;

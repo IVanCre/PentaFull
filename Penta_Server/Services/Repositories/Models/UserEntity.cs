@@ -14,5 +14,8 @@ namespace Penta_Server.Services.Repositories.Models
         public string Name { get; set; }
 
         public string MaskedPassword { get; set; }//хранится в зашифрованном виде
+
+        public DateTimeOffset? RegistrationDate { get; set; }
+        public DateTimeOffset? LastConnectDate { get; set; }
     }
 }

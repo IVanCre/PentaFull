@@ -43,7 +43,6 @@ namespace Client.Pages
 
         private async void OnLongClick(object sender, EventArgs e)
         {
-
             var button = sender as LongButton;
             var contact = (ContactInfo)button?.BindingContext;
 
@@ -53,7 +52,13 @@ namespace Client.Pages
                 await _clientFacade.DeleteContactAsync(contact.UserName);
             }
         }
+        private async void OnShowContact(object sender, EventArgs e)
+        {
+            var button = sender as LongButton;
+            var contact = (ContactInfo)button?.BindingContext;
 
+            await Navigation.PushAsync(new ContactCreatorPage(contact));
+        }
 
         private async void OnContactCreateClick(object sender, EventArgs e)
 		{

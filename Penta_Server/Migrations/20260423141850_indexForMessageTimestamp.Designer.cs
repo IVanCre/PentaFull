@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Penta_Server.Services.Repositories;
 
@@ -11,9 +12,11 @@ using Penta_Server.Services.Repositories;
 namespace Penta_Server.Migrations
 {
     [DbContext(typeof(DB))]
-    partial class DBModelSnapshot : ModelSnapshot
+    [Migration("20260423141850_indexForMessageTimestamp")]
+    partial class indexForMessageTimestamp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -182,18 +185,12 @@ namespace Penta_Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<DateTimeOffset?>("LastConnectDate")
-                        .HasColumnType("datetimeoffset");
-
                     b.Property<string>("MaskedPassword")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
-
-                    b.Property<DateTimeOffset?>("RegistrationDate")
-                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("ID");
 

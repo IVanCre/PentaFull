@@ -17,6 +17,8 @@ namespace Penta_ClientLib.Interfaces
         Task<bool> DeletePrivateChat(int chatID);
         Task<int> CreatePrivateChat(string chatName);
 
+        Task MarkChatLikeReaded(int chatID);
+
         Task<List<ChatInfo>> GetAllChatsInfo();
         Task<ChatInfo> GetChatByID(int chatID);
     }

@@ -27,7 +27,8 @@
                 HorizontalOptions="FillAndExpand"/>
         </Grid>
 
-        <Button 
+        <Button
+            x:Name="createBtn"
             Text="Создать" 
             HorizontalOptions="FillAndExpand"
             Clicked="OnCreateContact"
