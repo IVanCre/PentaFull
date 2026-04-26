@@ -16,6 +16,8 @@ namespace Penta_Server.Services.MessagesProcessors
         private string connStr;
         private int _daysToHold;
 
+
+
         public MessagesDBCleaner(
             ILogWriter logger,
             IConfiguration config)
@@ -91,6 +93,56 @@ namespace Penta_Server.Services.MessagesProcessors
         public void Stop()
         {
             _cleaner.Stop();
+        }
+
+        /// <summary>
+        /// Сбрасывает счетчик автоинкремента ID в таблицах Mesage и SharedDatas, чтобы не упираться в int.max
+        /// Делать ТОЛЬКО если таблицы пустые!
+        /// </summary>
+        public async void ResetMessageTableIDAutoincrement()
+        {
+            using (DB db = new DB(connStr))
+            {
+                using var transaction = await db.Database.BeginTransactionAsync();
+                try
+                {
+                    db.Database.ExecuteSqlRaw("TRUNCATE TABLE [Messages]");
+                    db.Database.ExecuteSqlRaw("TRUNCATE TABLE [SharedDatas]");
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.SaveError(ex.Message);
+                }
+            }
+        }
+
+        public async Task<double> CheckIdentityLimit()
+        {
+            // Задаем порог, например, 80%
+            double threshold = 80.0;
+
+            long currentID = -1;
+            using (DB db = new DB(connStr))
+            {
+                try
+                {
+                    currentID = await db.Database
+                       .SqlQueryRaw<long>("SELECT CAST(IDENT_CURRENT('Messages') AS BIGINT) AS [Value]")
+                       .FirstOrDefaultAsync();
+                }
+                catch(Exception ex)
+                {
+                    _logger.SaveError(ex.Message);
+                }
+            }
+
+            double percentage = (double)currentID / long.MaxValue * 100;
+            if (percentage > threshold)
+                _logger.SaveWarning($"\nВнимание! Таблица Messages заполнена на {percentage:F2}% .Выполните очистку ключей!");
+
+            return percentage;
         }
     }
 }

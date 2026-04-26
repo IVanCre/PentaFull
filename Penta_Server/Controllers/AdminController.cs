@@ -11,7 +11,7 @@ namespace Penta_Server.Controllers
 {
     [Route("Admin")]
     [ApiController]
-#if RELEASE//задрало уже токены вбивать))
+#if RELEASE//задрало уже токены вбивать при отладке))
     [Authorize(Roles = RoleNames.Admin)]
 #endif
     public class AdminController(
@@ -28,7 +28,7 @@ namespace Penta_Server.Controllers
         [HttpGet("GetLogsFiles")]
         public async Task<IEnumerable<string>> GetLogFiles()
         {
-            return _logReader.GetLogFileNames();
+            return await _logReader.GetLogFileNames();
         }
 
         [HttpGet("GetLogFile")]
@@ -52,11 +52,6 @@ namespace Penta_Server.Controllers
                     false));
         }
 
-        [HttpPost("DeleteMessages")]
-        public void DeleteAllMessages()
-        {
-            _messCleaner.ClearAll();
-        }
 
         [HttpGet("GetUserList")]
         public async Task<List<string>> GetAllUsers(IUserRepository userRepo)
@@ -65,6 +60,24 @@ namespace Penta_Server.Controllers
         }
 
 
+
+#region манипуляции с БД
+        [HttpDelete("DeleteMessages")]
+        public void DeleteAllMessages()
+        {
+            _messCleaner.ClearAll();
+        }
+        [HttpPost("ResetMessagesTable")]
+        public void ResetMessageTableIDAutoincrement()
+        {
+            _messCleaner.ResetMessageTableIDAutoincrement();
+        }
+        [HttpGet("PercentOfUsedMessageID")]
+        public async Task<double> GetPercent()
+        {
+            return await _messCleaner.CheckIdentityLimit();
+        }
+        #endregion
 
 
 

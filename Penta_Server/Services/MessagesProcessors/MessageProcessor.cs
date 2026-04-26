@@ -170,7 +170,7 @@ namespace Penta_Server.Services.MessagesProcessors
         //в этом методе берется последнее сохраненное сообщение из очереди сохраненных
         private void ProcessSavedMessage(Message savedMsg)
         {
-            _ = _clientNotifier.SendToUser(savedMsg);
+            _ = _clientNotifier.SendToUserWithPush(savedMsg);
         }
 
 

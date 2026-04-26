@@ -1,5 +1,5 @@
 ﻿using Penta_Server.Interfaces;
-using System.Reflection;
+
 
 namespace Penta_Server.Services.Loggers
 {
@@ -12,16 +12,19 @@ namespace Penta_Server.Services.Loggers
             LogFolder = Path.Combine(AppContext.BaseDirectory, config["Logging:FolderName"]);
         }
 
-        public IEnumerable<string> GetLogFileNames()
+        public async Task<IEnumerable<string>> GetLogFileNames()
         {
-            List<string> rows = new();
-            if (Directory.Exists(LogFolder))
+            return await Task.Factory.StartNew(() =>
             {
-                var finded = Directory.GetFiles(LogFolder);
-                foreach(string path in finded)
-                    rows.Add(Path.GetFileName(path));
-            }
-            return rows;
+                List<string> rows = new();
+                if (Directory.Exists(LogFolder))
+                {
+                    var finded = Directory.GetFiles(LogFolder);
+                    foreach (string path in finded)
+                        rows.Add(Path.GetFileName(path));
+                }
+                return rows;
+            });
         }
 
         public async Task<IEnumerable<string>> GetLogsFromFileAsync(string fileName)

@@ -41,7 +41,7 @@ namespace Penta_Server.Services.SignalR
                 }
             }
         }
-        public async Task SendToUser(Message msg)
+        public async Task SendToUserWithPush(Message msg)
         {
             var connectionID = _connRepo.GetConnectionID(msg.ToID);
             if (!string.IsNullOrEmpty(connectionID))//что такой юзер все еще подключен
@@ -58,6 +58,20 @@ namespace Penta_Server.Services.SignalR
                 _ = _pushMngr.SendPushToUserDevices(msg.ToID,msg.FromID);
             }
         }
+        public async Task SendToUserWithoutPush(Message msg)
+        {
+            var connectionID = _connRepo.GetConnectionID(msg.ToID);
+            if (!string.IsNullOrEmpty(connectionID))//что такой юзер все еще подключен
+            {
+                var client = _hubContext.Clients.Client(connectionID);
+                if (client != null)
+                {
+                    _logger?.SaveInfo($"Пересылаем клиенту {connectionID} сообщение");
+                    await client.SendAsync("RecieveMessage", msg);
+                }
+            }
+        }
+
 
 
         public void MessageSended( long messageID) => _messageRepo.DeleteMessage(messageID);

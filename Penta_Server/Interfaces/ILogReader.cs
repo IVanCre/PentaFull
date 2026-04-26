@@ -5,7 +5,7 @@
     /// </summary>
     public interface ILogReader
     {
-        public IEnumerable<string> GetLogFileNames();
+        public Task<IEnumerable<string>> GetLogFileNames();
         public Task<IEnumerable<string>> GetLogsFromFileAsync(string fileName);
     }
 }
