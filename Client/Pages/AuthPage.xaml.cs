@@ -37,7 +37,6 @@ namespace Client.Pages
                 if (result.Item1)
 				{
                     _platformConfigurator?.FirstConfigurate();
-
                     await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу „атов
                 }
 				else
@@ -55,6 +54,7 @@ namespace Client.Pages
                 UnlockUI();
                 if (result.Item1)
                 {
+                    _platformConfigurator?.FirstConfigurate();//чтобы оп€ть настроить
                     await Shell.Current.GoToAsync("//ChatsPage");//перенаправление на страницу „атов
                 }
                 else

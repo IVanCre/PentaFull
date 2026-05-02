@@ -43,22 +43,24 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 	  <AndroidKeyStore>False</AndroidKeyStore>
-	  <RunAOTCompilation>True</RunAOTCompilation>
-	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+	  <RunAOTCompilation>False</RunAOTCompilation>
+	  <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
 	  <DebugSymbols>True</DebugSymbols>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
 	  <ApplicationDisplayVersion>1.6.1</ApplicationDisplayVersion>
-	  <AndroidUseAapt2>True</AndroidUseAapt2>	
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <Debugger>Xamarin</Debugger>	
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 	  <AndroidKeyStore>False</AndroidKeyStore>
-	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <RunAOTCompilation>False</RunAOTCompilation>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
 	  <ApplicationDisplayVersion>1.6.1</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
-	  <DebugSymbols>True</DebugSymbols>		
+	  <DebugSymbols>True</DebugSymbols>
+	  <Debugger>Xamarin</Debugger>		
 	</PropertyGroup>
 
 	

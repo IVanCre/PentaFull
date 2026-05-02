@@ -231,7 +231,7 @@ namespace Client.Pages
 		private void RecieverConnectionChanged(int chatID, int userID, bool state)
 		{
 			if (chatID == _chatInfo.ID && _recieverUserID == userID)//значит это наш получатель
-				Dispatcher.Dispatch(() =>
+				MainThread.BeginInvokeOnMainThread(() =>
 				{
 					ConnectionStateText.Text = state == true ? "подключен" : "отключен";
 				});

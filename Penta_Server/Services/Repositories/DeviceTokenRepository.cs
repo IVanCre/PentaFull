@@ -34,12 +34,22 @@ namespace Penta_Server.Services.Repositories
         {
             using (DB db = new DB(connStr))
             {
-                 db.UsersDevices.Add(
-                    new UserDeviceEntity()
-                    {
-                        UserID = userID,
-                        DeviceToken = tokenDevice
-                    });
+                var finded = db.UsersDevices.Where(x => x.ID == userID)
+                    .FirstOrDefault();
+
+                if (finded == null)
+                {
+                    db.UsersDevices.Add(
+                       new UserDeviceEntity()
+                       {
+                           UserID = userID,
+                           DeviceToken = tokenDevice
+                       });
+                }
+                else
+                {
+                    finded.DeviceToken = tokenDevice;
+                }
                 var inserted= await db.SaveChangesAsync();
                 return inserted == 1;
             }
