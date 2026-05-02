@@ -5,9 +5,6 @@ using System.Collections.Concurrent;
 
 namespace Penta_Server.Services.MessagesProcessors
 {
-
-
-
     /// <summary>
     /// Сохраняет все входящие сообщения
     /// </summary>
@@ -20,7 +17,7 @@ namespace Penta_Server.Services.MessagesProcessors
         public event MesageSaved MessageSaved;//отдает сохраненное сообщение
 
 
-        public async void Save(Message message,long sharedDataMarker, int dataCopyCount)
+        public async void Save(Message message,Guid sharedDataMarker, int dataCopyCount)
         {
             _inputMessages.Enqueue(new MessagePack(message,dataCopyCount, sharedDataMarker));
 
@@ -38,8 +35,10 @@ namespace Penta_Server.Services.MessagesProcessors
                                 if (dataCopyCount < 1)//защита от дурака, т.к. этот метод всегда идет с данными
                                     dataCopyCount = 1;
 
-                                var sharedDataID = _messageRepo.SaveDataLikeShared(msgPack.SharedMarker, msgPack.Message.Data, dataCopyCount);
-                                _messageRepo.SaveWithData(msgPack.Message, sharedDataID);
+                                _messageRepo.SaveWithData(
+                                    msgPack.Message,
+                                    msgPack.SharedMarker,
+                                    dataCopyCount);
                             }
                             else
                                 _messageRepo.SaveWithoutData(msgPack.Message);
@@ -55,11 +54,11 @@ namespace Penta_Server.Services.MessagesProcessors
         private class MessagePack(
             Message msg,
             int count,
-            long marker)
+            Guid marker)
         {
             public Message Message { get; private set; } = msg;
             public int DataCopyCount { get; private set; } = count;
-            public long SharedMarker { get; private set; } = marker;//какие сообщения имеют общие Data
+            public Guid SharedMarker { get; private set; } = marker;//какие сообщения имеют общие Data
         }
 
     }

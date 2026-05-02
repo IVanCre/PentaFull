@@ -76,11 +76,9 @@ namespace Penta_Server.Services.MessagesProcessors
             using (DB db = new DB(connStr))
             {
                 await db.Messages
-                    .Where(x => x.ID > -1)
                     .ExecuteDeleteAsync();
 
                 await db.SharedDatas
-                    .Where(x => x.ID > -1)
                     .ExecuteDeleteAsync();
             }
         }

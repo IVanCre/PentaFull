@@ -7,7 +7,7 @@ namespace MessageLib
     //  ИМЕНА ПЕРЕМЕННЫХ В КОНСТРУКТОРЕ ДОЛЖНЫ БЫТЬ ИДЕНТИЧНЫ ИМЕНАМ ПОЛЕЙ !!!!!!!!!
     public class Message
     {
-        public long ID { get; private set; }
+        public Guid ID { get; private set; }
         public int FromID { get; private set; }
         public int ChatID { get; private set; }
         public int ToID { get; private set; }
@@ -18,7 +18,7 @@ namespace MessageLib
 
         [JsonConstructor]
         public Message(
-           long ID,
+           Guid ID,
            int FromID,
            int ChatID,
            int ToID,
@@ -37,17 +37,13 @@ namespace MessageLib
             this.IsSendedToServer = IsSendedToServer;
         }
 
-        public void SetServerID(long newID)//используется сервером для переопределения значения, которое пришло от клиента
+        /// <summary>
+        /// Используется, когда сообщение успешно пересекает границу между сервером и клиентом.
+        /// Чтобы не при вставке в разные БД не было конфликтов-повторов ID
+        /// </summary>
+        public void GenerateNewID()
         {
-            if(newID>0)//пеоложительные у сервера
-                this.ID = newID;
-        }
-
-//при высокой интенсивности, могут выскакивать повторы))
-// на сервере заменяются на собственные ID -т.к. на сервак может прийти 2 сообщения с одинаковым ID от 2 клиентов одновременно
-        public static long GenerateLocalIDByTime()
-        {
-            return (long)(DateTime.Now- DateTime.Parse("01.01.2026")).TotalMilliseconds * -1;//*-1 позволит разграничивать локальные сообщения и от сервера в локальной БД
+            this.ID = Guid.NewGuid();
         }
     }
 }

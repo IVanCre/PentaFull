@@ -52,11 +52,9 @@ namespace Penta_Server.Migrations
 
             modelBuilder.Entity("Penta_Server.Services.Repositories.Models.MessageEntity", b =>
                 {
-                    b.Property<long>("ID")
+                    b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("FromUserID")
                         .HasColumnType("int");
@@ -67,8 +65,8 @@ namespace Penta_Server.Migrations
                     b.Property<bool>("IsSended")
                         .HasColumnType("bit");
 
-                    b.Property<long>("SharedDataID")
-                        .HasColumnType("bigint");
+                    b.Property<Guid?>("SharedDataID")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ToUserID")
                         .HasColumnType("int");
@@ -95,11 +93,9 @@ namespace Penta_Server.Migrations
 
             modelBuilder.Entity("Penta_Server.Services.Repositories.Models.SharedDataEntity", b =>
                 {
-                    b.Property<long>("ID")
+                    b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("CopyCount")
                         .HasColumnType("int");
@@ -107,8 +103,8 @@ namespace Penta_Server.Migrations
                     b.Property<byte[]>("Data")
                         .HasColumnType("varbinary(max)");
 
-                    b.Property<long>("SharedMarker")
-                        .HasColumnType("bigint");
+                    b.Property<Guid>("SharedMarker")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("ID");
 

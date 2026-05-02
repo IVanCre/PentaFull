@@ -11,73 +11,94 @@ namespace Penta_Server.Services.Repositories
        private string connStr = config["WorkDB:ConnString"];
 
 
-        public void DeleteMessage(long messageID)
+        public void DeleteMessage(Guid messageID)
         {
             using (DB db = new DB(connStr))
             {
                 var finded = db.Messages.FirstOrDefault(x => x.ID == messageID);
                 if(finded!=null)
                 {
-                    db.Messages.Remove(finded);
-                    var data =db.SharedDatas.FirstOrDefault(x => x.ID == finded.SharedDataID);
+                    var data =db.SharedDatas.FirstOrDefault(x => x.ID == finded.SharedDataID && finded.SharedDataID!=null);
                     if(data!=null)
                     {
                         data.CopyCount--;
                         if(data.CopyCount<=0)
                             db.SharedDatas.Remove(data);//все необходимые копии использованы, можно удалять
                     }
+
+                    db.Messages.Remove(finded);
+
                     db.SaveChanges();
                 }
             }
         }
 
-        public long SaveDataLikeShared(long sharedMarker, byte[] data, int copyCount)
-        {
-            using (DB db = new DB(connStr))
-            {
-                var findedCopy =db.SharedDatas.FirstOrDefault(x => x.SharedMarker == sharedMarker);
-                if (findedCopy == null)
-                {
-                    var dataEntity = new SharedDataEntity()
-                    {
-                        SharedMarker = sharedMarker,
-                        Data = data,
-                        CopyCount = copyCount,
-                    };
-                    db.SharedDatas.Add(dataEntity);
 
-                    db.SaveChanges();
-                    return dataEntity.ID;
-                }
-                else//кто-то уже создал данные, привязываемся к этому объекту
-                    return findedCopy.ID;
-            }
-        }
-        public void SaveWithData(Message msg,long sharedDataID)
+        
+
+        public void SaveWithData(Message msg,Guid sharedMarker, int dataCopyCount)
         {
             using (DB db= new DB(connStr))
             {
-                if(db.Users.FirstOrDefault(x=>x.ID==msg.ToID) !=null)//получатель должен быть зарегистрированнным
+                if (db.Users.FirstOrDefault(x => x.ID == msg.ToID) != null)//получатель должен быть зарегистрированнным
                 {
+                    Guid createdSharedDataID;
+                    var findedCopy = db.SharedDatas.FirstOrDefault(x => x.SharedMarker == sharedMarker);
+                    if (findedCopy == null)
+                    {
+                        var dataEntity = new SharedDataEntity()
+                        {
+                            ID = Guid.NewGuid(),
+                            SharedMarker = sharedMarker,
+                            Data = msg.Data,
+                            CopyCount = dataCopyCount,
+                        };
+                        db.SharedDatas.Add(dataEntity);
+                        createdSharedDataID = dataEntity.ID;
+                    }
+                    else//кто-то уже создал данные с указанным маркером
+                        createdSharedDataID = findedCopy.ID;
+
                     var createdEntity = new MessageEntity()
                     {
-                        //оригинальный message.id(сгенеренный клиентом) не используем- т.к. клиенты шлют отрицательные идентификаторы(и они могут повторяться)
+                        ID = msg.ID,
                         IsSended = false,
                         FromUserID = msg.FromID,
                         GroupID = msg.ChatID,
                         ToUserID = msg.ToID,
                         Type = msg.Type,
-                        SharedDataID = sharedDataID,
+                        SharedDataID = createdSharedDataID,//указываем к каким данным привязываемся
                         UtcTimestamp = msg.UtcTimestamp,
                     };
                     db.Messages.Add(createdEntity);
                     db.SaveChanges();
-
-                    msg.SetServerID(createdEntity.ID);//меняем на серверный идентификатор(чтобы локальные айцдишникис  клиентов не конфликтовали на сервере)
                 }
             }
         }
-        public void SaveWithoutData(Message msg) => SaveWithData(msg, -1);
+
+        public void SaveWithoutData(Message msg)
+        {
+            using (DB db = new DB(connStr))
+            {
+                if (db.Users.FirstOrDefault(x => x.ID == msg.ToID) != null)//получатель должен быть зарегистрированнным
+                {
+                    var createdEntity = new MessageEntity()
+                    {
+                        ID = msg.ID,
+                        IsSended = false,
+                        FromUserID = msg.FromID,
+                        GroupID = msg.ChatID,
+                        ToUserID = msg.ToID,
+                        Type = msg.Type,
+                        SharedDataID = null,
+                        UtcTimestamp = msg.UtcTimestamp,
+                    };
+                    db.Messages.Add(createdEntity);
+                    db.SaveChanges();
+                }
+            }
+        }
+
 
 
 
@@ -95,7 +116,7 @@ namespace Penta_Server.Services.Repositories
 
                         foreach (var f in finded)
                         {
-                            if (f.SharedDataID > -1) //значит какие-то данные есть, надо искать
+                            if (f.SharedDataID !=null) //значит какие-то данные есть, надо искать
                                 data = db.SharedDatas.FirstOrDefault(x => x.ID == f.SharedDataID).Data;
                             else
                                 data = null;

@@ -134,7 +134,7 @@ namespace Penta_ClientLib
         }
 
 
-        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,string userContactID, MessageType type, byte[] data, long? messageID)
+        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,string userContactID, MessageType type, byte[] data, Guid messageID)
         {
             if(!ContactConverter.ContactIdValid(userContactID))
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
@@ -142,14 +142,16 @@ namespace Penta_ClientLib
             int recieverUserID = ContactConverter.ExtractUserID(userContactID);
             return  _chatManager.AddMessageToChat(chatID, recieverUserID, type, data, messageID);
         }
-        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data, long? messageID)
+        public Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data, Guid messageID)
         {
             if (userID==-1)
                 return Task.FromResult(Tuple.Create(false, new Exception("userContactID should be not null or empty")));
 
             return _chatManager.AddMessageToChat(chatID, userID, type, data, messageID);
         }
-        public Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data, long? messageID) => _chatManager.AddMessageToChat(chatID,-1,  type, data, messageID);
+        public Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data, Guid messageID) => 
+            _chatManager.AddMessageToChat(chatID,-1,  type, data, messageID);
+        
         public Task<Tuple<bool, Exception>> CreateGroupChatAsync(string chatName)
         {
             if (string.IsNullOrEmpty(chatName))

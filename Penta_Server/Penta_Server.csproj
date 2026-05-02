@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
 	<SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
-	<Version>1.7.0</Version>
+	<Version>1.8.0</Version>
 	<NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
   </PropertyGroup>
 

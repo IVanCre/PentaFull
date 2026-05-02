@@ -104,7 +104,7 @@ namespace Penta_ClientLib.Services
         private HubConnection _messHabConnection;
         public event MessageSended MessageSended;
         public event ConnectionStateChanged ConnectionStateChanged;
-        public event MessageRecieved RecievedMessage;//внешний делегат для обработки входящих сообщений ОТ сервера
+        public event MessageRecieved RecievedNewMessage;//внешний делегат для обработки входящих сообщений ОТ сервера
 
         public WebClient(ISettingsProvider settings) : base(settings) { }
 
@@ -340,8 +340,10 @@ namespace Penta_ClientLib.Services
             {
                 _messHabConnection.On<Message>("RecieveMessage", async (message) =>
                 {
-                    RecievedMessage?.Invoke(message);//вызываем внешний делегат
-                    await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении для сервака
+                    await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении для сервака(тут еще серверный ID)
+                    
+                    message.GenerateNewID();//с этого момента сообщение имеет уже клиентский идентификатор, а не серверный
+                    RecievedNewMessage?.Invoke(message);//вызываем внешний делегат что получили сообщение
                 });
                 await _messHabConnection.StartAsync();
 

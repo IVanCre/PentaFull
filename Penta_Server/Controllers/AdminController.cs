@@ -42,7 +42,7 @@ namespace Penta_Server.Controllers
         {
             _messProc.ProcessingMessage(
                 new Message(//просто заглушка
-                    -1,
+                    Guid.NewGuid(),
                     -1,
                     -1,
                     -1,

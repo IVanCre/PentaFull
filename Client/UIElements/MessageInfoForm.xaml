@@ -5,8 +5,8 @@
              xmlns:models="clr-namespace:Client.Models"
              x:Name="this">
 
-
-    <Border Padding="10" 
+    <Border x:Name="MainBorder" 
+            Padding="10" 
             Margin="2"
             StrokeShape="RoundRectangle 15"
             BackgroundColor="#F0F0F0"
@@ -17,7 +17,7 @@
                    x:Name="SenderLabel"
                    Text="{Binding SenderName}" 
                    FontSize="12" 
-                   TextColor="DimGray" 
+                   TextColor="Black" 
                    FontAttributes="Bold"/>
 
             <Label Grid.Row="1"

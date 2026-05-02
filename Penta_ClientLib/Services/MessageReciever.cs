@@ -27,7 +27,7 @@ namespace Penta_ClientLib.Services
             )
         {
             _messListener = messListener;
-            _messListener.RecievedMessage += ProcessResponce;
+            _messListener.RecievedNewMessage += ProcessResponce;
             _chatHolder = chatProvider;
             _messHolder = messHolder;
             _contactHolder = contactHolder;

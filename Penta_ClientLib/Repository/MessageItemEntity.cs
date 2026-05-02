@@ -7,7 +7,7 @@ namespace Penta_ClientLib.Repository
     internal class MessageItemEntity
     {
         [PrimaryKey]
-        public long ID { get; set; }
+        public Guid ID { get; set; }
 
         [Indexed(Name ="IsSended")]
         public bool IsSended { get; set; }

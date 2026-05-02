@@ -185,7 +185,7 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="data"></param>
         /// <param name="messageID"></param>
         /// <returns></returns>
-        Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data, long? messageID);
+        Task<Tuple<bool, Exception>> SendMessageToGroupChatAsync(int chatID, MessageType type, byte[] data, Guid messageID);
 
         /// <summary>
         /// Отправка сообщения в приватный чат
@@ -194,11 +194,11 @@ namespace Penta_ClientLib.Interfaces
         /// <param name="type"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID, string userConnectID, MessageType type, byte[] data, long? messageID);//это для клиентов,которые не имеют хранения контактов
+        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID, string userConnectID, MessageType type, byte[] data, Guid messageID);//это для клиентов,которые не имеют хранения контактов
         /// <summary>
         /// Отправка сообщения в приватный чат
         /// </summary>
-        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data, long? messageID);
+        Task<Tuple<bool, Exception>> SendMessageToUserAsync(int chatID,int userID, MessageType type, byte[] data, Guid messageID);
 
         /// <summary>
         /// Удаление аккаунта на сервере

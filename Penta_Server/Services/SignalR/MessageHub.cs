@@ -58,7 +58,10 @@ namespace Penta_Server.Services.SignalR
                 _logger?.SaveError($"Ошибка при отключении юзера от хаба: {exep.Message}");
         }
 
-        public void AcknowledgeReceived(long messageID)//подтверждение получения сообщения от клиента
+
+
+
+        public void AcknowledgeReceived(Guid messageID)//подтверждение получения серверного сообщения клиентом
         {
             try
             {
@@ -72,8 +75,10 @@ namespace Penta_Server.Services.SignalR
         }
 
 
+        //это точка получения сервером сообщения ОТ клиента
         public void SendToServer(Message msg)//клиент пишет на этот хаб
         {
+            msg.GenerateNewID();//присваиваем серверный ID
             _messageProc.ProcessingMessage(msg);
         }
     }

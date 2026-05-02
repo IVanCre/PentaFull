@@ -189,15 +189,28 @@ namespace Client.Pages
 			MessageText.Text = "";
 
 			if (IsThisChatIsPrivate())//значит приватный чат
-				await _clientFacade.SendMessageToUserAsync(_chatInfo.ID, _recieverUserID, MessageType.Text, MessageUtils.TextToBytes(input), msg.ID);
+			{
+				await _clientFacade.SendMessageToUserAsync(
+					_chatInfo.ID,
+					_recieverUserID,
+					MessageType.Text,
+					MessageUtils.TextToBytes(input),
+					msg.ID);
+			}
 			else//значит групповой чат
-				await _clientFacade.SendMessageToGroupChatAsync(_chatInfo.ID, MessageType.Text, MessageUtils.TextToBytes(input), msg.ID);
+			{
+				await _clientFacade.SendMessageToGroupChatAsync(
+					_chatInfo.ID,
+					MessageType.Text,
+					MessageUtils.TextToBytes(input),
+					msg.ID);
+			}
         }
 
         private MessageInfo AddNewMesageToList(Direction msgDirection,string sender, string text, DateTimeOffset timestamp)
 		{
 			var msg = new MessageInfo() {
-				ID = Message.GenerateLocalIDByTime(),
+				ID = Guid.NewGuid(),
 				Type = msgDirection,
 				SenderName = sender,
 				Text = text,
@@ -221,7 +234,7 @@ namespace Client.Pages
             });
         }
 
-		private void MakrMessageLikeSended(long messageID)
+		private void MakrMessageLikeSended(Guid messageID)
 		{
 			var finded = MessageList.FirstOrDefault(x => x.ID == messageID);
 			if(finded!=null)

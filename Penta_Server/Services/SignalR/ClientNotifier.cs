@@ -74,6 +74,6 @@ namespace Penta_Server.Services.SignalR
 
 
 
-        public void MessageSended( long messageID) => _messageRepo.DeleteMessage(messageID);
+        public void MessageSended(Guid messageID) => _messageRepo.DeleteMessage(messageID);
     }
 }

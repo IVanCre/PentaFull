@@ -11,7 +11,7 @@ namespace Penta_Server.Services.Repositories.Models
     [Index("UtcTimestamp")]
     public class MessageEntity
     {
-        public long ID { get; set; }
+        public Guid ID { get; set; }
 
         public bool IsSended { get; set; }//была ли выполнена автодоставка при покдлючении(чтобы потом удалить это сообщение)
         public int FromUserID { get; set; }
@@ -19,7 +19,7 @@ namespace Penta_Server.Services.Repositories.Models
         public int ToUserID { get; set; }
 
         public MessageType Type { get; set; }//чтобы EF в бибилотеку исходного класа не тащить
-        public long SharedDataID { get; set; }
+        public Guid? SharedDataID { get; set; }
         public DateTimeOffset UtcTimestamp { get; set; }
     }
 }

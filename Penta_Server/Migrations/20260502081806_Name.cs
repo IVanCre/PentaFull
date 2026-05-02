@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Penta_Server.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Name : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,19 +30,32 @@ namespace Penta_Server.Migrations
                 name: "Messages",
                 columns: table => new
                 {
-                    ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     IsSended = table.Column<bool>(type: "bit", nullable: false),
                     FromUserID = table.Column<int>(type: "int", nullable: false),
                     GroupID = table.Column<int>(type: "int", nullable: false),
                     ToUserID = table.Column<int>(type: "int", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
-                    Data = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    UtcTimestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    SharedDataID = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UtcTimestamp = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Messages", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SharedDatas",
+                columns: table => new
+                {
+                    ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SharedMarker = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Data = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    CopyCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SharedDatas", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
@@ -52,7 +65,9 @@ namespace Penta_Server.Migrations
                     ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
-                    MaskedPassword = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    MaskedPassword = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    RegistrationDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    LastConnectDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -80,8 +95,8 @@ namespace Penta_Server.Migrations
                     ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserID = table.Column<int>(type: "int", nullable: true),
-                    AccessToken = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
-                    RefreshToken = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true)
+                    AccessHash = table.Column<string>(type: "nvarchar(70)", maxLength: 70, nullable: true),
+                    RefreshHash = table.Column<string>(type: "nvarchar(70)", maxLength: 70, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -121,9 +136,19 @@ namespace Penta_Server.Migrations
                 column: "Type");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tokens_AccessToken",
+                name: "IX_Messages_UtcTimestamp",
+                table: "Messages",
+                column: "UtcTimestamp");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SharedDatas_SharedMarker",
+                table: "SharedDatas",
+                column: "SharedMarker");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tokens_AccessHash",
                 table: "Tokens",
-                column: "AccessToken");
+                column: "AccessHash");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tokens_ID",
@@ -132,9 +157,9 @@ namespace Penta_Server.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tokens_RefreshToken",
+                name: "IX_Tokens_RefreshHash",
                 table: "Tokens",
-                column: "RefreshToken");
+                column: "RefreshHash");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tokens_UserID",
@@ -172,6 +197,9 @@ namespace Penta_Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "SharedDatas");
 
             migrationBuilder.DropTable(
                 name: "Tokens");

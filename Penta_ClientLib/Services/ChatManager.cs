@@ -126,7 +126,7 @@ namespace Penta_ClientLib.Services
         }
 
 
-        public async Task<Tuple<bool, Exception>> AddMessageToChat(int chatID, int recieverID, MessageType type, byte[] data, long? messageID)
+        public async Task<Tuple<bool, Exception>> AddMessageToChat(int chatID, int recieverID, MessageType type, byte[] data, Guid? messageID)
         {
             try
             {

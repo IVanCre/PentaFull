@@ -151,16 +151,16 @@ namespace Penta_Server.Services.MessagesProcessors
         private async void NotifyAll(Message msg)
         {
             var allUsers = await _userRepo.GetAllUsersID();
-            long sharedMarker = -1;
+            Guid? sharedMarker = null;
             foreach (var recieverID in allUsers)
             {
                 var finalMsg = MessageFactory.CreateNotify(recieverID, msg.GetDataLikeString());
-                if (sharedMarker == -1)
+                if (sharedMarker == null)
                     sharedMarker = finalMsg.ID;
 
                 _messageSaver.Save(
                     finalMsg,
-                    sharedMarker,
+                    sharedMarker.Value,
                     allUsers.Count);
             }
         }

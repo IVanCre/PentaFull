@@ -12,8 +12,8 @@ using Penta_Server.Services.Repositories;
 namespace Penta_Server.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20260314123641_ChangeTokenEntity")]
-    partial class ChangeTokenEntity
+    [Migration("20260502081806_Name")]
+    partial class Name
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -55,11 +55,9 @@ namespace Penta_Server.Migrations
 
             modelBuilder.Entity("Penta_Server.Services.Repositories.Models.MessageEntity", b =>
                 {
-                    b.Property<long>("ID")
+                    b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("FromUserID")
                         .HasColumnType("int");
@@ -70,8 +68,8 @@ namespace Penta_Server.Migrations
                     b.Property<bool>("IsSended")
                         .HasColumnType("bit");
 
-                    b.Property<long>("SharedDataID")
-                        .HasColumnType("bigint");
+                    b.Property<Guid?>("SharedDataID")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ToUserID")
                         .HasColumnType("int");
@@ -79,8 +77,8 @@ namespace Penta_Server.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UtcTimestamp")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("UtcTimestamp")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("ID");
 
@@ -89,6 +87,8 @@ namespace Penta_Server.Migrations
 
                     b.HasIndex("Type");
 
+                    b.HasIndex("UtcTimestamp");
+
                     b.HasIndex("ToUserID", "IsSended");
 
                     b.ToTable("Messages");
@@ -96,11 +96,9 @@ namespace Penta_Server.Migrations
 
             modelBuilder.Entity("Penta_Server.Services.Repositories.Models.SharedDataEntity", b =>
                 {
-                    b.Property<long>("ID")
+                    b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("CopyCount")
                         .HasColumnType("int");
@@ -108,7 +106,12 @@ namespace Penta_Server.Migrations
                     b.Property<byte[]>("Data")
                         .HasColumnType("varbinary(max)");
 
+                    b.Property<Guid>("SharedMarker")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("ID");
+
+                    b.HasIndex("SharedMarker");
 
                     b.ToTable("SharedDatas");
                 });
@@ -178,12 +181,18 @@ namespace Penta_Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
+                    b.Property<DateTimeOffset?>("LastConnectDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("MaskedPassword")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTimeOffset?>("RegistrationDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("ID");
 

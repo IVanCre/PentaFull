@@ -5,10 +5,10 @@ namespace Penta_Server.Services.Repositories.Models
     [Index("SharedMarker")]
     public class SharedDataEntity
     {
-        public long ID { get; set; }
+        public Guid ID { get; set; }
 //маркер нужен, чтобы система могла опознать, когда создавать объект, а когда надо использовать
 //уже созданный
-        public long SharedMarker { get; set; }
+        public Guid SharedMarker { get; set; }
         public byte[] Data { get; set; }
 
 //используется, когда копия этих данных отправлется с очередным ответом члену группы.

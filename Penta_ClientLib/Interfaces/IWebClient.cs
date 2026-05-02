@@ -4,7 +4,7 @@ using Penta_ClientLib.DataStructs;
 namespace Penta_ClientLib.Interfaces
 {
     public delegate void MessageRecieved(Message msg);
-    public delegate void MessageSended(long messageID);
+    public delegate void MessageSended(Guid messageID);
 
     public interface IWebClient :IDisposable
     {
@@ -26,7 +26,7 @@ namespace Penta_ClientLib.Interfaces
         Task<bool> SendMessage(Message message);
 
         public bool IsConnected();
-        public event MessageRecieved RecievedMessage;//обработка входящих сообщений с помощью внешней функции
+        public event MessageRecieved RecievedNewMessage;//обработка входящих сообщений с помощью внешней функции
         public event MessageSended MessageSended;//факт успешной отправки сообщения на сервер
         public event ConnectionStateChanged ConnectionStateChanged;//состояние подключение к серваку
     }

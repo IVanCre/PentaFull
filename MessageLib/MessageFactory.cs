@@ -6,9 +6,8 @@ namespace MessageLib
     {
         public static Message CreateGroupChat_Request(int senderUserID, string chatName)
         {
-
             return new Message(
-                    Message.GenerateLocalIDByTime(),
+                    Guid.NewGuid(),
                     senderUserID,
                     -1,
                     -1,
@@ -20,7 +19,7 @@ namespace MessageLib
         public static Message CreateGroupChat_Response(int chatID,Message request)
         {
            return new Message(//генерируем ответ для юзера, который прислал запрос
-                    Message.GenerateLocalIDByTime(),
+                    Guid.NewGuid(),
                     -1,
                     chatID,//его определяет сервер при создании у себя
                     request.FromID,
@@ -34,7 +33,7 @@ namespace MessageLib
         public static Message CreateDeleteGroupChat_Request(int senderUserID, int chatID) 
         {
             return new Message(
-                    Message.GenerateLocalIDByTime(),
+                    Guid.NewGuid(),
                     senderUserID,
                     chatID,
                     -1,
@@ -61,7 +60,7 @@ namespace MessageLib
         public static Message CreateAddUserToGroupChat_Request(int senderUserID, int chatID, int userToAddedID)
         {
             return new Message(
-                    Message.GenerateLocalIDByTime(),
+                    Guid.NewGuid(),
                     senderUserID,//кто добавляет
                     chatID,//куда добавляет
                     userToAddedID,//кого добавляют
@@ -87,7 +86,7 @@ namespace MessageLib
         public static Message CreateUserAddedToGroupChat_ServerResponse(int recieverUserID,int chatID, string chatName)
         {
             return new Message(//создаем новое сообщения для добавленного юзера
-                 Message.GenerateLocalIDByTime(),
+                 Guid.NewGuid(),
                  -1,
                  chatID,//куда добавляют
                  recieverUserID,//кого добавляют
@@ -103,7 +102,7 @@ namespace MessageLib
         public static Message CreateDeleteUserFromGroupChat_Request(int senderUserID,int userForDeleteID,int chatID)
         {
             return new Message(
-                Message.GenerateLocalIDByTime(),
+                Guid.NewGuid(),
                 senderUserID,
                 chatID,
                 userForDeleteID,
@@ -139,10 +138,10 @@ namespace MessageLib
                 false);
         }
 
-        public static Message CreateUserToUser(int senderUserID,int recieverUserID, MessageType type, byte[] data, long? messageID)
+        public static Message CreateUserToUser(int senderUserID,int recieverUserID, MessageType type, byte[] data, Guid? messageID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                messageID==null ? Message.GenerateLocalIDByTime(): messageID.Value, //внешний айдишник может быть передан из связанной сущности
+                messageID==null ? Guid.NewGuid(): messageID.Value, //внешний айдишник может быть передан из связанной сущности
                 senderUserID,
                 -1,
                 recieverUserID,
@@ -151,10 +150,10 @@ namespace MessageLib
                 DateTimeOffset.UtcNow,
                 false);
         }
-        public static Message CreateUserToGroupChat(int senderUserID, int chatID, MessageType type, byte[] data, long? messageID)
+        public static Message CreateUserToGroupChat(int senderUserID, int chatID, MessageType type, byte[] data, Guid? messageID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                messageID == null ? Message.GenerateLocalIDByTime() : messageID.Value,
+                messageID == null ? Guid.NewGuid() : messageID.Value,
                 senderUserID,
                 chatID,
                 -1,
@@ -167,7 +166,7 @@ namespace MessageLib
         public static Message CreateDeleteAccountRequest(int senderUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateLocalIDByTime(),
+                Guid.NewGuid(),
                 senderUserID,
                 -1,
                 -1,
@@ -179,7 +178,7 @@ namespace MessageLib
         public static Message CreateDeleteAccountResponce(Message request)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateLocalIDByTime(),
+                Guid.NewGuid(),
                 request.FromID,
                 -1,
                 request.FromID,
@@ -192,7 +191,7 @@ namespace MessageLib
         public static Message CreateNotify(int recieverID, string message)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateLocalIDByTime(),
+                Guid.NewGuid(),
                 -1,
                 -1,
                 recieverID,
@@ -206,7 +205,7 @@ namespace MessageLib
         public static Message StartObserveUserInSystem(int senderID,int chatID, int observerUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateLocalIDByTime(),
+                Guid.NewGuid(),
                 senderID,
                 chatID,
                 observerUserID,
@@ -218,7 +217,7 @@ namespace MessageLib
         public static Message UserInSystemState(int chatID,int observerUserID, int recieverID, bool state)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateLocalIDByTime(),
+                Guid.NewGuid(),
                 observerUserID,//кого отслеживаем
                 chatID,//какой чат отслеживает
                 recieverID,//кто отслеживает
@@ -230,7 +229,7 @@ namespace MessageLib
         public static Message EndObserveUserInSystem(int senderID, int chatID, int observerUserID)
         {
             return new Message(//создаем новое сообщения для всех кто в группе
-                Message.GenerateLocalIDByTime(),
+                Guid.NewGuid(),
                 senderID,
                 chatID,
                 observerUserID,

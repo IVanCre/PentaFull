@@ -72,26 +72,26 @@ namespace Penta_Server.Services.Repositories
         {
             using (DB db= new DB(_connStr))
             {
-                var user =db.Tokens
+                var userForDelete =db.Tokens
                     .Include(x=>x.User)
                     .FirstOrDefault(x=>x.AccessHash==tokenHash)?.User;
 
-                if (user != null)
+                if (userForDelete != null)
                 {
                     await db.Messages
-                        .Select(x=>x.ID==user.ID)
+                        .Select(x=>x.ToUserID==userForDelete.ID)//сообщения, адресованные удаленному юзеру
                         .ExecuteDeleteAsync();
 
                     await db.Tokens
                         .Include (x=>x.User)
-                        .Select(x => x.User.ID == user.ID)
+                        .Select(x => x.User.ID == userForDelete.ID)
                         .ExecuteDeleteAsync();
 
                     await db.Users
-                        .Select(x => x.ID == user.ID)
+                        .Select(x => x.ID == userForDelete.ID)
                         .ExecuteDeleteAsync();
 
-                    _logger?.SaveInfo($"Пользователь {user.Name} удален");
+                    _logger?.SaveInfo($"Пользователь {userForDelete.Name} удален");
                     return true;
                 }
                 else

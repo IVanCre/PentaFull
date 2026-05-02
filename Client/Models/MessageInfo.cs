@@ -10,7 +10,7 @@ namespace Client.Models
     }
     public class MessageInfo : INotifyPropertyChanged
     {
-        public long ID { get; set; }
+        public Guid ID { get; set; }
         public Direction Type { get; set; }
         public string SenderName { get; set; }
         public string Text { get; set; }

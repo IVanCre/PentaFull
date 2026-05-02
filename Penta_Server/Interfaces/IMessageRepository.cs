@@ -8,11 +8,11 @@ namespace Penta_Server.Interfaces
     public interface IMessageRepository
     {
         /// <summary>
-        /// Сохраняет поле Message.Data как отдельную сущность(под указанным sharedDataID)
+        /// Сохраняет поле Message.Data как отдельную сущность
         /// </summary>
         /// <param name="msg"></param>
         /// <param name="sharedDataID"></param>
-        void SaveWithData(Message msg, long sharedDataID);
+        void SaveWithData(Message msg, Guid sharedMarker, int copyCount);
 
         /// <summary>
         /// поле Message.Data сохраняется как null
@@ -20,17 +20,8 @@ namespace Penta_Server.Interfaces
         /// <param name="msg"></param>
         void SaveWithoutData(Message msg);
 
-        /// <summary>
-        /// Сохраняет указанный массив данных с ограниченным числом чтения\копирования
-        /// </summary>
-        /// <param name="sharedMarker">используется для опознания нужно создавать данные или использовать имеющиеся</param>
-        /// <param name="data">сами данные</param>
-        /// <param name="copyCount">сколько чтений допустимо</param>
-        /// <returns></returns>
-        long SaveDataLikeShared(long sharedMarker,byte[] data, int copyCount);
-
         Task<List<Message>> GetNonSendedForUserAsync(int userID);
         Task<bool> HasNonSended(int userID);
-        void DeleteMessage(long messageID);
+        void DeleteMessage(Guid messageID);
     }
 }

@@ -91,13 +91,22 @@ namespace ConsoleClient_Tests
             {
                 Console.WriteLine("ID чата:");
                 string chatName = Console.ReadLine();
-                facade.SendMessageToGroupChatAsync(int.Parse(chatName), MessageType.Text, MessageUtils.TextToBytes(text),null);
+                facade.SendMessageToGroupChatAsync(
+                    int.Parse(chatName),
+                    MessageType.Text,
+                    MessageUtils.TextToBytes(text),
+                    Guid.NewGuid());
             }
             else
             {
                 Console.WriteLine("connectID получателя:");
                 string userConnectID = Console.ReadLine();
-                facade.SendMessageToUserAsync(-1,userConnectID, MessageType.Text, MessageUtils.TextToBytes(text),null);
+                facade.SendMessageToUserAsync(
+                    -1,
+                    userConnectID,
+                    MessageType.Text,
+                    MessageUtils.TextToBytes(text),
+                    Guid.NewGuid());
             }
         }
 
