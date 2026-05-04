@@ -38,7 +38,7 @@ namespace Penta_Server.Services.MessagesProcessors
             using (DB db= new DB(connStr))
             {
                 var ids = await db.Messages
-                    .Where(x => x.UtcTimestamp < DateTime.UtcNow.AddDays(_daysToHold))
+                    .Where(x => x.UtcTimestamp < DateTimeOffset.UtcNow.AddDays(-1*_daysToHold))
                     .Select(x => new { x.ID, x.SharedDataID })
                     .ToListAsync();
 
@@ -61,6 +61,7 @@ namespace Penta_Server.Services.MessagesProcessors
 
                     await transaction.CommitAsync();
 
+                    if(del_1>0 || del_2>0)
                     _logger?.SaveInfo($"Вызвана очистка БД. Удалено сообщений={del_1}. Удалено данных={del_2}");
                 }
                 catch(Exception ex)
