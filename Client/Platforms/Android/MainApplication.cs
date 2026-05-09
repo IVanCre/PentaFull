@@ -24,6 +24,7 @@ namespace Client.Platforms.Android
             builder.Services.AddScoped<DeviceTokenSender>();
             builder.Services.AddSingleton<ISoundManager, AndroidSoundManager>();
             builder.Services.AddScoped<IPlatformConfigurator, AndroidConfigurator>();
+            builder.Services.AddSingleton<INotifyHelper, NotificationHelper>();
 
             return MauiProgram.CreateMauiApp(builder);
         }

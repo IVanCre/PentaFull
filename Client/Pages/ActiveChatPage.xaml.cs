@@ -1,6 +1,5 @@
 
 using Client.Models;
-using Client.Interfaces;
 using Client.UIElements;
 
 using MessageLib;
@@ -18,6 +17,7 @@ namespace Client.Pages
 	{
 		public CustomObservableCollection<MessageInfo> MessageList { get; set; }
 		public string ChatName => _chatInfo.ChatName;
+		public int ChatID=>_chatInfo.ID;
 		public bool CanShowConnectionState = false;//используется в приватном чате
 
 		private ChatInfo _chatInfo;
@@ -267,7 +267,7 @@ namespace Client.Pages
 
 		private bool IsThisChatIsPrivate()
 		{
-			return _chatInfo.ID < 0;
+			return _chatInfo.ID < 0 && ChatName!="Системные оповещения";
 		}
 
 #region несохраняемые уведомления

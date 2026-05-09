@@ -1,6 +1,6 @@
 ﻿using Android.Content;
 using AndroidX.Core.App;
-using Android.App;
+using AndroidApp=Android.App;
 using Android.OS;
 using Android.Graphics;
 
@@ -9,7 +9,15 @@ using Android.Graphics;
 
 namespace Client.Platforms.Android.PushServices
 {
-    public class NotificationHelper//отображает уведомления и позволяет тапать по ним
+    public interface INotifyHelper
+    {
+        int ShowNotification(string title, string text);
+        int UpdateNotification(int notifyID, string title, string text);
+        void SkipAllNotifications();
+        void SkipNotification(int notifyID);
+    }
+
+    public class NotificationHelper: INotifyHelper//отображает уведомления и позволяет тапать по ним
     {
         private readonly Context _context;
         private const string _channelId = "penta_msg_channel_v3";
@@ -17,23 +25,23 @@ namespace Client.Platforms.Android.PushServices
         private int smallIconID;
         private int largeIconID;
 
-        public NotificationHelper(Context context)
+        public NotificationHelper()
         {
-            _context = context;
+            _context = AndroidApp.Application.Context;
             CreateNotificationChannel();
 
-            smallIconID = context.Resources.GetIdentifier("hands", "drawable", context.PackageName);//объявляется в манифесте, живет в папке Images
-            largeIconID = context.Resources.GetIdentifier("message", "drawable", context.PackageName);//drawable -это ТИП ресурса
+            smallIconID = _context.Resources.GetIdentifier("hands", "drawable", _context.PackageName);//объявляется в манифесте, живет в папке Images
+            largeIconID = _context.Resources.GetIdentifier("message", "drawable", _context.PackageName);//drawable -это ТИП ресурса
         }
 
         private void CreateNotificationChannel()
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                var channel = new NotificationChannel(_channelId, "PentaChannel", NotificationImportance.High);
-                channel.LockscreenVisibility = NotificationVisibility.Public;
+                var channel = new AndroidApp.NotificationChannel(_channelId, "PentaChannel", AndroidApp.NotificationImportance.High);
+                channel.LockscreenVisibility = AndroidApp.NotificationVisibility.Public;
 
-                var manager = (NotificationManager)_context.GetSystemService(Context.NotificationService);
+                var manager = (AndroidApp.NotificationManager)_context.GetSystemService(Context.NotificationService);
                 manager.CreateNotificationChannel(channel);
             }
         }
@@ -67,11 +75,11 @@ namespace Client.Platforms.Android.PushServices
             return notifyID;
         }
 
-        private Notification CreateNotify(string title, string text)
+        private AndroidApp.Notification CreateNotify(string title, string text)
         {
             var intent = _context.PackageManager.GetLaunchIntentForPackage(_context.PackageName);
             intent.SetFlags(ActivityFlags.ReorderToFront | ActivityFlags.NewTask);
-            var pendingIntent = PendingIntent.GetActivity(_context, 0, intent, PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable);
+            var pendingIntent = AndroidApp.PendingIntent.GetActivity(_context, 0, intent, AndroidApp.PendingIntentFlags.UpdateCurrent | AndroidApp.PendingIntentFlags.Immutable);
 
             var builder = new NotificationCompat.Builder(_context, _channelId)
                 .SetContentTitle(title)
@@ -99,10 +107,15 @@ namespace Client.Platforms.Android.PushServices
         /// <summary>
         /// Удаляет все уведомления
         /// </summary>
-        public static void SkipAllNotifications()
+        public void SkipAllNotifications()
         {
-            var manager = (NotificationManager)Platform.CurrentActivity.GetSystemService(Context.NotificationService);
+            var manager = (AndroidApp.NotificationManager)Platform.CurrentActivity.GetSystemService(Context.NotificationService);
             manager?.CancelAll();
+        }
+        public void SkipNotification(int id)
+        {
+            var manager = (AndroidApp.NotificationManager)Platform.CurrentActivity.GetSystemService(Context.NotificationService);
+            manager?.Cancel(id);
         }
     }
 }

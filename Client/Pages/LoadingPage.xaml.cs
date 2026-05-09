@@ -2,7 +2,8 @@
 using Penta_ClientLib.Interfaces;
 using Client.Interfaces;
 using MessageLib;
-using Client.Services;
+using Client.Pages;
+using Client.Platforms.Android.PushServices;
 
 namespace Client.Pages
 {
@@ -28,11 +29,23 @@ namespace Client.Pages
 
         private void ConfigureServices(IClientFacade _clientFacade)
         {
-            var _soundManager = App.Services.GetRequiredService<ISoundManager>();
-            _clientFacade.MessageAddedToChat += (int chatID, Message mesage) =>
+            var notifyService = App.Services.GetRequiredService<INotifyHelper>();
+            _clientFacade.MessageAddedToChat += async (int chatID, Message mesage) =>
             {
-                if(App.DeviceIsSleep)//звук оповещения только с погасшим экраном
-                    _soundManager?.InputMessageNotify();
+                var currentPage = Shell.Current.CurrentPage;
+                string text = $"Новое сообщение.Нажмите для просмотра. {DateTime.Now.ToString("HH:mm:ss")}";
+                if (currentPage is ActiveChatPage currChat)
+                {
+                    if (currChat.ChatID != chatID)
+                        notifyService.UpdateNotification(mesage.FromID, currChat.ChatName, text);
+                    else
+                        App.Services.GetRequiredService<ISoundManager>()?.InputMessageNotify();
+                }
+                else
+                {
+                    var senderContactName = await _clientFacade.FindUserPseudonimeByID(mesage.FromID);
+                    notifyService.UpdateNotification(mesage.FromID, senderContactName, text);
+                }
             };
         }
 

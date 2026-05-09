@@ -21,7 +21,7 @@ namespace Client.Pages
         {
             InitializeComponent();
 
-            NotificationHelper.SkipAllNotifications();
+            App.Services.GetRequiredService<INotifyHelper>()?.SkipAllNotifications();
             BindingContext = this;
 
             var itemToRemove = Shell.Current.Items.FirstOrDefault(x => x.Route == "LoadingPage");//удаляем заглушку
