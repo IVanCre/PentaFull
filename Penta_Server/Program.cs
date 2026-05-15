@@ -83,6 +83,7 @@ namespace Penta_Server
             services.AddSingleton<MessagesDBCleaner>();
             services.AddSingleton<IConnectionsRepository, ConnectionsRepository>();
             services.AddSingleton<IDeviceTokenRepository, DeviceTokenRepository>();
+            services.AddSingleton<IDataSourceRepository, DataSourcesRepository>();
 
             services.AddSingleton<IMessageSaver, MessageSaver>();
             services.AddSingleton<ITokenManager, TokenManager>();
@@ -91,6 +92,7 @@ namespace Penta_Server
             services.AddSingleton<IPushManager, PushManager>();
             services.AddSingleton<IClientFileObserver, ClientBuildsObserver>();
             services.AddSingleton<IUsersConnectionObserver, UsersConnectionObserver>();
+            services.AddSingleton<IDataSourcesApi, DataSourcesApi>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();

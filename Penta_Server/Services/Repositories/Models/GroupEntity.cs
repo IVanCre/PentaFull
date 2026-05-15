@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Penta_Server.Services.Repositories.Models
 {
+    /// <summary>
+    /// Группа, в которой могут состоять юзеры
+    /// </summary>
     [Index("ID", IsUnique = true)]
     [Index("Name")]
     public class GroupEntity

@@ -39,7 +39,7 @@ namespace Penta_Server.Services.Repositories
                 if (finded!=null)
                 {
                     var result= await db.Groups
-                        .Select(x=>x.ID==finded.ID)
+                        .Where(x=>x.ID==finded.ID)
                         .ExecuteDeleteAsync();
 
                     return result == 1;

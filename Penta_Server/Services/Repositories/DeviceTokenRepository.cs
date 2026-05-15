@@ -23,7 +23,7 @@ namespace Penta_Server.Services.Repositories
             using (DB db = new DB(connStr))
             {
                 var deleted = await db.UsersDevices
-                    .Select(x => x.UserID == userID && x.DeviceToken == tokenDevice)
+                    .Where(x => x.UserID == userID && x.DeviceToken == tokenDevice)
                     .ExecuteDeleteAsync(); 
 
                 return deleted == 1;

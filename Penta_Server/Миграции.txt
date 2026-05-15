@@ -1,0 +1,4 @@
+
+как сгенрить sql из миграции:
+вбиваем в диспетчере пакетов
+Script-Migration -From migration_A -To migration_B
