@@ -79,16 +79,16 @@ namespace Penta_Server.Services.Repositories
                 if (userForDelete != null)
                 {
                     await db.Messages
-                        .Where(x=>x.ToUserID==userForDelete.ID)//сообщения, адресованные удаленному юзеру
+                        .Select(x=>x.ToUserID==userForDelete.ID)//сообщения, адресованные удаленному юзеру
                         .ExecuteDeleteAsync();
 
                     await db.Tokens
                         .Include (x=>x.User)
-                        .Where(x => x.User.ID == userForDelete.ID)
+                        .Select(x => x.User.ID == userForDelete.ID)
                         .ExecuteDeleteAsync();
 
                     await db.Users
-                        .Where(x => x.ID == userForDelete.ID)
+                        .Select(x => x.ID == userForDelete.ID)
                         .ExecuteDeleteAsync();
 
                     _logger?.SaveInfo($"Пользователь {userForDelete.Name} удален");
@@ -104,18 +104,18 @@ namespace Penta_Server.Services.Repositories
             using (DB db= new DB(_connStr))
             {
                 await db.Messages
-                    .Where(x => x.ToUserID == userID)
+                    .Select(x => x.ToUserID == userID)
                     .ExecuteDeleteAsync();
 
                 var deleted = await db.Tokens
                         .Include(x => x.User)
-                        .Where(x => x.User.ID == userID)
+                        .Select(x => x.User.ID == userID)
                         .ExecuteDeleteAsync();
 
                 if (deleted == 1)
                 {
                     deleted = await db.Users
-                        .Where(x => x.ID == userID)
+                        .Select(x => x.ID == userID)
                         .ExecuteDeleteAsync();
 
                     if (deleted == 1)

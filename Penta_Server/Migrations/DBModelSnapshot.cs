@@ -22,35 +22,6 @@ namespace Penta_Server.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Penta_Server.Services.Repositories.Models.DataSourceEntity", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<string>("AccessToken")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("GroupID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("AccessToken");
-
-                    b.HasIndex("ID")
-                        .IsUnique();
-
-                    b.HasIndex("Name");
-
-                    b.ToTable("DataSources");
-                });
-
             modelBuilder.Entity("Penta_Server.Services.Repositories.Models.GroupEntity", b =>
                 {
                     b.Property<int>("ID")

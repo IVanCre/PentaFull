@@ -19,7 +19,6 @@ namespace Penta_Server.Services.Repositories
         public DbSet<TokenEntity> Tokens => Set<TokenEntity>();
         public DbSet<GroupEntity> Groups => Set<GroupEntity>();
         public DbSet<UserDeviceEntity> UsersDevices => Set<UserDeviceEntity>();
-        public DbSet<DataSourceEntity> DataSources => Set<DataSourceEntity>();
 
 
 
