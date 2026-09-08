@@ -4,6 +4,7 @@ using Penta_Server.Interfaces;
 using MessageLib;
 
 
+
 namespace Penta_Server.Services.SignalR
 {
     /// <summary>
@@ -23,7 +24,7 @@ namespace Penta_Server.Services.SignalR
         private IConnectionsRepository _connRepo = connRepo;
         private ILogWriter _logger = logger;
         private IHubContext<MessageHub> _hubContext=hubContext;
-
+        Dictionary<Guid, List<Guid>> _sendedPacks = new();
 
         public async Task SendAllNonSended(int userID, string connID)//отправляет клиенту все неотправленные ЕМУ сообщения
         {
@@ -35,8 +36,9 @@ namespace Penta_Server.Services.SignalR
                     var client = _hubContext.Clients.Client(connID);
                     if (client != null)
                     {
-                        foreach (var msg in nonsended)
-                            await client.SendAsync("RecieveMessage", msg);
+                        var idList = nonsended.Select(x => x.ID).ToList();//запоминаем, какие сообщения в пакете
+                        _sendedPacks.Add(nonsended[0].ID, idList);
+                        await client.SendAsync("RecieveMessagePack", nonsended);
                     }
                 }
             }
@@ -75,5 +77,16 @@ namespace Penta_Server.Services.SignalR
 
 
         public void MessageSended(Guid messageID) => _messageRepo.DeleteMessage(messageID);
+        public void PackSended(Guid messagePackID)
+        {
+            if(_sendedPacks.ContainsKey(messagePackID))
+            {
+                Task.Run(() =>
+                {
+                    foreach (var id in _sendedPacks[messagePackID])
+                        _messageRepo.DeleteMessage(id);
+                });
+            }
+        }
     }
 }

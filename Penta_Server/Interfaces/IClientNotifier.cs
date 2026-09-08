@@ -9,6 +9,7 @@ namespace Penta_Server.Interfaces
     {
         Task SendAllNonSended(int userID, string connID);
         void MessageSended(Guid messageID);
+        void PackSended(Guid packID);
         Task SendToUserWithPush(Message msg);
         Task SendToUserWithoutPush(Message msg);
     }

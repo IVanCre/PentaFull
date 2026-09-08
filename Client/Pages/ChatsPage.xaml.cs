@@ -21,7 +21,6 @@ namespace Client.Pages
         {
             InitializeComponent();
 
-            App.Services.GetRequiredService<INotifyHelper>()?.SkipAllNotifications();
             BindingContext = this;
 
             var itemToRemove = Shell.Current.Items.FirstOrDefault(x => x.Route == "LoadingPage");//удаляем заглушку
@@ -33,6 +32,8 @@ namespace Client.Pages
         protected override async void OnAppearing()//вызывается при отображении страницы
         {
             base.OnAppearing();
+
+            App.Services.GetRequiredService<INotifyHelper>()?.SkipAllNotifications();
 
             if (_clientFacade == null)
             {

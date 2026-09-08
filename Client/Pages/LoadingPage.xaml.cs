@@ -22,12 +22,12 @@ namespace Client.Pages
             base.OnAppearing();
 
             var _clientFacade = App.Services.GetRequiredService<IClientFacade>();
-            await _clientFacade.DeleteOldMessages(14);//пока с дефолтом
-            ConfigureServices(_clientFacade);
+            _= Task.Run(()=>_clientFacade.DeleteOldMessages(7));//пока с дефолтом
+            ConfigureNotifications(_clientFacade);
             await TryAutoLogin(_clientFacade);
         }
 
-        private void ConfigureServices(IClientFacade _clientFacade)
+        private void ConfigureNotifications(IClientFacade _clientFacade)
         {
             var notifyService = App.Services.GetRequiredService<INotifyHelper>();
             _clientFacade.MessageAddedToChat += async (int chatID, Message mesage) =>
@@ -37,9 +37,9 @@ namespace Client.Pages
                 if (currentPage is ActiveChatPage currChat)
                 {
                     if (currChat.ChatID != chatID)
-                        notifyService.UpdateNotification(mesage.FromID, currChat.ChatName, text);
+                        notifyService.UpdateNotification(mesage.FromID, currChat.ChatName, text);//звук+пуш
                     else
-                        App.Services.GetRequiredService<ISoundManager>()?.InputMessageNotify();
+                        App.Services.GetRequiredService<ISoundManager>()?.InputMessageNotify();//только звук
                 }
                 else
                 {
@@ -53,10 +53,6 @@ namespace Client.Pages
         private async Task TryAutoLogin(IClientFacade _clientFacade)
         {
             var _uiNotificator = App.Services.GetService<IDialogManager>();
-            _clientFacade.SysLogRecieved += (LogEventType type, string text, DateTime timestamp) =>
-            {
-                _uiNotificator.ShowMessage("Систенмый лог", $"{timestamp.ToString("HH:mm:ss")} {text}", "ок");//чтобы события отслоеживались сразу
-            };
 
             var myContact = await _clientFacade.GetMyContactID();
             if (!string.IsNullOrEmpty(myContact))

@@ -29,7 +29,7 @@
 		<ApplicationId>com.companyname.penta</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.8.3</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>1.8.4</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
@@ -38,7 +38,7 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-		<Version>1.8.3</Version>
+		<Version>1.8.4</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
@@ -47,7 +47,7 @@
 	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	  <DebugSymbols>True</DebugSymbols>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
-	  <ApplicationDisplayVersion>1.8.3</ApplicationDisplayVersion>
+	  <ApplicationDisplayVersion>1.8.4</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <Debugger>Xamarin</Debugger>	
 	</PropertyGroup>
@@ -57,7 +57,7 @@
 	  <RunAOTCompilation>True</RunAOTCompilation>
 	  <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
-	  <ApplicationDisplayVersion>1.8.3</ApplicationDisplayVersion>
+	  <ApplicationDisplayVersion>1.8.4</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <DebugSymbols>True</DebugSymbols>
 	  <Debugger>Xamarin</Debugger>		

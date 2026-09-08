@@ -341,10 +341,21 @@ namespace Penta_ClientLib.Services
                 _messHabConnection.On<Message>("RecieveMessage", async (message) =>
                 {
                     await _messHabConnection.InvokeAsync("AcknowledgeReceived", message.ID);//подтверждение о получении для сервака(тут еще серверный ID)
-                    
                     message.GenerateNewID();//с этого момента сообщение имеет уже клиентский идентификатор, а не серверный
                     RecievedNewMessage?.Invoke(message);//вызываем внешний делегат что получили сообщение
                 });
+
+                _messHabConnection.On<List<Message>>("RecieveMessagePack", async (messagePack) =>
+                {
+                    await _messHabConnection.InvokeAsync("AcknowledgeReceivedPack", messagePack[0].ID);//подтверждение о получении для сервака(тут еще серверный ID)
+                    foreach (var msg in messagePack)
+                    {
+                        msg.GenerateNewID();//с этого момента сообщение имеет уже клиентский идентификатор, а не серверный
+                        RecievedNewMessage?.Invoke(msg);//вызываем внешний делегат что получили сообщение
+                    }
+                });
+
+
                 await _messHabConnection.StartAsync();
 
                 if (_messHabConnection.State == HubConnectionState.Connected)

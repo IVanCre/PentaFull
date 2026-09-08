@@ -73,6 +73,18 @@ namespace Penta_Server.Services.SignalR
                 _logger?.SaveInfo($"Ошибка подтверждения получения сообщения: {ex.Message}");
             }
         }
+        public void AcknowledgeReceivedPack(Guid messagePackID)
+        {
+            try
+            {
+                _clientNotifier.PackSended(messagePackID);
+                _logger?.SaveInfo($"Клиент подтвердил получение пакета сообщений [0]id={messagePackID}");
+            }
+            catch (Exception ex)
+            {
+                _logger?.SaveInfo($"Ошибка подтверждения получения пакета сообщений: {ex.Message}");
+            }
+        }
 
 
         //это точка получения сервером сообщения ОТ клиента

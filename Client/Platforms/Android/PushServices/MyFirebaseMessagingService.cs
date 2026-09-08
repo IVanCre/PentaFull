@@ -30,7 +30,7 @@ namespace Client.Platforms.Android.PushServices
             // Извлекаем данные из Data-пакета
             if (message.Data.Count > 0)
             {
-                int userID = int.Parse(message.Data["fromUserID"]);
+                int fromID = int.Parse(message.Data["fromUserID"]);
                 string text = message.Data["message"];
                 long timestampMilisec = long.Parse(message.Data["timestamp_msec"]);//время отправки пуша
 
@@ -39,8 +39,8 @@ namespace Client.Platforms.Android.PushServices
 //и следовательно, не видел это новое сообщение, которое сгенерировало этот пуш
                 if (timestampOfLastConnect < timestampMilisec)
                 {
-                    string senderContactName = await _clientFacade.FindUserPseudonimeByID(userID);
-                    _notifier.UpdateNotification(userID,senderContactName, text);//отолбражаем уведомление
+                    string senderContactName = await _clientFacade.FindUserPseudonimeByID(fromID);
+                    _notifier.UpdateNotification(fromID,senderContactName, text);//отолбражаем уведомление
                 }
                 //else -значит юзер зашел раньше, чем получил пуш и следовательно уже сам увидел новое сообщение
             }

@@ -79,7 +79,11 @@ namespace Client.Platforms.Android.PushServices
         {
             var intent = _context.PackageManager.GetLaunchIntentForPackage(_context.PackageName);
             intent.SetFlags(ActivityFlags.ReorderToFront | ActivityFlags.NewTask);
-            var pendingIntent = AndroidApp.PendingIntent.GetActivity(_context, 0, intent, AndroidApp.PendingIntentFlags.UpdateCurrent | AndroidApp.PendingIntentFlags.Immutable);
+            var pendingIntent = AndroidApp.PendingIntent.GetActivity(
+                _context, 
+                0, 
+                intent, 
+                AndroidApp.PendingIntentFlags.UpdateCurrent | AndroidApp.PendingIntentFlags.Immutable);
 
             var builder = new NotificationCompat.Builder(_context, _channelId)
                 .SetContentTitle(title)

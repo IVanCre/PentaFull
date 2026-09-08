@@ -140,7 +140,7 @@ namespace MessageLib
 
         public static Message CreateUserToUser(int senderUserID,int recieverUserID, MessageType type, byte[] data, Guid? messageID)
         {
-            return new Message(//создаем новое сообщения для всех кто в группе
+            return new Message(
                 messageID==null ? Guid.NewGuid(): messageID.Value, //внешний айдишник может быть передан из связанной сущности
                 senderUserID,
                 -1,

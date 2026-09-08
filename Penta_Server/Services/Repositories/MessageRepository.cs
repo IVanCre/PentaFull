@@ -111,7 +111,10 @@ namespace Penta_Server.Services.Repositories
                 {
                     if (db.Users.FirstOrDefault(x => x.ID == userID) != null)//получатель должен быть зарегистрированнным
                     {
-                        var finded = db.Messages.Where(x => x.ToUserID==userID && !x.IsSended).ToList();
+                        var finded = db.Messages
+                            .Where(x => x.ToUserID==userID && !x.IsSended)
+                            .OrderBy(x=>x.UtcTimestamp)
+                            .ToList();
                         byte[] data = null;
 
                         foreach (var f in finded)
