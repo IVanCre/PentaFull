@@ -42,7 +42,7 @@
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Content>
 	  <Content Update="penta-client-1928-firebase-adminsdk-fbsvc-6fb6a671e1.json">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 	  </Content>
   </ItemGroup>
 
